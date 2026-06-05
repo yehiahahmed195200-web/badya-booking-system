@@ -1,0 +1,541 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("MYSQL_DATABASE_URL")
+}
+
+model adminlog {
+  id        String   @id
+  adminId   String
+  action    String
+  targetId  String?
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+model audit_logs {
+  id         BigInt   @id @default(autoincrement())
+  action     String   @db.VarChar(255)
+  created_at DateTime @db.DateTime(6)
+  details    String?  @db.Text
+  ip_address String?  @db.VarChar(255)
+  user_agent String?  @db.VarChar(255)
+  admin_id   BigInt
+  ipAddress  String?  @db.VarChar(255)
+  userAgent  String?  @db.VarChar(255)
+  users      users    @relation(fields: [admin_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKipd9i0r8h4lyhkehn7nm5qkc0")
+
+  @@index([action], map: "idx_action")
+  @@index([admin_id], map: "idx_admin_id")
+  @@index([created_at], map: "idx_created_at")
+}
+
+model booking {
+  id                   String                   @id
+  userId               String
+  facilityId           String
+  startTime            DateTime
+  endTime              DateTime
+  participants         Int
+  status               booking_status           @default(PENDING)
+  requiresApproval     Boolean                  @default(false)
+  approverRole         String?
+  conflictId           String?
+  rejectionReason      String?
+  reminderSent         Boolean                  @default(false)
+  termsAccepted        Boolean                  @default(false)
+  buddyIds             String                   @default("[]")
+  attendanceStatus     booking_attendanceStatus @default(NOT_CHECKED_IN)
+  checkedInAt          DateTime?
+  checkedOutAt         DateTime?
+  studentLatitude      Float?
+  studentLongitude     Float?
+  distanceFromFacility Float?
+  verifiedBy           String?
+  createdAt            DateTime                 @default(now())
+  conflict             conflict?                @relation(fields: [conflictId], references: [id], map: "Booking_conflictId_fkey")
+  facility             facility                 @relation(fields: [facilityId], references: [id], map: "Booking_facilityId_fkey")
+  user                 user                     @relation(fields: [userId], references: [id], map: "Booking_userId_fkey")
+  bookingParticipants  BookingParticipant[]
+  sportId              String?
+  sport                sport?                   @relation(fields: [sportId], references: [id], onDelete: SetNull)
+
+  @@index([conflictId], map: "Booking_conflictId_fkey")
+  @@index([facilityId, startTime, endTime], map: "Booking_facilityId_startTime_endTime_idx")
+  @@index([userId], map: "Booking_userId_fkey")
+}
+
+model bookings {
+  id                     BigInt                     @id @default(autoincrement())
+  attendance_status      bookings_attendance_status?
+  checked_in_at          DateTime?                  @db.DateTime(6)
+  checked_out_at         DateTime?                  @db.DateTime(6)
+  conflict_id            String?                    @db.VarChar(255)
+  created_at             DateTime                   @db.DateTime(6)
+  distance_from_facility Float?
+  end_time               DateTime                   @db.DateTime(6)
+  participants           Int
+  start_time             DateTime                   @db.DateTime(6)
+  status                 bookings_status
+  student_latitude       Float?
+  student_longitude      Float?
+  verified_by            String?                    @db.VarChar(255)
+  facility_id            BigInt
+  user_id                BigInt
+  scanned_id_data        String?                    @db.VarChar(255)
+  attendanceStatus       bookings_attendanceStatus?
+  checkedInAt            DateTime?                  @db.DateTime(6)
+  checkedOutAt           DateTime?                  @db.DateTime(6)
+  conflictId             String?                    @db.VarChar(255)
+  distanceFromFacility   Float?
+  scannedIdData          String?                    @db.VarChar(255)
+  studentLatitude        Float?
+  studentLongitude       Float?
+  verifiedBy             String?                    @db.VarChar(255)
+  users                  users                      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKeyog2oic85xg7hsu2je2lx3s6")
+  facilities             facilities                 @relation(fields: [facility_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKovcktajgjh8wo5wrx0e2j2jpd")
+
+  @@index([user_id], map: "FKeyog2oic85xg7hsu2je2lx3s6")
+  @@index([facility_id], map: "FKovcktajgjh8wo5wrx0e2j2jpd")
+}
+
+model conflict {
+  id          String    @id
+  description String
+  resolved    Boolean   @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  createdAt   DateTime  @default(now())
+  booking     booking[]
+}
+
+model dailyusage {
+  id            String   @id
+  userId        String
+  facilityId    String
+  studentId     String   @default("")
+  studentName   String   @default("")
+  facilityName  String   @default("")
+  date          String
+  usedMins      Int      @default(0)
+  remainingMins Int      @default(60)
+  updatedAt     DateTime
+
+  @@unique([userId, facilityId, date], map: "DailyUsage_userId_facilityId_date_key")
+}
+
+model facilities {
+  id                                        BigInt             @id @default(autoincrement())
+  active                                    Boolean            @db.Bit(1)
+  category                                  String             @db.VarChar(255)
+  close_time                                String?            @db.VarChar(255)
+  default_slot_mins                         Int?
+  geofencing_radius                         Float?
+  latitude                                  Float?
+  longitude                                 Float?
+  max_participants                          Int?
+  min_participants                          Int?
+  name                                      String             @unique(map: "UK6tm0w2xajnx3l566muxq8apmq") @db.VarChar(255)
+  open_time                                 String?            @db.VarChar(255)
+  sports                                    String?            @db.Text
+  status                                    String?            @db.VarChar(255)
+  status_reason                             String?            @db.Text
+  closeTime                                 String?            @db.VarChar(255)
+  defaultSlotMins                           Int?
+  geofencingRadius                          Float?
+  maxParticipants                           Int?
+  minParticipants                           Int?
+  openTime                                  String?            @db.VarChar(255)
+  statusReason                              String?            @db.Text
+  bookings                                  bookings[]
+  feedback_feedback_facility_idTofacilities feedback[]         @relation("feedback_facility_idTofacilities")
+  feedback_feedback_facilityIdTofacilities  feedback[]         @relation("feedback_facilityIdTofacilities")
+  waitlist_entries                          waitlist_entries[]
+}
+
+model facility {
+  id               String          @id
+  name             String          @unique(map: "Facility_name_key")
+  sportId          String?
+  category         String
+  defaultSlotMins  Int             @default(60)
+  openTime         String
+  closeTime        String
+  minParticipants  Int             @default(1)
+  maxParticipants  Int             @default(20)
+  status           facility_status @default(OPEN)
+  statusReason     String?
+  isActive         Boolean         @default(true)
+  feedbackEnabled  Boolean         @default(true)
+  latitude         Float?
+  longitude        Float?
+  geofencingRadius Float?
+  createdAt        DateTime        @default(now())
+  booking          booking[]
+  sport            sport?          @relation(fields: [sportId], references: [id], map: "Facility_sportId_fkey")
+  user             user[]
+  matchmakingQueues MatchmakingQueue[]
+
+  @@index([sportId], map: "Facility_sportId_fkey")
+}
+
+model feedback {
+  id                                          BigInt        @id @default(autoincrement())
+  rating                                      Int
+  bookingId                                   String?
+  booking_id                                  BigInt?
+  comment                                     String?
+  createdAt                                   DateTime?     @default(now())
+  facilityId                                  BigInt?
+  isAnonymous                                 Boolean       @default(false)
+  userId                                      String?
+  content                                     String        @db.Text
+  created_at                                  DateTime?     @db.DateTime(6)
+  type                                        feedback_type
+  user_id                                     BigInt?
+  facility_id                                 BigInt?
+  facilities_feedback_facility_idTofacilities facilities?   @relation("feedback_facility_idTofacilities", fields: [facility_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK9c5da9vnu0n9n8ddnvq234ruv")
+  facilities_feedback_facilityIdTofacilities  facilities?   @relation("feedback_facilityIdTofacilities", fields: [facilityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKmnq6coj4e3fynoqymkq1xep2q")
+  users                                       users?        @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKpwwmhguqianghvi1wohmtsm8l")
+
+  @@index([facility_id], map: "FK9c5da9vnu0n9n8ddnvq234ruv")
+  @@index([user_id], map: "FKpwwmhguqianghvi1wohmtsm8l")
+  @@index([facilityId, createdAt], map: "Feedback_facilityId_createdAt_idx")
+}
+
+model medical_records {
+  id            BigInt   @id @default(autoincrement())
+  created_at    DateTime @db.DateTime(6)
+  description   String?  @db.Text
+  document_name String?  @db.VarChar(255)
+  document_url  String?  @db.VarChar(512)
+  status        String   @db.VarChar(255)
+  submitted_by  String?  @db.VarChar(255)
+  user_id       BigInt
+  documentName  String?  @db.VarChar(255)
+  documentUrl   String?  @db.VarChar(512)
+  submittedBy   String?  @db.VarChar(255)
+  users         users    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKdd9qwwn228b1yaci52j69dkp4")
+
+  @@index([user_id], map: "FKdd9qwwn228b1yaci52j69dkp4")
+}
+
+model medicalrecord {
+  id          String   @id
+  userId      String
+  documentUrl String
+  description String?
+  isEncrypted Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model notification {
+  id        String   @id
+  userId    String
+  title     String
+  message   String
+  channel   String   @default("EMAIL")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt], map: "Notification_userId_createdAt_idx")
+}
+
+model notifications {
+  id         BigInt             @id @default(autoincrement())
+  created_at DateTime           @db.DateTime(6)
+  message    String             @db.Text
+  is_read    Boolean            @db.Bit(1)
+  title      String             @db.VarChar(255)
+  type       notifications_type
+  user_id    BigInt
+  users      users              @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK9y21adhxn0ayjhfocscqox7bh")
+
+  @@index([user_id], map: "FK9y21adhxn0ayjhfocscqox7bh")
+}
+
+model reward {
+  id          String @id
+  name        String
+  description String
+  pointsCost  Int
+  rewardType  String
+}
+
+model sport {
+  id              String     @id
+  name            String     @unique(map: "Sport_name_key")
+  icon            String?
+  description     String?
+  minParticipants Int        @default(1)
+  maxParticipants Int        @default(20)
+  durationOptions String     @default("30,60,90")
+  requiresCoach   Boolean    @default(false)
+  idealParticipants Int      @default(10)
+  facility        facility[]
+  matchmakingQueues MatchmakingQueue[]
+  bookings        booking[]
+}
+
+model system_rules {
+  id                                 BigInt  @id @default(autoincrement())
+  advance_booking_window_days        Int?
+  allow_back_to_back_bookings        Boolean? @db.Bit(1)
+  auto_ban_warning_threshold         Int?
+  global_email_notifications_enabled Boolean? @db.Bit(1)
+  max_booking_duration_mins          Int?
+  max_bookings_per_user_per_day      Int?
+  min_booking_duration_mins          Int?
+  priority_booking_enabled           Boolean? @db.Bit(1)
+  priority_early_access_hours        Int?
+  priority_score_threshold           Int?
+  advanceBookingWindowDays           Int?
+  allowBackToBackBookings            Boolean? @db.Bit(1)
+  autoBanWarningThreshold            Int?
+  globalEmailNotificationsEnabled    Boolean? @db.Bit(1)
+  maxBookingDurationMins             Int?
+  maxBookingsPerUserPerDay           Int?
+  minBookingDurationMins             Int?
+  priorityBookingEnabled             Boolean? @db.Bit(1)
+  priorityEarlyAccessHours           Int?
+  priorityScoreThreshold             Int?
+}
+
+model systemrule {
+  id                   String   @id
+  maxBookingsPerDay    Int      @default(1)
+  autoBanThreshold     Int      @default(3)
+  advanceBookingWindow Int      @default(7)
+  minimumNoticeTime    Int      @default(24)
+  updatedAt            DateTime
+}
+
+model user {
+  id                String    @id
+  studentId         String    @unique(map: "User_studentId_key")
+  phone             String?   @unique(map: "User_phone_key")
+  fullName          String?
+  email             String?   @unique(map: "User_email_key")
+  college           String?
+  barcode           String?   @unique(map: "User_barcode_key")
+  passwordHash      String
+  role              user_role @default(STUDENT)
+  managedFacilityId String?
+  points            Int       @default(0)
+  warnings          Int       @default(0)
+  isBanned          Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  skillLevel        String    @default("Intermediate")
+  booking           booking[]
+  facility          facility? @relation(fields: [managedFacilityId], references: [id], map: "User_managedFacilityId_fkey")
+  bookingParticipants BookingParticipant[]
+  matchmakingQueues   MatchmakingQueue[]
+
+  @@index([managedFacilityId], map: "User_managedFacilityId_fkey")
+}
+
+model userreward {
+  id         String   @id
+  userId     String
+  rewardId   String
+  redeemedAt DateTime @default(now())
+}
+
+model users {
+  id                  BigInt             @id @default(autoincrement())
+  active_bookings     Int?
+  banned              Boolean            @db.Bit(1)
+  earned_points       Int?
+  email               String             @unique(map: "UK6dotkott2kjsp8vw4d0m25fb7") @db.VarChar(255)
+  email_notifications Boolean?           @db.Bit(1)
+  full_name           String?            @db.VarChar(255)
+  push_notifications  Boolean?           @db.Bit(1)
+  role                users_role
+  warnings            Int
+  credits             Int
+  barcode             String?            @unique(map: "UKi095je3dnvjnhvteqhmok2gc6") @db.VarChar(255)
+  student_id          String?            @unique(map: "UKqh3otyipv2k9hqte4a1abcyhq") @db.VarChar(255)
+  activeBookings      Int?
+  earnedPoints        Int?
+  emailNotifications  Boolean?           @db.Bit(1)
+  fullName            String?            @db.VarChar(255)
+  pushNotifications   Boolean?           @db.Bit(1)
+  studentId           String?            @unique(map: "UKolxe15b9ax5ojsnv4ig6g6n7") @db.VarChar(255)
+  skillLevel          String?            @db.VarChar(50)
+  deviceId            String?            @db.VarChar(255)
+  device_id           String?            @db.VarChar(255)
+  otpCode             String?            @db.VarChar(255)
+  otp_code           String?            @db.VarChar(255)
+  otpExpiry           DateTime?          @db.DateTime(6)
+  otp_expiry          DateTime?          @db.DateTime(6)
+  pendingDeviceId     String?            @db.VarChar(255)
+  pending_device_id   String?            @db.VarChar(255)
+  deviceChangeStatus  String?            @db.VarChar(50)
+  device_change_status String?           @db.VarChar(50)
+  deviceChangeRequestedAt DateTime?      @db.DateTime(6)
+  device_change_requested_at DateTime?   @db.DateTime(6)
+  audit_logs          audit_logs[]
+  bookings            bookings[]
+  feedback            feedback[]
+  medical_records     medical_records[]
+  notifications       notifications[]
+  waitlist_entries    waitlist_entries[]
+}
+
+model waitlist_entries {
+  id                 BigInt     @id @default(autoincrement())
+  created_at         DateTime?  @db.DateTime(6)
+  desired_start_time DateTime?  @db.DateTime(6)
+  participants       Int
+  facility_id        BigInt
+  user_id            BigInt
+  createdAt          DateTime?  @db.DateTime(6)
+  desiredStartTime   DateTime?  @db.DateTime(6)
+  facilities         facilities @relation(fields: [facility_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK5668m6tlre17gx47jbh3tk351")
+  users              users      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FKdpgl4h9wd7kabg6dk86wdvjqy")
+
+  @@index([facility_id], map: "FK5668m6tlre17gx47jbh3tk351")
+  @@index([user_id], map: "FKdpgl4h9wd7kabg6dk86wdvjqy")
+}
+
+enum bookings_attendance_status {
+  CANCELLED_BEFORE_START
+  CHECKED_IN
+  CHECKED_OUT
+  NOT_CHECKED_IN
+  NO_SHOW
+}
+
+enum notifications_type {
+  BOOKING_CANCELLED
+  BOOKING_CONFIRMED
+  BOOKING_REMINDER
+  FEEDBACK_RECEIVED
+  POINTS_EARNED
+  PROMOTIONAL
+  SYSTEM_ALERT
+}
+
+enum booking_status {
+  PENDING
+  APPROVED
+  REJECTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum user_role {
+  STUDENT
+  COACH
+  ADMIN
+  DEAN
+  MANAGER
+}
+
+enum users_role {
+  ADMIN
+  COACH
+  STUDENT
+}
+
+enum facility_status {
+  OPEN
+  MAINTENANCE
+  TOURNAMENT
+  CLOSED
+}
+
+enum bookings_status {
+  CANCELLED
+  COMPLETED
+  CONFIRMED
+  PENDING
+  REJECTED
+}
+
+enum feedback_type {
+  BUG_REPORT
+  FACILITY_REVIEW
+  GENERAL_FEEDBACK
+  RECOMMENDATION
+  SERVICE_FEEDBACK
+}
+
+enum booking_attendanceStatus {
+  NOT_CHECKED_IN
+  CHECKED_IN
+  CHECKED_OUT
+  NO_SHOW
+  CANCELLED_BEFORE_START
+}
+
+enum bookings_attendanceStatus {
+  CANCELLED_BEFORE_START
+  CHECKED_IN
+  CHECKED_OUT
+  NOT_CHECKED_IN
+  NO_SHOW
+}
+
+model BookingParticipant {
+  id        String  @id @default(uuid())
+  bookingId String
+  userId    String
+  team      String  @default("A") // "A" or "B" for auto team balancing
+
+  booking   booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user      user    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, userId])
+}
+
+model MatchmakingQueue {
+  id          String   @id @default(uuid())
+  userId      String
+  sportId     String
+  facilityId  String
+  date        String   // e.g. "2026-06-05"
+  timeSlot    String   // e.g. "10:00"
+  createdAt   DateTime @default(now())
+  
+  user        user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sport       sport    @relation(fields: [sportId], references: [id], onDelete: Cascade)
+  facility    facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sportId, date, timeSlot])
+}
+
+model FairnessConfig {
+  id                           BigInt @id @default(autoincrement())
+  primeTimeStartHour           Int    @default(17)
+  primeTimeEndHour             Int    @default(21)
+  basketballQuotaPercent       Float  @default(60.0)
+  volleyballQuotaPercent       Float  @default(40.0)
+  cooldownPeriodHours          Int    @default(24)
+  maxWeeklyReservationsPerUser Int    @default(3)
+  consecutiveSlotLimit         Int    @default(2)
+  teamOverlapThresholdPercent  Float  @default(50.0)
+  playerWeightCoeff            Float  @default(0.4)
+  unusedHoursWeightCoeff       Float  @default(0.3)
+  primeTimeDisadvantageCoeff   Float  @default(0.3)
+
+  @@map("fairness_config")
+}
+
+model WeeklySportStats {
+  id                    String @id @default(uuid())
+  year                  Int
+  weekNumber            Int
+  sportId               String
+  bookedHours           Float  @default(0.0)
+  activePlayersCount    Int    @default(0)
+  primeTimeHoursUsed    Float  @default(0.0)
+  rejectedBookingsCount Int    @default(0)
+
+  @@unique([year, weekNumber, sportId], name: "year_weekNumber_sportId")
+  @@map("weekly_sport_stats")
+}

@@ -1,0 +1,7 @@
+Badya Chat Prototype — Getting Started
+
+This small document explains how to use the Badya Chat prototype. You can ask about booking facilities, admin workflows, and student actions. Use Arabic or English.
+
+Examples:
+- How do I book a tennis court?
+- What are the opening hours?

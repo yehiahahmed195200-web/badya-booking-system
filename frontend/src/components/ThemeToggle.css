@@ -1,0 +1,74 @@
+.theme-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto; /* Pushes it to the right if in a flex container */
+  margin-right: 1rem;
+}
+
+.toggle-track {
+  width: 56px;
+  height: 28px;
+  background: rgba(var(--glass-color), 0.1);
+  border: 1px solid rgba(var(--glass-color), 0.2);
+  border-radius: 30px;
+  position: relative;
+  transition: var(--transition);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.theme-toggle:hover .toggle-track {
+  background: rgba(var(--glass-color), 0.15);
+  border-color: rgba(var(--glass-color), 0.3);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  background: var(--bg-card);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.theme-toggle.light .toggle-thumb {
+  transform: translateX(28px);
+}
+
+.icon {
+  position: absolute;
+  font-size: 12px;
+  transition: opacity 0.3s ease, transform 0.4s ease;
+}
+
+.sun {
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+.moon {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.theme-toggle.light .sun {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.theme-toggle.light .moon {
+  opacity: 0;
+  transform: translateY(-15px);
+}

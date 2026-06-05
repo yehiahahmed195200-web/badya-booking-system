@@ -1,0 +1,40 @@
+{
+  "name": "badya-sport-booking-system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:seed": "ts-node --transpile-only prisma/seed.ts",
+    "badya-ai": "node chatbot/server.js",
+    "badya-ai:dev": "nodemon chatbot/server.js",
+    "prisma:studio": "node studio.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "@types/cors": "^2.8.19",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.6",
+    "dayjs": "^1.11.13",
+    "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "openai": "^6.35.0",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^5.0.1",
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/node": "^22.14.1",
+    "prisma": "^6.7.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
+  }
+}

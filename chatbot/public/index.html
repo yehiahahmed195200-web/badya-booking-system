@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badya Guide</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <button id="chatToggle" title="Chat with Badya Guide">
+        💬
+    </button>
+
+    <div class="chat-container" data-state="closed">
+        <div class="chat-header">
+            <div class="chat-header-avatar">🎯</div>
+            <div class="chat-header-info">
+                <h3>Badya Guide</h3>
+                <p>Online • Ready to help</p>
+            </div>
+            <button id="chatClose" class="chat-close">×</button>
+        </div>
+
+        <div id="messages">
+            <!-- Messages appear here -->
+        </div>
+
+        <div class="chat-footer">
+            <div class="quick-actions">
+                <button class="action-chip">Available facilities 🏸</button>
+                <button class="action-chip">How to book? 📅</button>
+                <button class="action-chip">Check my bookings 📋</button>
+                <button class="action-chip">Contact support 💬</button>
+            </div>
+            <form id="form">
+                <div class="input-wrap">
+                    <input type="text" id="input" placeholder="Ask me anything..." autocomplete="off">
+                    <button type="submit" id="sendBtn" aria-label="Send message">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+</html>
