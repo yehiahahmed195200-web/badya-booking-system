@@ -1,268 +1,160 @@
 const messagesEl = document.getElementById('messages');
 const form = document.getElementById('form');
 const input = document.getElementById('input');
+const fileInput = document.getElementById('file');
+const uploadBtn = document.getElementById('uploadBtn');
+const loadBtn = document.getElementById('loadBtn');
+const resetBtn = document.getElementById('resetBtn');
+const chooseFileBtn = document.getElementById('chooseFileBtn');
+const fileName = document.getElementById('fileName');
 const chatToggle = document.getElementById('chatToggle');
 const chatClose = document.getElementById('chatClose');
-const chatContainer = document.querySelector('.chat-container');
-const sendBtn = document.getElementById('sendBtn');
-
-// Get token from URL params
-const urlParams = new URLSearchParams(window.location.search);
-const authToken = urlParams.get('token') || localStorage.getItem('token');
-
+const chatWrap = document.querySelector('.chat-wrap');
 const sessionId = (localStorage.getItem('chat_session_id') || crypto.randomUUID());
 localStorage.setItem('chat_session_id', sessionId);
-
-const isEmbedded = new URLSearchParams(window.location.search).get('embedded') === '1';
-
+const quickActions = document.querySelectorAll('[data-prompt]');
 const conversationHistory = [];
-let isAwaitingResponse = false;
 
-function detectLanguage(locale = '') {
-    const value = String(locale || '').toLowerCase();
-    if (value.startsWith('ar')) return 'ar';
-    if (value.startsWith('es')) return 'es';
-    if (value.startsWith('fr')) return 'fr';
-    if (value.startsWith('de')) return 'de';
-    return 'en';
-}
-
-// Detect language
-const userLanguage = detectLanguage(navigator.language);
-
-const WELCOME_EN = "Hey! 👋 I'm here to help you book sports facilities at Badya. What would you like to do?";
-const WELCOME_AR = "أهلاً! 👋 أنا هنا لمساعدتك في حجز الملاعب الرياضية. شنو اللي تبغاه؟";
+const welcomeText = [
+  'أهلاً بك في Badya Concierge.',
+  'أستطيع مساعدتك في الحجز، استعراض المرافق، الإشعارات، أو توضيح الخطوات التالية بشكل مختصر وواضح.',
+  'جرب أحد الاختصارات بالأسفل أو اكتب سؤالك مباشرة.'
+].join('\n');
 
 function syncScroll() {
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function highlightKeywords(text) {
-    if (!text) return '';
-    let html = text;
+function renderBubble(role, text, metaText) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
 
-    // Categories (Sports, facilities)
-    const categories = [
-        /\b(tennis|padel|football|basketball|volleyball|gym|squash|swimming|pool|fitness|yoga|cardio)\b/gi,
-        /(ملعب|كرة القدم|تنس|بادل|سلة|طائرة|سباحة|مسبح|جيم|لياقة)/g
-    ];
-    // Success / Confirmation
-    const success = [
-        /\b(confirmed|successful|success|done|enjoy)\b/gi,
-        /(تم تأكيد|بنجاح|تم إنشاء|تمت|استمتع|ممتاز|أكيد)/g
-    ];
-    // Warnings / Cancellations / Errors
-    const warnings = [
-        /\b(failed|fail|cancel|cancelled|late|warning|error)\b/gi,
-        /(تعذر|فشل|إلغاء|تأخير|تحذير|خلل|خطأ)/g
-    ];
-    // Times & Dates
-    const times = [
-        /\b(today|tomorrow|monday|tuesday|wednesday|thursday|friday|saturday|sunday|am|pm|mins?|hours?)\b/gi,
-        /(اليوم|بكرة|غداً|غدا|ساعة|ساعات|دقيقة|دقائق|صباحاً|مساءً|صباحا|مساءا|عصراً|عصرا)/g
-    ];
+  const avatar = document.createElement('div');
+  avatar.className = 'msg__avatar';
+  avatar.textContent = role.includes('user') ? 'YOU' : 'B';
 
-    for (const pattern of success) {
-        html = html.replace(pattern, '<span class="hl-ok">$&</span>');
-    }
-    for (const pattern of warnings) {
-        html = html.replace(pattern, '<span class="hl-err">$&</span>');
-    }
-    for (const pattern of times) {
-        html = html.replace(pattern, '<span class="hl-date">$&</span>');
-    }
-    for (const pattern of categories) {
-        html = html.replace(pattern, '<span class="hl-type">$&</span>');
-    }
+  const bubble = document.createElement('div');
+  bubble.className = 'msg__bubble';
+  bubble.textContent = text;
 
-    return html;
+  if (metaText) {
+    bubble.title = metaText;
+  }
+
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  messagesEl.appendChild(div);
+  syncScroll();
+  return div;
 }
 
-function formatMarkdown(text) {
-    if (!text) return '';
-    
-    // First, escape HTML to prevent XSS
-    let html = text
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-    // Apply keyword highlighting
-    html = highlightKeywords(html);
-
-    // Code blocks: `code` -> <code class="inline-code">code</code>
-    html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
-
-    // Bold text: **text** -> <strong class="bold-text">$1</strong>
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="bold-text">$1</strong>');
-
-    // Parse lines for headers and lists
-    const lines = html.split('\n');
-    let inList = false;
-    let inOrderedList = false;
-    let resultLines = [];
-
-    for (let line of lines) {
-        let trimmed = line.trim();
-        
-        // Headers (h4, h3)
-        if (trimmed.startsWith('###')) {
-            if (inList) { resultLines.push('</ul>'); inList = false; }
-            if (inOrderedList) { resultLines.push('</ol>'); inOrderedList = false; }
-            resultLines.push(`<h4 class="chat-header-h4">${trimmed.slice(3).trim()}</h4>`);
-            continue;
-        }
-        if (trimmed.startsWith('##')) {
-            if (inList) { resultLines.push('</ul>'); inList = false; }
-            if (inOrderedList) { resultLines.push('</ol>'); inOrderedList = false; }
-            resultLines.push(`<h3 class="chat-header-h3">${trimmed.slice(2).trim()}</h3>`);
-            continue;
-        }
-
-        // Bullet lists
-        const bulletMatch = line.match(/^(\s*)[*-]\s+(.+)$/);
-        if (bulletMatch) {
-            if (inOrderedList) { resultLines.push('</ol>'); inOrderedList = false; }
-            if (!inList) {
-                resultLines.push('<ul class="chat-list">');
-                inList = true;
-            }
-            resultLines.push(`<li class="chat-list-item">${bulletMatch[2]}</li>`);
-            continue;
-        }
-
-        // Ordered lists
-        const numberedMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
-        if (numberedMatch) {
-            if (inList) { resultLines.push('</ul>'); inList = false; }
-            if (!inOrderedList) {
-                resultLines.push('<ol class="chat-ordered-list">');
-                inOrderedList = true;
-            }
-            resultLines.push(`<li class="chat-list-item">${numberedMatch[2]}</li>`);
-            continue;
-        }
-
-        // Empty lines or standard paragraphs
-        if (trimmed === '') {
-            if (inList) { resultLines.push('</ul>'); inList = false; }
-            if (inOrderedList) { resultLines.push('</ol>'); inOrderedList = false; }
-            resultLines.push('<div class="chat-break"></div>');
-        } else {
-            resultLines.push(`<p class="chat-p">${line}</p>`);
-        }
-    }
-
-    if (inList) resultLines.push('</ul>');
-    if (inOrderedList) resultLines.push('</ol>');
-
-    return resultLines.join('\n');
+function addMessage(role, text) {
+  return renderBubble(role, text);
 }
 
-function renderBubble(role, content, isTemp = false) {
-    const div = document.createElement('div');
-    div.className = `msg ${role}`;
-    const avatar = document.createElement('div');
-    avatar.className = 'msg__avatar';
-    avatar.textContent = role === 'user' ? 'You' : '🎯';
-    const bubble = document.createElement('div');
-    bubble.className = 'msg__bubble';
-    if (typeof content === 'string') {
-        bubble.innerHTML = formatMarkdown(content);
-    } else {
-        bubble.appendChild(content);
-    }
-    div.appendChild(avatar);
-    div.appendChild(bubble);
-    messagesEl.appendChild(div);
-    syncScroll();
-    return div;
+function pushHistory(role, content) {
+  if (!content) return;
+  conversationHistory.push({ role, content });
+  while (conversationHistory.length > 12) {
+    conversationHistory.shift();
+  }
 }
 
-function addTypingIndicator() {
-    const indicator = document.createElement('div');
-    indicator.className = 'typing-dots';
-    indicator.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
-    return renderBubble('bot', indicator);
+function clearMessages() {
+  messagesEl.innerHTML = '';
+  conversationHistory.length = 0;
 }
 
-function closeWidget() {
-    if (isEmbedded && window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'badya-chat-close' }, '*');
-        return;
-    }
-
-    chatContainer.dataset.state = 'closed';
-    chatToggle.style.display = 'flex';
+function addWelcomeMessage() {
+  if (messagesEl.children.length === 0) {
+    addMessage('bot', welcomeText);
+  }
 }
 
-async function sendMessage(text) {
-    if (!text.trim() || isAwaitingResponse) return;
-    renderBubble('user', text);
-    conversationHistory.push({ role: 'user', content: text });
-    input.value = '';
-    isAwaitingResponse = true;
-    sendBtn.disabled = true;
-    const typing = addTypingIndicator();
-    try {
-        const response = await fetch('http://localhost:3333/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: text,
-                history: conversationHistory.slice(-10),
-                token: authToken,
-                sessionId,
-                preferredLanguage: userLanguage
-            })
-        });
-        const data = await response.json();
-        typing.remove();
-        if (data.reply) {
-            renderBubble('bot', data.reply);
-            conversationHistory.push({ role: 'assistant', content: data.reply });
-        } else {
-            renderBubble('bot', userLanguage === 'ar' ? "معذرة، حصل شي خطأ!" : "Oops, something went wrong!");
-        }
-    } catch (err) {
-        typing.remove();
-        renderBubble('bot', userLanguage === 'ar' ? "الاتصال انقطع." : "Connection lost.");
-        console.error(err);
-    } finally {
-        isAwaitingResponse = false;
-        sendBtn.disabled = false;
-        input.focus();
-    }
+addWelcomeMessage();
+
+function setChatState(open) {
+  if (!chatWrap) return;
+  chatWrap.dataset.state = open ? 'open' : 'closed';
+  chatWrap.setAttribute('aria-hidden', open ? 'false' : 'true');
+  if (open) {
+    setTimeout(() => input.focus(), 150);
+  }
 }
 
-form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    sendMessage(input.value);
-});
+chatToggle.addEventListener('click', () => setChatState(true));
+chatClose.addEventListener('click', () => setChatState(false));
 
-document.querySelectorAll('.action-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-        sendMessage(chip.textContent);
-    });
-});
-
-chatToggle.addEventListener('click', () => {
-    chatContainer.dataset.state = 'open';
-    chatToggle.style.display = 'none';
-    if (messagesEl.children.length === 0) {
-        renderBubble('bot', userLanguage === 'ar' ? WELCOME_AR : WELCOME_EN);
-    }
+quickActions.forEach((button) => {
+  button.addEventListener('click', () => {
+    const prompt = button.dataset.prompt || '';
+    input.value = prompt;
     input.focus();
+  });
 });
 
-chatClose.addEventListener('click', () => {
-    closeWidget();
+chooseFileBtn.addEventListener('click', () => {
+  fileInput.click();
 });
 
-if (isEmbedded) {
-    chatContainer.dataset.state = 'open';
-    chatToggle.style.display = 'none';
-    if (messagesEl.children.length === 0) {
-        renderBubble('bot', userLanguage === 'ar' ? WELCOME_AR : WELCOME_EN);
-    }
-}
+fileInput.addEventListener('change', () => {
+  const selectedFile = fileInput.files && fileInput.files[0];
+  fileName.textContent = selectedFile ? selectedFile.name : 'لم يتم اختيار ملف';
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const txt = input.value.trim();
+  if (!txt) return;
+  addMessage('user', txt);
+  pushHistory('user', txt);
+  input.value = '';
+  const typing = renderBubble('bot typing', 'جاري التحليل...');
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: txt, history: conversationHistory.slice(-8), sessionId })
+    });
+    const j = await r.json();
+    const reply = j.reply || 'لم أتمكن من توليد رد حالياً.';
+    typing.remove();
+    addMessage('bot', reply);
+    pushHistory('assistant', reply);
+  } catch (e) {
+    typing.remove();
+    const errorText = 'تعذر الوصول إلى الخدمة حالياً. حاول مرة أخرى بعد لحظات.';
+    addMessage('bot', errorText);
+    pushHistory('assistant', errorText);
+  }
+});
+
+uploadBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const f = fileInput.files && fileInput.files[0];
+  if (!f) { alert('اختر ملفاً أولاً'); return; }
+  const txt = await f.text();
+  try {
+    const r = await fetch('/api/docs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: f.name, text: txt }) });
+    const j = await r.json();
+    alert('تم رفع المستند بنجاح. رقم التعريف: ' + j.id);
+  } catch (err) { alert('فشل الرفع: ' + err.message); }
+});
+
+loadBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+  try {
+    const r = await fetch('/api/load-docs');
+    const j = await r.json();
+    alert('تم تحميل ' + j.loaded + ' ملفاً من المجلد.');
+  } catch (err) { alert('فشل التحميل: ' + err.message); }
+});
+
+resetBtn.addEventListener('click', async (e) => {
+  e.preventDefault();
+  try {
+    await fetch('/api/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId }) });
+    clearMessages();
+    addMessage('bot', 'تمت إعادة ضبط المحادثة. كيف يمكنني مساعدتك اليوم؟');
+  } catch (err) { alert('فشل إعادة الضبط: ' + err.message); }
+});

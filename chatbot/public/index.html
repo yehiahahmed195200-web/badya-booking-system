@@ -1,51 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Badya Guide</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
-</head>
-<body>
-    <button id="chatToggle" title="Chat with Badya Guide">
-        💬
-    </button>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Badya Concierge</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <button id="chatToggle" class="chat-toggle" aria-label="Open chat">
+        <span class="chat-toggle__dot"></span>
+        <span class="chat-toggle__label">Badya Concierge</span>
+      </button>
 
-    <div class="chat-container" data-state="closed">
-        <div class="chat-header">
-            <div class="chat-header-avatar">🎯</div>
-            <div class="chat-header-info">
-                <h3>Badya Guide</h3>
-                <p>Online • Ready to help</p>
+      <aside class="chat-wrap" data-state="closed" aria-hidden="true">
+        <header class="chat-header">
+          <div class="brand">
+            <div class="brand__badge">B</div>
+            <div class="brand__copy">
+              <span class="brand__eyebrow">Official Support Assistant</span>
+              <div class="brand__title">Badya Concierge</div>
+              <div class="brand__subtitle">حجز، مرافق، إشعارات، ودعم سريع</div>
             </div>
-            <button id="chatClose" class="chat-close">×</button>
-        </div>
-
-        <div id="messages">
-            <!-- Messages appear here -->
-        </div>
-
-        <div class="chat-footer">
-            <div class="quick-actions">
-                <button class="action-chip">Available facilities 🏸</button>
-                <button class="action-chip">How to book? 📅</button>
-                <button class="action-chip">Check my bookings 📋</button>
-                <button class="action-chip">Contact support 💬</button>
+          </div>
+          <button id="chatClose" class="chat-close" aria-label="Close chat">×</button>
+        </header>
+        <section class="chat-intro">
+          <div class="status-pill">
+            <span class="status-pill__dot"></span>
+            <span>متاح الآن · متوسط الرد خلال ثوانٍ</span>
+          </div>
+          <div class="intro-grid">
+            <article>
+              <strong>Support</strong>
+              <span>مساعدة فورية للحجوزات والطلبات الشائعة</span>
+            </article>
+            <article>
+              <strong>Facilities</strong>
+              <span>استعراض الملاعب والقاعات والأوقات المتاحة</span>
+            </article>
+            <article>
+              <strong>Account</strong>
+              <span>إشعارات، متابعة، وتوجيه واضح للخطوة التالية</span>
+            </article>
+          </div>
+        </section>
+        <main id="messages" class="messages" aria-live="polite"></main>
+        <section class="quick-actions" aria-label="Quick actions">
+          <button type="button" class="quick-action" data-prompt="ما هي المرافق المتاحة الآن؟">عرض المرافق</button>
+          <button type="button" class="quick-action" data-prompt="أريد حجز ملعب لمدة ساعة اليوم">إنشاء حجز</button>
+          <button type="button" class="quick-action" data-prompt="ما هي الإشعارات الخاصة بالمستخدم 3؟">الإشعارات</button>
+          <button type="button" class="quick-action" data-prompt="أشرح لي خطوات الحجز بشكل مختصر">شرح سريع</button>
+        </section>
+        <div class="controls">
+          <form id="form" class="composer">
+            <input id="input" class="composer__input" placeholder="اكتب سؤالك أو استخدم أحد الاختصارات" autocomplete="off" />
+            <button class="send-btn" type="submit">إرسال</button>
+          </form>
+          <div class="tool-row">
+            <div class="tool-row__field file-picker">
+              <input type="file" id="file" class="file-input" />
+              <button id="chooseFileBtn" type="button" class="file-picker__button">اختيار ملف</button>
+              <span id="fileName" class="file-picker__name">لم يتم اختيار ملف</span>
             </div>
-            <form id="form">
-                <div class="input-wrap">
-                    <input type="text" id="input" placeholder="Ask me anything..." autocomplete="off">
-                    <button type="submit" id="sendBtn" aria-label="Send message">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                    </button>
-                </div>
-            </form>
+            <div class="tool-row__actions">
+              <button id="uploadBtn" type="button">رفع ملف</button>
+              <button id="loadBtn" type="button">تحميل محتوى</button>
+              <button id="resetBtn" type="button" class="ghost-btn">محادثة جديدة</button>
+            </div>
+          </div>
         </div>
+      </aside>
     </div>
-
-    <script src="chat.js"></script>
-</body>
+    <script src="/chat.js"></script>
+  </body>
 </html>
