@@ -280,7 +280,7 @@ router.put("/fairness-config", async (req, res, next) => {
       data: {
         adminId: req.auth!.userId,
         action: "UPDATE_FAIRNESS_CONFIG",
-        targetId: config.id,
+        targetId: config.id.toString(),
         details: JSON.stringify(data),
       },
     });
