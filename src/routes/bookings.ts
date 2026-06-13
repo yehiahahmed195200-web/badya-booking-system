@@ -10,6 +10,7 @@ const router = Router();
 const createBookingSchema = z.object({
   facilityId: z.string().min(1),
   sportId: z.string().optional(), // NEW: Optional sportId for shared facilities
+  sport: z.string().optional(), // ADDED: Allow sport name string
   startTime: z.coerce.date(),
   participants: z.coerce.number().int().positive(),
   durationMins: z.coerce.number().int().positive().optional(),
@@ -26,9 +27,19 @@ router.post("/", requireAuth, async (req, res, next) => {
       return res.status(400).json({ code: "TERMS_NOT_ACCEPTED", message: "You must accept the terms and conditions." });
     }
 
+    let resolvedSportId = data.sportId;
+    if (!resolvedSportId && data.sport) {
+      const sportRecord = await prisma.sport.findFirst({
+        where: { name: { equals: data.sport, mode: "insensitive" } }
+      });
+      if (sportRecord) {
+        resolvedSportId = sportRecord.id;
+      }
+    }
+
     const booking = await createBooking({
       facilityId: data.facilityId,
-      sportId: data.sportId, // NEW: Pass the selected sportId
+      sportId: resolvedSportId,
       startTime: data.startTime,
       participants: data.participants,
       durationMins: data.durationMins,

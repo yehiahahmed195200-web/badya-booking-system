@@ -74,10 +74,18 @@ public class BookingService {
         String sport = request.sport();
         if (facility.getSports() != null && facility.getSports().contains(",")) {
             if (sport == null || sport.trim().isEmpty()) {
-                throw new IllegalArgumentException("Booking rejected: Sport selection (Basketball or Volleyball) is required for this shared court.");
+                throw new IllegalArgumentException("Booking rejected: Sport selection is required for this shared facility.");
             }
-            if (!"Basketball".equalsIgnoreCase(sport) && !"Volleyball".equalsIgnoreCase(sport)) {
-                throw new IllegalArgumentException("Booking rejected: Invalid sport selection. Must be Basketball or Volleyball.");
+            boolean isValidSport = false;
+            String[] allowedSports = facility.getSports().split(",");
+            for (String allowedSport : allowedSports) {
+                if (allowedSport.trim().equalsIgnoreCase(sport.trim())) {
+                    isValidSport = true;
+                    break;
+                }
+            }
+            if (!isValidSport) {
+                throw new IllegalArgumentException("Booking rejected: Invalid sport selection. Must be one of: " + facility.getSports());
             }
         }
 
