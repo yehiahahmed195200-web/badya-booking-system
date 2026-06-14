@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./StudentDashboard.css";
 import { API_BASE } from "../config/api";
 import AttendanceCard from "../components/AttendanceCard";
+import NotificationBell from "../components/NotificationBell";
 
 const API = API_BASE;
 const CHATBOT_URL = import.meta.env.VITE_CHATBOT_URL || "http://localhost:3333";
@@ -84,7 +85,7 @@ function BookingCard({ booking, onCancel, onReschedule, onFeedback }) {
   );
 }
 
-export default function StudentDashboard({ session, onLogout }) {
+export default function StudentDashboard({ session, onLogout, toggleNotifications }) {
   const [bookings, setBookings] = useState([]);
   const [userPoints, setUserPoints] = useState(session?.points || 0);
   const [userWarnings, setUserWarnings] = useState(session?.warnings || 0);
@@ -532,9 +533,12 @@ export default function StudentDashboard({ session, onLogout }) {
               </p>
             </div>
           </div>
-          <button className="sd-book-cta" onClick={() => navigate("/book")}>
-            + Book a Facility
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <NotificationBell onClick={toggleNotifications} />
+            <button className="sd-book-cta" onClick={() => navigate("/book")}>
+              + Book a Facility
+            </button>
+          </div>
         </header>
 
         <div className="sd-content">

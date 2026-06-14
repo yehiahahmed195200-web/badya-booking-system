@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import "./App.css";
 
 import LoginPage from "./pages/LoginPage";
@@ -31,6 +31,8 @@ export default function App() {
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDashboardRoute = ["/dashboard", "/book", "/facilities", "/live"].some(path => location.pathname === path || location.pathname.startsWith(path + "/"));
 
   // Register modal state
   const [showRegister, setShowRegister] = useState(false);
@@ -195,10 +197,22 @@ export default function App() {
   const DashboardPage = () => {
     if (!session) return <Navigate to="/login" replace />;
     if (session.role === "STUDENT") {
-      return <StudentDashboard session={session} onLogout={onLogout} />;
+      return (
+        <StudentDashboard 
+          session={session} 
+          onLogout={onLogout} 
+          toggleNotifications={() => setNotificationDrawerOpen(!notificationDrawerOpen)} 
+        />
+      );
     }
     if (session.role === "ADMIN" || session.role === "MANAGER") {
-      return <AdminDashboard session={session} onLogout={onLogout} />;
+      return (
+        <AdminDashboard 
+          session={session} 
+          onLogout={onLogout} 
+          toggleNotifications={() => setNotificationDrawerOpen(!notificationDrawerOpen)} 
+        />
+      );
     }
     // Simple placeholder for Coach until implemented
     return (
@@ -233,34 +247,30 @@ export default function App() {
     <NotificationProvider token={session ? localStorage.getItem('token') : null}>
       <div className="site-shell">
         <NotificationCenter isOpen={notificationDrawerOpen} onClose={() => setNotificationDrawerOpen(false)} />
-        <header className="site-nav" id="brand">
-        <div className="nav-inner">
-          <nav className="nav-links">
-            <a href="/#about">About Us</a>
-            <a href="/#contact">Contact Us</a>
-            {session && (session.role === "ADMIN" || session.role === "MANAGER") && (
-              <Link to="/live" style={{ color: "#818cf8", fontWeight: "bold" }}>📡 Live Feed</Link>
-            )}
-            <Link to="/login">Login</Link>
-          </nav>
-          <div className="brand-wrap">
-            {session && (
-              <NotificationBell onClick={() => setNotificationDrawerOpen(!notificationDrawerOpen)} />
-            )}
-            <div className="brand">Badya University</div>
-            <img
-              className="brand-logo"
-              src="/badya-logo.png"
-              alt="Badya University logo"
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
-            />
-          </div>
-        </div>
-      </header>
+        {!isDashboardRoute && (
+          <header className="site-nav" id="brand">
+            <div className="nav-inner">
+              <nav className="nav-links">
+                <a href="/#about">About Us</a>
+                <a href="/#contact">Contact Us</a>
+                <Link to="/login">Login</Link>
+              </nav>
+              <div className="brand-wrap">
+                <div className="brand">Badya University</div>
+                <img
+                  className="brand-logo"
+                  src="/badya-logo.png"
+                  alt="Badya University logo"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                />
+              </div>
+            </div>
+          </header>
+        )}
 
-      <main className="page-content">
+      <main className={`page-content ${isDashboardRoute ? "dashboard-layout" : ""}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={

@@ -8,6 +8,7 @@ import "../AdminDashboard.css";
 import { API_BASE } from "../config/api";
 import ThemeToggle from "../components/ThemeToggle";
 import AiReportModal from "../components/AiReportModal";
+import NotificationBell from "../components/NotificationBell";
 
 const API = API_BASE;
 const FAIRNESS_API = import.meta.env.VITE_FAIRNESS_API_URL || API_BASE;
@@ -49,7 +50,7 @@ const getBookingFacilityId = (booking) => booking?.facility?.id ?? booking?.faci
 
 const getBookingUserId = (booking) => booking?.user?.id ?? booking?.userId;
 
-export default function AdminDashboard({ session, onLogout }) {
+export default function AdminDashboard({ session, onLogout, toggleNotifications }) {
   const [bookings, setBookings] = useState([]);
   const [facilities, setFacilities] = useState([]);
   const [conflicts, setConflicts] = useState([]);
@@ -771,6 +772,7 @@ export default function AdminDashboard({ session, onLogout }) {
             </div>
           </div>
           <div className="ac-topbar-actions">
+            <NotificationBell onClick={toggleNotifications} />
             <ThemeToggle />
             <button className="ac-refresh-btn" onClick={fetchAll}>↻ Refresh</button>
             <span className="ac-live-dot" /> <span style={{ fontSize: "0.8rem", color: "#10b981" }}>Live</span>

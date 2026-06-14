@@ -11,9 +11,10 @@
   min-height: 100vh;
 }
 
-/* Hero and login already manage their own padding-top — reset */
+/* Hero, login and dashboards already manage their own padding-top — reset */
 .page-content:has(.login-hero),
-.page-content:has(.hero) {
+.page-content:has(.hero),
+.page-content.dashboard-layout {
   padding-top: 0;
 }
 
