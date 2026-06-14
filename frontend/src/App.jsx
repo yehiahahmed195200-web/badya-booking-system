@@ -223,6 +223,12 @@ export default function App() {
     return <BookingPage session={session} />;
   };
 
+  const LiveRoute = () => {
+    if (!session) return <Navigate to="/login" replace />;
+    if (session.role !== "ADMIN" && session.role !== "MANAGER") return <Navigate to="/dashboard" replace />;
+    return <LiveDashboard session={session} />;
+  };
+
   return (
     <NotificationProvider token={session ? localStorage.getItem('token') : null}>
       <div className="site-shell">
@@ -232,7 +238,9 @@ export default function App() {
           <nav className="nav-links">
             <a href="/#about">About Us</a>
             <a href="/#contact">Contact Us</a>
-            <Link to="/live" style={{ color: "#818cf8", fontWeight: "bold" }}>📡 Live Feed</Link>
+            {session && (session.role === "ADMIN" || session.role === "MANAGER") && (
+              <Link to="/live" style={{ color: "#818cf8", fontWeight: "bold" }}>📡 Live Feed</Link>
+            )}
             <Link to="/login">Login</Link>
           </nav>
           <div className="brand-wrap">
@@ -267,7 +275,7 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/book" element={<BookingRoute />} />
           <Route path="/facilities" element={<FacilitiesRoute />} />
-          <Route path="/live" element={<LiveDashboard session={session} />} />
+          <Route path="/live" element={<LiveRoute />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
