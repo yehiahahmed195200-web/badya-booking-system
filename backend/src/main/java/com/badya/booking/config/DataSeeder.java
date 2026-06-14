@@ -164,58 +164,11 @@ public class DataSeeder {
                 }
             }
 
-            if (facilityRepository.count() == 0) {
-                Facility tennis = new Facility();
-                tennis.setName("Tennis Court A");
-                tennis.setCategory("Sport");
-                tennis.setOpenTime("08:00");
-                tennis.setCloseTime("15:00");
-                tennis.setDefaultSlotMins(60);
-                tennis.setMinParticipants(2);
-                tennis.setMaxParticipants(4);
-                tennis.setActive(true);
-                tennis.setLatitude(30.0544); // القاهرة
-                tennis.setLongitude(31.3572);
-                tennis.setGeofencingRadius(0.004); // 4 متر
-                tennis.setStatus("OPEN");
-                tennis.setStatusReason(null);
-                tennis.setSports("Tennis,Squash");
-                facilityRepository.save(tennis);
-
-                Facility basketball = new Facility();
-                basketball.setName("Basketball Court");
-                basketball.setCategory("Sport");
-                basketball.setOpenTime("08:00");
-                basketball.setCloseTime("15:00");
-                basketball.setDefaultSlotMins(60);
-                basketball.setMinParticipants(6);
-                basketball.setMaxParticipants(12);
-                basketball.setActive(true);
-                basketball.setLatitude(30.0550); // بالقرب من Tennis Court
-                basketball.setLongitude(31.3580);
-                basketball.setGeofencingRadius(0.004); // 4 متر
-                basketball.setStatus("OPEN");
-                basketball.setStatusReason(null);
-                basketball.setSports("Basketball,Volleyball");
-                facilityRepository.save(basketball);
-
-                Facility gym = new Facility();
-                gym.setName("Gym Main Hall");
-                gym.setCategory("Fitness");
-                gym.setOpenTime("08:00");
-                gym.setCloseTime("15:00");
-                gym.setDefaultSlotMins(60);
-                gym.setMinParticipants(1);
-                gym.setMaxParticipants(30);
-                gym.setActive(true);
-                gym.setLatitude(30.0540); // بالقرب من بقية المنشآت
-                gym.setLongitude(31.3560);
-                gym.setGeofencingRadius(0.004); // 4 متر
-                gym.setStatus("OPEN");
-                gym.setStatusReason(null);
-                gym.setSports("Fitness,Yoga,Cardio");
-                facilityRepository.save(gym);
-            }
+            // Seed or update facilities
+            upsertFacility(facilityRepository, "Tennis Court A", "Sport", "08:00", "15:00", 60, 2, 4, "Tennis", 30.0544, 31.3572, 0.004);
+            upsertFacility(facilityRepository, "Basketball Court", "Sport", "08:00", "15:00", 60, 6, 12, "Basketball", 30.0550, 31.3580, 0.004);
+            upsertFacility(facilityRepository, "Gym Main Hall", "Fitness", "08:00", "15:00", 60, 1, 30, "Fitness", 30.0540, 31.3560, 0.004);
+            upsertFacility(facilityRepository, "Multipurpose Court", "Sport", "08:00", "15:00", 60, 6, 12, "Basketball,Volleyball", 30.0550, 31.3580, 0.004);
 
             if (bookingRepository.count() == 0) {
                 UserAccount admin = userRepository.findAll().stream()
@@ -273,5 +226,45 @@ public class DataSeeder {
                 }
             }
         };
+    }
+
+    private void upsertFacility(
+            FacilityRepository facilityRepository,
+            String name,
+            String category,
+            String openTime,
+            String closeTime,
+            int defaultSlotMins,
+            int minParticipants,
+            int maxParticipants,
+            String sports,
+            double latitude,
+            double longitude,
+            double geofencingRadius) {
+        
+        Facility facility = facilityRepository.findAll().stream()
+                .filter(f -> f.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+        
+        if (facility == null) {
+            facility = new Facility();
+            facility.setName(name);
+            facility.setStatus("OPEN");
+        }
+        
+        facility.setCategory(category);
+        facility.setOpenTime(openTime);
+        facility.setCloseTime(closeTime);
+        facility.setDefaultSlotMins(defaultSlotMins);
+        facility.setMinParticipants(minParticipants);
+        facility.setMaxParticipants(maxParticipants);
+        facility.setActive(true);
+        facility.setLatitude(latitude);
+        facility.setLongitude(longitude);
+        facility.setGeofencingRadius(geofencingRadius);
+        facility.setSports(sports);
+        
+        facilityRepository.save(facility);
     }
 }
