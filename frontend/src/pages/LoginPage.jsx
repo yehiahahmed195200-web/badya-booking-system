@@ -315,7 +315,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                       Student ID: <strong style={{ color: "#2dd4dc" }}>{selectedStudentId}</strong>
                     </p>
 
-                    <p className="text-arabic" style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.6)", background: "rgba(255,255,255,0.04)", padding: 8, borderRadius: 8, marginBottom: 16 }}>
+                    <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.6)", background: "rgba(255,255,255,0.04)", padding: "10px 12px", borderRadius: 12, marginBottom: 16, textAlign: "center", lineHeight: "1.5" }}>
                       🔒 This device is registered and secured to your account. You will be logged in with a single click.
                     </p>
 

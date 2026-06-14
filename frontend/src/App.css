@@ -534,6 +534,7 @@ button {
   background: rgba(242, 247, 255, 0.9);
   border: 1px solid rgba(220, 231, 246, 0.9);
   color: #29415f;
+  text-align: center;
 }
 
 .login-error {
@@ -544,6 +545,7 @@ button {
   border: 1px solid rgba(255, 204, 204, 0.9);
   color: #b02424;
   font-weight: 600;
+  text-align: center;
 }
 
 .dashboard-section {
@@ -589,6 +591,11 @@ button {
 }
 
 @media (max-width: 920px) {
+  body {
+    background-attachment: scroll !important;
+    background-position: center top;
+  }
+
   .site-nav {
     position: sticky;
     top: 0;
@@ -609,7 +616,7 @@ button {
 
   .nav-inner {
     width: 100%;
-    flex-direction: column;
+    flex-direction: column-reverse;
     gap: 8px;
   }
 
@@ -617,7 +624,7 @@ button {
     font-size: 1.1rem;
   }
 
-  .brand-badge {
+  .brand-logo {
     width: 28px;
     height: 28px;
   }
@@ -890,18 +897,17 @@ button {
   .booking-layout {
     grid-template-columns: 1fr;
   }
-}
 
+  .chatbot-launcher {
+    width: 52px;
+    height: 52px;
+    right: 14px;
+    bottom: 14px;
+  }
 
-.chatbot-launcher {
-  width: 58px;
-  height: 58px;
-  right: 14px;
-  bottom: 14px;
-}
-
-.chatbot-launcher__icon {
-  font-size: 1.35rem;
+  .chatbot-launcher__icon {
+    font-size: 1.25rem;
+  }
 }
 
 /* Admin Dashboard Additions */
