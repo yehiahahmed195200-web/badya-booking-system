@@ -760,7 +760,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                           </div>
 
                           {/* Match Teams / Balancing Grid */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, padding: 20, background: '#fff' }}>
+                          <div className="sd-match-teams-grid">
                             
                             {/* Team A */}
                             <div style={{ border: m.myTeam === "A" ? '2px solid #3b82f6' : '1px solid #e2e8f0', background: m.myTeam === "A" ? '#eff6ff' : '#fff', padding: 16, borderRadius: 8 }}>

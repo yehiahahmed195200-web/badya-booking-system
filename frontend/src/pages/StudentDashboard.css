@@ -349,6 +349,15 @@
   background: #f0f4f8;
   padding: 4px;
   border-radius: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+
+.sd-filter-tabs::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
 }
 
 .sd-filter-tab {
@@ -365,6 +374,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .sd-filter-tab:hover {
@@ -621,13 +631,6 @@
     padding: 14px 20px;
   }
 }
-
-@media (max-width: 480px) {
-  .sd-stats-row {
-    grid-template-columns: 1fr !important;
-  }
-}
-
 /* Stats: 6 columns for points and credits cards */
 .sd-stats-row {
   grid-template-columns: repeat(6, 1fr);
@@ -642,6 +645,12 @@
 @media (max-width: 768px) {
   .sd-stats-row {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .sd-stats-row {
+    grid-template-columns: 1fr !important;
   }
 }
 
@@ -1193,4 +1202,21 @@
   border-radius: 3px;
   width: 0%;
   transition: width 0.1s linear;
+}
+
+/* Matchmaking Teams Grid */
+.sd-match-teams-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 20px;
+  background: #fff;
+}
+
+@media (max-width: 640px) {
+  .sd-match-teams-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+  }
 }

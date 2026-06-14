@@ -33,6 +33,7 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const isDashboardRoute = ["/dashboard", "/book", "/facilities", "/live"].some(path => location.pathname === path || location.pathname.startsWith(path + "/"));
+  const hideNavbar = isDashboardRoute || location.pathname === "/login";
 
   // Register modal state
   const [showRegister, setShowRegister] = useState(false);
@@ -247,7 +248,7 @@ export default function App() {
     <NotificationProvider token={session ? localStorage.getItem('token') : null}>
       <div className="site-shell">
         <NotificationCenter isOpen={notificationDrawerOpen} onClose={() => setNotificationDrawerOpen(false)} />
-        {!isDashboardRoute && (
+        {!hideNavbar && (
           <header className="site-nav" id="brand">
             <div className="nav-inner">
               <nav className="nav-links">

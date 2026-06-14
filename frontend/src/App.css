@@ -263,7 +263,7 @@ body {
 .login-hero {
   position: relative;
   min-height: 100vh;
-  padding-top: 110px;
+  padding-top: 40px;
 }
 
 .login-hero-overlay {
@@ -643,7 +643,7 @@ button {
   }
 
   .login-hero {
-    padding-top: 140px;
+    padding-top: 24px;
   }
 
   .btn {
