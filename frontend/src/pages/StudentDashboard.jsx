@@ -116,6 +116,7 @@ export default function StudentDashboard({ session, onLogout }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const getMinDate = () => {
     const d = new Date();
@@ -328,6 +329,35 @@ export default function StudentDashboard({ session, onLogout }) {
     }
   }, [activeTab]);
 
+  // Mobile menu side-effects
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "auto";
+    return () => { document.body.style.overflow = "auto"; };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    window.history.pushState({ menuOpen: true }, "");
+    const handlePopState = () => setIsMobileMenuOpen(false);
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (window.history.state?.menuOpen) {
+        window.history.back();
+      }
+    };
+  }, [isMobileMenuOpen]);
+
   const handleCancel = async (id) => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
     setCancellingId(id);
@@ -414,8 +444,21 @@ export default function StudentDashboard({ session, onLogout }) {
 
   return (
     <div className="sd-shell">
+      {/* Sidebar Overlay */}
+      <div 
+        className={`sd-sidebar-overlay ${isMobileMenuOpen ? "active" : ""}`}
+        role="button"
+        tabIndex={0}
+        aria-label="Close menu"
+        onClick={() => setIsMobileMenuOpen(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            setIsMobileMenuOpen(false);
+          }
+        }}
+      />
       {/* Sidebar */}
-      <aside className="sd-sidebar">
+      <aside className={`sd-sidebar ${isMobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="sd-sidebar-profile">
           <div className="sd-avatar">
             {session?.fullName?.charAt(0)?.toUpperCase() || "S"}
@@ -440,7 +483,10 @@ export default function StudentDashboard({ session, onLogout }) {
             <button
               key={item.id}
               className={`sd-nav-item ${activeTab === item.id ? "active" : ""}`}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                setActiveTab(item.id);
+                setIsMobileMenuOpen(false);
+              }}
             >
               <span>{item.icon}</span>
               {item.label}
@@ -449,10 +495,10 @@ export default function StudentDashboard({ session, onLogout }) {
         </nav>
 
         <div className="sd-sidebar-footer">
-          <button className="sd-nav-item" onClick={() => navigate("/book")}>
+          <button className="sd-nav-item" onClick={() => { navigate("/book"); setIsMobileMenuOpen(false); }}>
             <span>🎯</span> New Booking
           </button>
-          <button className="sd-nav-item danger" onClick={onLogout}>
+          <button className="sd-nav-item danger" onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}>
             <span>🚪</span> Logout
           </button>
         </div>
@@ -470,11 +516,21 @@ export default function StudentDashboard({ session, onLogout }) {
       <div className="sd-main">
         {/* Topbar */}
         <header className="sd-topbar">
-          <div>
-            <h1 className="sd-topbar-title">🎓 Student Portal</h1>
-            <p className="sd-topbar-sub">
-              Welcome back, <strong>{session?.fullName}</strong> — {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
-            </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <button 
+              className="sd-menu-toggle"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Open navigation menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              ☰
+            </button>
+            <div>
+              <h1 className="sd-topbar-title">🎓 Student Portal</h1>
+              <p className="sd-topbar-sub">
+                Welcome back, <strong>{session?.fullName}</strong> — {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+              </p>
+            </div>
           </div>
           <button className="sd-book-cta" onClick={() => navigate("/book")}>
             + Book a Facility

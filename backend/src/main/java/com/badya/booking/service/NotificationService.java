@@ -195,16 +195,18 @@ public class NotificationService {
     }
 
     public void sendEmail(String to, String subject, String body) {
-        try {
-            SimpleMailMessage msg = new SimpleMailMessage();
-            msg.setTo(to);
-            msg.setSubject(subject);
-            msg.setText(body);
-            mailSender.send(msg);
-            System.out.println("✅ Email sent successfully to: " + to);
-        } catch (Exception ex) {
-            System.err.println("❌ Email send failed to " + to + ": " + ex.getMessage());
-            System.err.println("💡 Note: Google SMTP requires an 'App Password' if 2FA is enabled. Personal passwords will be blocked.");
-        }
+        new Thread(() -> {
+            try {
+                SimpleMailMessage msg = new SimpleMailMessage();
+                msg.setTo(to);
+                msg.setSubject(subject);
+                msg.setText(body);
+                mailSender.send(msg);
+                System.out.println("✅ Email sent successfully to: " + to);
+            } catch (Exception ex) {
+                System.err.println("❌ Email send failed to " + to + ": " + ex.getMessage());
+                System.err.println("💡 Note: Google SMTP requires an 'App Password' if 2FA is enabled. Personal passwords will be blocked.");
+            }
+        }).start();
     }
 }

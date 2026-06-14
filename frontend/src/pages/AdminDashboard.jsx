@@ -58,6 +58,7 @@ export default function AdminDashboard({ session, onLogout }) {
   const [savingRules, setSavingRules] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditPage, setAuditPage] = useState(0);
@@ -328,6 +329,35 @@ export default function AdminDashboard({ session, onLogout }) {
     }, 30000);
     return () => clearInterval(intervalId);
   }, [activeTab]);
+
+  // Mobile menu side-effects
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "auto";
+    return () => { document.body.style.overflow = "auto"; };
+  }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 900) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    window.history.pushState({ menuOpen: true }, "");
+    const handlePopState = () => setIsMobileMenuOpen(false);
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      if (window.history.state?.menuOpen) {
+        window.history.back();
+      }
+    };
+  }, [isMobileMenuOpen]);
 
   const saveRules = async () => {
     if (!rulesForm) return;
@@ -650,8 +680,21 @@ export default function AdminDashboard({ session, onLogout }) {
 
   return (
     <div className="ac-shell">
+      {/* Sidebar Overlay */}
+      <div 
+        className={`ac-sidebar-overlay ${isMobileMenuOpen ? "active" : ""}`}
+        role="button"
+        tabIndex={0}
+        aria-label="Close menu"
+        onClick={() => setIsMobileMenuOpen(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            setIsMobileMenuOpen(false);
+          }
+        }}
+      />
       {/* Sidebar */}
-      <aside className="ac-sidebar">
+      <aside className={`ac-sidebar ${isMobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="ac-sidebar-brand">
           <span className="ac-brand-icon">🏟️</span>
           <div>
@@ -676,7 +719,10 @@ export default function AdminDashboard({ session, onLogout }) {
             <button
               key={item.id}
               className={`ac-nav-item ${activeTab === item.id ? "active" : ""}`}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => {
+                setActiveTab(item.id);
+                setIsMobileMenuOpen(false);
+              }}
             >
               <span className="ac-nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -686,10 +732,10 @@ export default function AdminDashboard({ session, onLogout }) {
         </nav>
 
         <div className="ac-sidebar-footer">
-          <button className="ac-nav-item" onClick={() => navigate("/facilities")}>
+          <button className="ac-nav-item" onClick={() => { navigate("/facilities"); setIsMobileMenuOpen(false); }}>
             <span className="ac-nav-icon">⚙️</span> Manage Facilities
           </button>
-          <button className="ac-nav-item danger" onClick={onLogout}>
+          <button className="ac-nav-item danger" onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}>
             <span className="ac-nav-icon">🚪</span> Logout
           </button>
         </div>
@@ -699,20 +745,30 @@ export default function AdminDashboard({ session, onLogout }) {
       <div className="ac-main">
         {/* Topbar */}
         <header className="ac-topbar">
-          <div>
-            <h1 className="ac-topbar-title">
-              {activeTab === "overview" && "📊 Dashboard Overview"}
-              {activeTab === "analytics" && "📈 Analytics & Reporting"}
-              {activeTab === "bookings" && "📅 Booking Management"}
-              {activeTab === "facilities" && "🏟️ Facility Status"}
-              {activeTab === "rules" && "⚙️ Rules & System Configuration"}
-              {activeTab === "conflicts" && "⚔️ Conflict Resolution"}
-              {activeTab === "users" && "👥 User Management & Disciplinary"}
-              {activeTab === "attendance" && "📍 Attendance & Geofencing"}
-              {activeTab === "medical" && "⚕️ Athlete Medical Clearance"}
-              {activeTab === "auditlog" && "📋 Conflict Audit Log"}
-            </h1>
-            <p className="ac-topbar-sub">Welcome back, {session?.fullName}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <button
+              className="ac-menu-toggle"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Open navigation menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              ☰
+            </button>
+            <div>
+              <h1 className="ac-topbar-title">
+                {activeTab === "overview" && "📊 Dashboard Overview"}
+                {activeTab === "analytics" && "📈 Analytics & Reporting"}
+                {activeTab === "bookings" && "📅 Booking Management"}
+                {activeTab === "facilities" && "🏟️ Facility Status"}
+                {activeTab === "rules" && "⚙️ Rules & System Configuration"}
+                {activeTab === "conflicts" && "⚔️ Conflict Resolution"}
+                {activeTab === "users" && "👥 User Management & Disciplinary"}
+                {activeTab === "attendance" && "📍 Attendance & Geofencing"}
+                {activeTab === "medical" && "⚕️ Athlete Medical Clearance"}
+                {activeTab === "auditlog" && "📋 Conflict Audit Log"}
+              </h1>
+              <p className="ac-topbar-sub">Welcome back, {session?.fullName}</p>
+            </div>
           </div>
           <div className="ac-topbar-actions">
             <ThemeToggle />

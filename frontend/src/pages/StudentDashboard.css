@@ -539,6 +539,28 @@
   }
 }
 
+.sd-menu-toggle {
+  display: none;
+}
+
+.sd-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1100;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sd-sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
   .sd-stats-row {
@@ -548,7 +570,21 @@
 
 @media (max-width: 768px) {
   .sd-sidebar {
-    display: none;
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    z-index: 1200;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.3s ease, visibility 0.3s ease;
+  }
+
+  .sd-sidebar.mobile-open {
+    transform: translateX(0);
+    visibility: visible;
   }
 
   .sd-main {
@@ -561,6 +597,28 @@
 
   .sd-content {
     padding: 16px;
+  }
+
+  .sd-menu-toggle {
+    display: block;
+    background: transparent;
+    border: none;
+    font-size: 1.6rem;
+    color: #123058;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+  }
+
+  .sd-menu-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .sd-topbar {
+    position: relative;
+    top: auto;
+    padding: 14px 20px;
   }
 }
 
