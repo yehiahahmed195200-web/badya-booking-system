@@ -121,11 +121,11 @@ public class BookingService {
                 String scanned = b.getScannedIdData();
                 if (scanned != null && scanned.startsWith("matchmaking:")) {
                     bSport = scanned.replace("matchmaking:", "");
+                } else if (scanned != null && !scanned.trim().isEmpty()) {
+                    bSport = scanned.trim();
                 } else if (b.getFacility().getSports() != null) {
                     String sportsStr = b.getFacility().getSports();
-                    if (sportsStr.toLowerCase().contains("volleyball")) {
-                        bSport = "Basketball";
-                    }
+                    bSport = sportsStr.split(",")[0].trim();
                 }
 
                 if ("Basketball".equalsIgnoreCase(bSport)) {
@@ -234,6 +234,18 @@ public class BookingService {
 
         LocalDateTime endTime = startTime.plusMinutes(duration);
 
+        // Operating hours check
+        if (facility.getOpenTime() != null && facility.getCloseTime() != null) {
+            LocalTime openTime = LocalTime.parse(facility.getOpenTime());
+            LocalTime closeTime = LocalTime.parse(facility.getCloseTime());
+            LocalTime startLocal = startTime.toLocalTime();
+            LocalTime endLocal = endTime.toLocalTime();
+
+            if (startLocal.isBefore(openTime) || endLocal.isAfter(closeTime) || endLocal.isBefore(startLocal)) {
+                throw new IllegalArgumentException("Booking must fall within facility operating hours.");
+            }
+        }
+
         if (!Boolean.TRUE.equals(rules.getAllowBackToBackBookings())) {
             List<Booking> sameDayBookings = bookingRepository.findByUserIdAndStatusInAndStartTimeBetween(
                     userId,
@@ -335,40 +347,110 @@ public class BookingService {
         booking.setConflictId(null);
         Booking saved = bookingRepository.save(booking);
 
-        // After cancellation, try to promote earliest waitlist entry for same facility/time
+        // After cancellation, try to promote earliest valid waitlist entry for same facility/time
         try {
-            Optional<WaitlistEntry> maybe = waitlistRepository.findFirstByFacility_IdAndDesiredStartTimeOrderByCreatedAtAsc(
+            List<WaitlistEntry> waitlist = waitlistRepository.findByFacility_IdAndDesiredStartTimeOrderByCreatedAtAsc(
                     booking.getFacility().getId(), booking.getStartTime());
-            if (maybe.isPresent()) {
-                WaitlistEntry entry = maybe.get();
+            
+            SystemRule rules = systemRuleService.getCurrentRules();
+
+            for (WaitlistEntry entry : waitlist) {
                 UserAccount waitlistUser = entry.getUser();
-                if (waitlistUser != null && waitlistUser.getCredits() != null && waitlistUser.getCredits() > 0) {
-                    waitlistUser.setCredits(waitlistUser.getCredits() - 1);
-                    userRepository.save(waitlistUser);
-
-                    Booking auto = new Booking();
-                    auto.setUser(waitlistUser);
-                    auto.setFacility(booking.getFacility());
-                    LocalDateTime start = entry.getDesiredStartTime();
-                    // use facility default if available
-                    int duration = entry.getFacility().getDefaultSlotMins() != null ? entry.getFacility().getDefaultSlotMins() : 60;
-                    auto.setStartTime(start);
-                    auto.setEndTime(start.plusMinutes(duration));
-                    auto.setParticipants(entry.getParticipants());
-                    auto.setCreatedAt(LocalDateTime.now());
-                    auto.setStatus(BookingStatus.CONFIRMED);
-                    Booking confirmed = bookingRepository.save(auto);
-
-                    // remove from waitlist
+                if (waitlistUser == null) {
                     waitlistRepository.delete(entry);
+                    continue;
+                }
 
-                    // create notification for user
-                    try {
-                        notificationService.sendBookingConfirmed(confirmed, false, false, true);
-                    } catch (Exception ex) {
-                        System.err.println("Waitlist promotion notification failed: " + ex.getMessage());
+                // 1. Ban status check
+                if (waitlistUser.isBanned()) {
+                    waitlistRepository.delete(entry);
+                    continue;
+                }
+
+                // 2. Warning threshold / auto-ban check
+                Integer warningThreshold = rules.getAutoBanWarningThreshold();
+                if (warningThreshold != null && warningThreshold > 0 && waitlistUser.getWarnings() != null && waitlistUser.getWarnings() >= warningThreshold) {
+                    waitlistUser.setBanned(true);
+                    userRepository.save(waitlistUser);
+                    waitlistRepository.delete(entry);
+                    continue;
+                }
+
+                // 3. Credit balance validation
+                if (waitlistUser.getCredits() == null || waitlistUser.getCredits() <= 0) {
+                    waitlistRepository.delete(entry);
+                    continue;
+                }
+
+                LocalDateTime start = entry.getDesiredStartTime();
+                int duration = entry.getFacility().getDefaultSlotMins() != null ? entry.getFacility().getDefaultSlotMins() : 60;
+                LocalDateTime end = start.plusMinutes(duration);
+
+                LocalDateTime dayStart = start.toLocalDate().atStartOfDay();
+                LocalDateTime dayEnd = dayStart.plusDays(1).minusNanos(1);
+
+                // 4. Daily booking limit validation
+                long dailyCount = bookingRepository.countByUserIdAndStatusInAndStartTimeBetween(
+                        waitlistUser.getId(),
+                        List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
+                        dayStart,
+                        dayEnd);
+                if (dailyCount >= rules.getMaxBookingsPerUserPerDay()) {
+                    waitlistRepository.delete(entry);
+                    continue;
+                }
+
+                // 5. Back-to-back booking validation
+                if (!Boolean.TRUE.equals(rules.getAllowBackToBackBookings())) {
+                    List<Booking> sameDayBookings = bookingRepository.findByUserIdAndStatusInAndStartTimeBetween(
+                            waitlistUser.getId(),
+                            List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
+                            dayStart,
+                            dayEnd);
+                    boolean hasBackToBack = sameDayBookings.stream().anyMatch(existing ->
+                            existing.getEndTime().equals(start) || existing.getStartTime().equals(end));
+                    if (hasBackToBack) {
+                        waitlistRepository.delete(entry);
+                        continue;
                     }
                 }
+
+                // All validations passed! Promote this user.
+                waitlistUser.setCredits(waitlistUser.getCredits() - 1);
+                userRepository.save(waitlistUser);
+
+                Booking auto = new Booking();
+                auto.setUser(waitlistUser);
+                auto.setFacility(booking.getFacility());
+                auto.setStartTime(start);
+                auto.setEndTime(end);
+                auto.setParticipants(entry.getParticipants());
+                auto.setCreatedAt(LocalDateTime.now());
+                auto.setStatus(BookingStatus.CONFIRMED);
+
+                // Copy scannedIdData from cancelled booking to preserve sport selection, or fallback to default
+                String sportData = booking.getScannedIdData();
+                if (sportData == null || sportData.trim().isEmpty()) {
+                    String defaultSport = "Basketball";
+                    if (booking.getFacility().getSports() != null) {
+                        defaultSport = booking.getFacility().getSports().split(",")[0].trim();
+                    }
+                    sportData = "matchmaking:" + defaultSport;
+                }
+                auto.setScannedIdData(sportData);
+
+                Booking confirmed = bookingRepository.save(auto);
+                waitlistRepository.delete(entry);
+
+                // Create notification for user
+                try {
+                    notificationService.sendBookingConfirmed(confirmed, false, false, true);
+                } catch (Exception ex) {
+                    System.err.println("Waitlist promotion notification failed: " + ex.getMessage());
+                }
+
+                // Successfully promoted one candidate, break the loop
+                break;
             }
         } catch (Exception ex) {
             System.err.println("Waitlist promotion error: " + ex.getMessage());

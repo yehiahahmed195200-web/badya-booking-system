@@ -6,8 +6,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 @Repository
 public interface WaitlistRepository extends JpaRepository<WaitlistEntry, Long> {
     Optional<WaitlistEntry> findFirstByFacility_IdAndDesiredStartTimeOrderByCreatedAtAsc(Long facilityId, LocalDateTime desiredStartTime);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<WaitlistEntry> findByFacility_IdAndDesiredStartTimeOrderByCreatedAtAsc(Long facilityId, LocalDateTime desiredStartTime);
 }
