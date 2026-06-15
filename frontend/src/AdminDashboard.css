@@ -223,7 +223,8 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0,0,0,0.02);
   transition: transform 0.15s, box-shadow 0.15s;
   position: relative;
   overflow: hidden;
@@ -552,9 +553,13 @@
     bottom: 0;
     width: 280px;
     z-index: 1200;
+    background: #0f172a !important; /* Premium dark theme background for mobile menu */
+    border-top-right-radius: 24px;
+    border-bottom-right-radius: 24px;
+    box-shadow: 20px 0 40px rgba(0, 0, 0, 0.18);
     transform: translateX(-100%);
     visibility: hidden;
-    transition: transform 0.3s ease, visibility 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s ease;
   }
 
   .ac-sidebar.mobile-open {
@@ -587,15 +592,28 @@
   }
 
   .ac-topbar {
-    position: relative;
-    top: auto;
-    padding: 14px 20px;
+    position: sticky !important;
+    top: 0;
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 100;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 16px;
   }
 }
 
 @media (max-width: 480px) {
   .ac-stats-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .ac-stat-card {
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+  .ac-stat-value {
+    font-size: 1.6rem;
   }
 }
 
