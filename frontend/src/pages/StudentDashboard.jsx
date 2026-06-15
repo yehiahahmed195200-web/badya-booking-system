@@ -517,7 +517,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
       <div className="sd-main">
         {/* Topbar */}
         <header className="sd-topbar">
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div className="sd-topbar-left">
             <button 
               className="sd-menu-toggle"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -533,7 +533,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
               </p>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div className="sd-topbar-right">
             <NotificationBell onClick={toggleNotifications} />
             <button className="sd-book-cta" onClick={() => navigate("/book")}>
               + Book a Facility

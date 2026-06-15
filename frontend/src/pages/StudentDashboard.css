@@ -159,6 +159,18 @@
   z-index: 5;
 }
 
+.sd-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sd-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .sd-topbar-title {
   margin: 0;
   font-size: 1.3rem;
@@ -638,7 +650,37 @@
     -webkit-backdrop-filter: blur(12px);
     z-index: 100;
     border-bottom: 1px solid #e2e8f0;
-    padding: 12px 16px;
+    padding: 12px 16px 16px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding-right: 60px !important;
+  }
+
+  .sd-topbar-left {
+    width: 100% !important;
+  }
+
+  .sd-topbar-right {
+    width: 100% !important;
+    display: block !important;
+  }
+
+  .sd-topbar-right .notification-bell {
+    position: absolute !important;
+    top: 18px !important;
+    right: 16px !important;
+    z-index: 10 !important;
+  }
+
+  .sd-book-cta {
+    width: 100% !important;
+    margin-top: 4px !important;
+    display: block !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
   }
 
   .sd-list-card {
