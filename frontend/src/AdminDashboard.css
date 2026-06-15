@@ -641,49 +641,33 @@
 
 @media (max-width: 768px) {
   .ac-stats-grid {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    scroll-snap-type: x mandatory;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 12px !important;
-    padding: 4px 4px 12px !important;
+    padding: 0 !important;
     margin-bottom: 8px !important;
-    -webkit-overflow-scrolling: touch;
-    grid-template-columns: none !important;
-  }
-
-  .ac-stats-grid::-webkit-scrollbar {
-    height: 5px;
-  }
-  .ac-stats-grid::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.02);
-    border-radius: 10px;
-  }
-  .ac-stats-grid::-webkit-scrollbar-thumb {
-    background: rgba(28, 178, 191, 0.3);
-    border-radius: 10px;
   }
 
   .ac-stat-card {
-    flex: 0 0 150px !important;
-    scroll-snap-align: start;
     padding: 12px !important;
     border-radius: 14px !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 8px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-height: 80px !important;
   }
 
   .ac-stat-icon {
-    width: 34px !important;
-    height: 34px !important;
+    width: 36px !important;
+    height: 36px !important;
     font-size: 1.1rem !important;
     border-radius: 10px !important;
   }
 
   .ac-stat-value {
-    font-size: 1.5rem !important;
-    margin-top: 2px !important;
+    font-size: 1.4rem !important;
+    line-height: 1.1 !important;
   }
 
   .ac-stat-label {
@@ -691,10 +675,7 @@
     color: #5a6a80 !important;
     font-weight: 700 !important;
     line-height: 1.2 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    width: 100% !important;
+    white-space: normal !important;
   }
 
   .ac-stat-sub {
