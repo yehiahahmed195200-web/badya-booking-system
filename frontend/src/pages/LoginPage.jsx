@@ -179,7 +179,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
           .login-tab-btn {
             width: 100%;
             white-space: normal;
-            min-height: 54px;
+            min-height: 80px;
             padding: 8px 4px;
             font-size: 0.85rem;
             line-height: 1.25;
@@ -284,7 +284,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
           </p>
         </div>
 
-        <main className="layout login-layout" id="layout">
+        <main className="login-layout" id="layout">
           <section className="login-card" id="login-section">
             
             {/* Tabs Header */}

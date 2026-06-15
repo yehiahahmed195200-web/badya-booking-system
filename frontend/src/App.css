@@ -319,6 +319,9 @@ body {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 220px);
+  width: 100%;
+  padding: 14px 18px 34px;
+  box-sizing: border-box;
 }
 
 .login-card {
