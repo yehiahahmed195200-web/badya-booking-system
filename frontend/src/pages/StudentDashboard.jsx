@@ -608,7 +608,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 </div>
 
                 {/* Matchmaking Grid */}
-                <div className="sd-matchmaking-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                <div className="sd-matchmaking-grid">
                   
                   {/* Left Column: Join Queue Form */}
                   <div className="sd-matchmaking-form-panel" style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e2e8f0' }}>
@@ -635,7 +635,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                         </select>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      <div className="sd-matchmaking-form-row">
                         <div>
                           <label style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem', marginBottom: 6, color: '#475569' }}>Date</label>
                           <input 
@@ -687,7 +687,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         {myQueues.map(q => (
-                          <div key={q.id} className="sd-conflict-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', border: '1px solid #cbd5e1', borderRadius: 8, background: '#f8fafc' }}>
+                          <div key={q.id} className="sd-queue-card">
                             <div className="sd-conflict-left">
                               <div className="sd-conflict-fac" style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>
                                 {FACILITY_ICONS(q.facility?.name)} {q.sport?.name}
@@ -740,7 +740,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                         <div key={m.id} style={{ border: '1px solid #cbd5e1', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                           
                           {/* Match Header */}
-                          <div style={{ background: '#f8fafc', padding: '16px 20px', borderBottom: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div className="sd-match-header">
                             <div>
                               <span style={{ fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 6, color: '#1e293b' }}>
                                 {FACILITY_ICONS(m.sportName)} {m.sportName} Match

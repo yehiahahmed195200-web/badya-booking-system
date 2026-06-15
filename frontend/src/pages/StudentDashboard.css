@@ -1258,10 +1258,113 @@
   background: #fff;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .sd-match-teams-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     padding: 12px;
     gap: 12px;
+  }
+}
+
+/* Matchmaking Grid Layout */
+.sd-matchmaking-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .sd-matchmaking-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* Matchmaking Inner Form Row */
+.sd-matchmaking-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .sd-matchmaking-form-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+/* Queue Card */
+.sd-queue-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+  .sd-queue-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+  .sd-queue-card .sd-conflict-right {
+    width: 100%;
+  }
+  .sd-queue-card .sd-cancel-btn {
+    width: 100% !important;
+    text-align: center;
+    box-sizing: border-box;
+  }
+}
+
+/* Match Header */
+.sd-match-header {
+  background: #f8fafc;
+  padding: 16px 20px;
+  border-bottom: 1px solid #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .sd-match-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+  .sd-match-header > div:last-child {
+    text-align: left !important;
+  }
+}
+
+/* Booking Tabs Mobile Wrap */
+@media (max-width: 768px) {
+  .sd-filter-tabs {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    background: transparent !important;
+    padding: 0 !important;
+    overflow-x: visible !important;
+    white-space: normal !important;
+  }
+
+  .sd-filter-tab {
+    flex: 1 1 calc(50% - 8px) !important;
+    background: #f0f4f8 !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    padding: 8px !important;
+  }
+
+  .sd-filter-tab.active {
+    background: #1cb2bf !important;
+    color: #fff !important;
   }
 }

@@ -175,16 +175,16 @@ export default function FacilitiesPage({ session }) {
                 const isSaving = saving[f.id];
                 return (
                   <tr key={f.id} className={!f.active ? "row-inactive" : ""}>
-                    <td><strong>{f.name}</strong></td>
-                    <td><span className="category-badge">{f.category}</span></td>
-                    <td>{f.openTime} – {f.closeTime}</td>
-                    <td>{f.minParticipants} – {f.maxParticipants}</td>
-                    <td>
+                    <td data-label="Facility"><strong>{f.name}</strong></td>
+                    <td data-label="Category"><span className="category-badge">{f.category}</span></td>
+                    <td data-label="Hours">{f.openTime} – {f.closeTime}</td>
+                    <td data-label="Participants">{f.minParticipants} – {f.maxParticipants}</td>
+                    <td data-label="Current Status">
                       <span className="status-pill" style={{ background: getAvailabilityConfig(Boolean(f.active)).color + "22", color: getAvailabilityConfig(Boolean(f.active)).color, border: `1px solid ${getAvailabilityConfig(Boolean(f.active)).color}` }}>
                         {getAvailabilityConfig(Boolean(f.active)).icon} {getAvailabilityConfig(Boolean(f.active)).label}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Change Status">
                       <select
                         value={typeof edit.active === "boolean" ? String(edit.active) : String(Boolean(f.active))}
                         onChange={e => handleStatusChange(f.id, "active", e.target.value === "true")}
@@ -193,7 +193,7 @@ export default function FacilitiesPage({ session }) {
                         {AVAILABILITY_OPTIONS.map(option => <option key={String(option.value)} value={String(option.value)}>{option.icon} {option.label}</option>)}
                       </select>
                     </td>
-                    <td>
+                    <td data-label="Reason">
                       <input
                         placeholder="Reason (optional)"
                         value={edit.reason || ""}
@@ -201,7 +201,7 @@ export default function FacilitiesPage({ session }) {
                         className="reason-input"
                       />
                     </td>
-                    <td>
+                    <td data-label="Action">
                       <button
                         type="button"
                         className="btn-approve"
