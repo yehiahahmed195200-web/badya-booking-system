@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./StudentDashboard.css";
 import { API_BASE } from "../config/api";
 import AttendanceCard from "../components/AttendanceCard";
@@ -91,7 +91,10 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
   const [userWarnings, setUserWarnings] = useState(session?.warnings || 0);
   const [userCredits, setUserCredits] = useState(session?.credits || 10);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("bookings");
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("tab") || "bookings";
+  });
   const [cancellingId, setCancellingId] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [fbFacility, setFbFacility] = useState("");
@@ -117,6 +120,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const getMinDate = () => {
@@ -319,6 +323,14 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get("tab");
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (activeTab === "fairness") {

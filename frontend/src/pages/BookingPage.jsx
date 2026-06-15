@@ -54,6 +54,8 @@ export default function BookingPage({ session }) {
   const [buddyInput, setBuddyInput]       = useState("");
   const [buddyIds, setBuddyIds]           = useState([]);
   const [buddyError, setBuddyError]       = useState("");
+  const [buddyLoading, setBuddyLoading]   = useState(false);
+  const [showMatchmakingPromo, setShowMatchmakingPromo] = useState(false);
   // FR-2.1 Availability
   const [availability, setAvailability]   = useState(null);
   const [availLoading, setAvailLoading]   = useState(false);
@@ -112,14 +114,91 @@ export default function BookingPage({ session }) {
     setStep(2);
   };
 
-  // FR-2.12: add buddy
-  const addBuddy = () => {
+  // Reset validation and promos on step change
+  useEffect(() => {
+    setError(null);
+    setBuddyError("");
+    setShowMatchmakingPromo(false);
+  }, [step]);
+
+  // FR-2.12: add buddy with backend validation
+  const addBuddy = async () => {
     const id = buddyInput.trim();
     if (!id) return;
-    if (buddyIds.includes(id)) { setBuddyError("Already added"); return; }
-    setBuddyIds(p => [...p, id]);
-    setBuddyInput("");
+    if (buddyIds.includes(id)) {
+      setBuddyError("هذا المستخدم مضاف بالفعل / Already added");
+      return;
+    }
+
     setBuddyError("");
+    setBuddyLoading(true);
+    setShowMatchmakingPromo(false);
+
+    try {
+      const res = await fetch(`${API}/api/users/student-id/${id}`, { headers });
+      if (!res.ok) {
+        throw new Error("Student ID not found");
+      }
+      const data = await res.json();
+      // Successfully verified
+      setBuddyIds(p => [...p, id]);
+      setBuddyInput("");
+      setBuddyError("");
+    } catch (err) {
+      setBuddyError(
+        "❌ الرقم الجامعي غير مسجل في النظام. لن يتم الحجز بدون وجود شركاء مسجلين."
+      );
+      setShowMatchmakingPromo(true);
+    } finally {
+      setBuddyLoading(false);
+    }
+  };
+
+  // Validate teammate counts and existence on submit details step
+  const handleDetailsSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setBuddyError(null);
+    setShowMatchmakingPromo(false);
+
+    const participantsNum = parseInt(form.participants, 10);
+    const requiredBuddies = participantsNum - 1;
+
+    // Check if enough buddy IDs are provided
+    if (participantsNum > 1 && buddyIds.length < requiredBuddies) {
+      setError(
+        `لم تقم بإدخال معرفات (IDs) زملائك بالكامل لمطابقة عدد المشاركين المختار (${participantsNum}). الحجز لن يتم إلا بوجود شركاء مسجلين. يمكنك استخدام ميزة الـ Matchmaking (LFG) لتجد لاعبين آخرين ينضمون إليك.`
+      );
+      setShowMatchmakingPromo(true);
+      return;
+    }
+
+    // Double check all buddy IDs in parallel to make absolutely sure they exist before advancing
+    setBuddyLoading(true);
+    try {
+      const checkPromises = buddyIds.map(id =>
+        fetch(`${API}/api/users/student-id/${id}`, { headers })
+          .then(res => ({ id, ok: res.ok }))
+          .catch(() => ({ id, ok: false }))
+      );
+      const results = await Promise.all(checkPromises);
+      const invalidIds = results.filter(r => !r.ok).map(r => r.id);
+
+      if (invalidIds.length > 0) {
+        setError(
+          `الحجز لن يتم: معرفات الطلاب التالية غير موجودة في قاعدة البيانات: [${invalidIds.join(", ")}]. يرجى التأكد من الأرقام المضافة، أو استخدام ميزة الـ Matchmaking (LFG) لمساعدتك في العثور على لاعبين لتلعب معهم.`
+        );
+        setShowMatchmakingPromo(true);
+        return;
+      }
+    } catch (err) {
+      setError("حدث خطأ أثناء التحقق من معرفات الطلاب. يرجى المحاولة مرة أخرى.");
+      return;
+    } finally {
+      setBuddyLoading(false);
+    }
+
+    setStep(3);
   };
 
   const handleSubmit = async () => {
@@ -258,8 +337,53 @@ export default function BookingPage({ session }) {
               <button className="bk-change-btn" onClick={() => setStep(1)}>Change ↩</button>
             </div>
 
-            <form onSubmit={e => { e.preventDefault(); setStep(3); }} className="bk-details-form">
+            <form onSubmit={handleDetailsSubmit} className="bk-details-form">
               {error && <div className="bk-error"><span>⚠️</span> {error}</div>}
+              {showMatchmakingPromo && (
+                <div className="bk-matchmaking-promo" style={{
+                  background: "linear-gradient(135deg, #eff6ff, #dbeafe)",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: "14px",
+                  padding: "20px",
+                  marginTop: "-10px",
+                  marginBottom: "20px",
+                  boxShadow: "0 4px 12px rgba(59, 130, 246, 0.08)",
+                  direction: "rtl",
+                  textAlign: "right"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                    <span style={{ fontSize: "1.4rem" }}>🎯</span>
+                    <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "1.05rem", fontWeight: "700" }}>
+                      هل تبحث عن زملاء للعب؟ جرب ميزة الـ Matchmaking!
+                    </h4>
+                  </div>
+                  <p style={{ margin: "0 0 14px 0", color: "#1e40af", fontSize: "0.88rem", lineHeight: "1.5" }}>
+                    لا تشيل هم! إذا لم تجد لاعبين حالياً، يمكنك استخدام ميزة <strong>Matchmaking (LFG)</strong> المتوفرة في لوحة التحكم لمساعدتك في العثور على لاعبين آخرين واللعب معهم بسهولة.
+                  </p>
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/dashboard?tab=matchmaking")}
+                      style={{
+                        background: "#2563eb",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "10px",
+                        padding: "10px 18px",
+                        fontSize: "0.88rem",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        boxShadow: "0 2px 6px rgba(37, 99, 235, 0.2)"
+                      }}
+                      onMouseOver={(e) => e.target.style.background = "#1d4ed8"}
+                      onMouseOut={(e) => e.target.style.background = "#2563eb"}
+                    >
+                      🎯 انتقل إلى صفحة الـ Matchmaking
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="bk-form-row">
                 <div className="bk-field">
@@ -334,8 +458,11 @@ export default function BookingPage({ session }) {
                     value={buddyInput} onChange={e => setBuddyInput(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addBuddy())}
                     style={{ flex: 1 }}
+                    disabled={buddyLoading}
                   />
-                  <button type="button" className="bk-buddy-add-btn" onClick={addBuddy}>+ Add</button>
+                  <button type="button" className="bk-buddy-add-btn" onClick={addBuddy} disabled={buddyLoading}>
+                    {buddyLoading ? "Checking..." : "+ Add"}
+                  </button>
                 </div>
                 {buddyError && <p className="bk-buddy-error">{buddyError}</p>}
                 {buddyIds.length > 0 && (
