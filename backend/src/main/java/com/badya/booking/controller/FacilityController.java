@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.badya.booking.dto.ChangeFacilityStatusRequest;
 import com.badya.booking.dto.UpdateFacilityConfigRequest;
@@ -153,6 +154,19 @@ public class FacilityController {
                 "facilityName", facility.getName(),
                 "sports", sports
         );
+    }
+
+    @GetMapping("/{id}/availability")
+    public ResponseEntity<?> getAvailability(
+            @PathVariable Long id,
+            @RequestParam String date) {
+        try {
+            java.time.LocalDate localDate = java.time.LocalDate.parse(date);
+            Map<String, Object> avail = facilityService.getAvailabilityForDate(id, localDate);
+            return ResponseEntity.ok(avail);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     private UserAccount getCurrentAdmin(String authHeader) {

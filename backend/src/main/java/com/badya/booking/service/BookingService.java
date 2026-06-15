@@ -269,7 +269,9 @@ public class BookingService {
                         startTime);
 
         if (!overlaps.isEmpty()) {
-            throw new IllegalArgumentException("Booking rejected: This court is already booked during the requested time slot.");
+            List<String> freeSlots = getAvailableSlotsForDate(facility, startTime.toLocalDate());
+            String freeSlotsStr = freeSlots.isEmpty() ? "No available slots today" : String.join(", ", freeSlots);
+            throw new IllegalArgumentException("Booking rejected: This court is already booked during the requested time slot. Available times today: " + freeSlotsStr);
         }
 
         Booking booking = new Booking();
@@ -431,5 +433,44 @@ public class BookingService {
         }
 
         return saved;
+    }
+
+    private List<String> getAvailableSlotsForDate(Facility facility, LocalDate date) {
+        LocalDateTime dayStart = date.atStartOfDay();
+        LocalDateTime dayEnd = date.atTime(LocalTime.MAX);
+        List<Booking> dayBookings = bookingRepository.findByFacilityIdAndStartTimeBetween(facility.getId(), dayStart, dayEnd);
+        List<Booking> activeBookings = dayBookings.stream()
+                .filter(b -> b.getStatus() != BookingStatus.CANCELLED && b.getStatus() != BookingStatus.REJECTED)
+                .toList();
+
+        LocalTime open = LocalTime.parse(facility.getOpenTime());
+        LocalTime close = LocalTime.parse(facility.getCloseTime());
+        int slotMins = facility.getDefaultSlotMins() != null ? facility.getDefaultSlotMins() : 60;
+
+        List<String> availableTimes = new java.util.ArrayList<>();
+        LocalTime current = open;
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+
+        while (current.plusMinutes(slotMins).isBefore(close) || current.plusMinutes(slotMins).equals(close)) {
+            LocalTime slotStart = current;
+            LocalTime slotEnd = current.plusMinutes(slotMins);
+
+            LocalDateTime slotStartDT = date.atTime(slotStart);
+            LocalDateTime slotEndDT = date.atTime(slotEnd);
+
+            boolean isAvailable = true;
+            for (Booking booking : activeBookings) {
+                if (slotStartDT.isBefore(booking.getEndTime()) && slotEndDT.isAfter(booking.getStartTime())) {
+                    isAvailable = false;
+                    break;
+                }
+            }
+
+            if (isAvailable) {
+                availableTimes.add(slotStart.format(formatter));
+            }
+            current = slotEnd;
+        }
+        return availableTimes;
     }
 }

@@ -108,4 +108,58 @@ public class FacilityService {
 
         return facilityRepository.save(facility);
     }
+
+    public java.util.Map<String, Object> getAvailabilityForDate(Long id, java.time.LocalDate date) {
+        Facility facility = facilityRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Facility not found"));
+
+        java.time.LocalDateTime dayStart = date.atStartOfDay();
+        java.time.LocalDateTime dayEnd = date.atTime(java.time.LocalTime.MAX);
+
+        // Fetch all bookings for this facility on this day that are not cancelled or rejected
+        List<Booking> dayBookings = bookingRepository.findByFacilityIdAndStartTimeBetween(id, dayStart, dayEnd);
+        List<Booking> activeBookings = dayBookings.stream()
+                .filter(b -> b.getStatus() != BookingStatus.CANCELLED && b.getStatus() != BookingStatus.REJECTED)
+                .toList();
+
+        // Parse open and close times
+        java.time.LocalTime open = java.time.LocalTime.parse(facility.getOpenTime());
+        java.time.LocalTime close = java.time.LocalTime.parse(facility.getCloseTime());
+        int slotMins = facility.getDefaultSlotMins() != null ? facility.getDefaultSlotMins() : 60;
+
+        java.util.List<java.util.Map<String, Object>> slots = new java.util.ArrayList<>();
+        java.time.LocalTime current = open;
+
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+
+        while (current.plusMinutes(slotMins).isBefore(close) || current.plusMinutes(slotMins).equals(close)) {
+            java.time.LocalTime slotStart = current;
+            java.time.LocalTime slotEnd = current.plusMinutes(slotMins);
+
+            java.time.LocalDateTime slotStartDT = date.atTime(slotStart);
+            java.time.LocalDateTime slotEndDT = date.atTime(slotEnd);
+
+            boolean isAvailable = true;
+            for (Booking booking : activeBookings) {
+                // If overlap occurs: slotStartDT < bookingEndTime && slotEndDT > bookingStartTime
+                if (slotStartDT.isBefore(booking.getEndTime()) && slotEndDT.isAfter(booking.getStartTime())) {
+                    isAvailable = false;
+                    break;
+                }
+            }
+
+            java.util.Map<String, Object> slotObj = new java.util.LinkedHashMap<>();
+            slotObj.put("time", slotStart.format(formatter));
+            slotObj.put("available", isAvailable);
+            slots.add(slotObj);
+
+            current = slotEnd;
+        }
+
+        java.util.Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("facilityId", id);
+        response.put("date", date.toString());
+        response.put("slots", slots);
+        return response;
+    }
 }

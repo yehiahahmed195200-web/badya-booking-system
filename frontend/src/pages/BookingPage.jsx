@@ -96,9 +96,20 @@ export default function BookingPage({ session }) {
   // FR-2.1: fetch availability when facility+date change
   useEffect(() => {
     if (!selectedFacility || !form.date) return;
-    // Java backend does not expose this endpoint yet; keep UI functional without 404 spam.
-    setAvailability(null);
-    setAvailLoading(false);
+    setAvailLoading(true);
+    fetch(`${API}/api/facilities/${selectedFacility.id}/availability?date=${form.date}`, { headers })
+      .then(res => {
+        if (!res.ok) throw new Error("Could not load availability");
+        return res.json();
+      })
+      .then(data => {
+        setAvailability(data);
+        setAvailLoading(false);
+      })
+      .catch(() => {
+        setAvailability(null);
+        setAvailLoading(false);
+      });
   }, [selectedFacility?.id, form.date]);
 
   // FR-2.8: check repeat user when facility selected
