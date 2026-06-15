@@ -1,8 +1,9 @@
+require('dotenv').config();
 const { OpenAI } = require('openai');
 
 const client = new OpenAI({
-  apiKey: "AIzaSyByY9MyURsm2LM0fqtFF3wqgfASaSJ0lyg",
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/"
+  apiKey: process.env.LLM_API_KEY || process.env.OPENAI_API_KEY,
+  baseURL: process.env.LLM_BASE_URL || "https://generativelanguage.googleapis.com/v1beta/openai/"
 });
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

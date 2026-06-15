@@ -73,13 +73,31 @@ function addWelcomeMessage() {
 
 addWelcomeMessage();
 
+const urlParams = new URLSearchParams(window.location.search);
+const isEmbedded = urlParams.get('embedded') === '1';
+
+if (isEmbedded) {
+  document.body.classList.add('is-embedded');
+  if (chatToggle) {
+    chatToggle.style.display = 'none';
+  }
+}
+
 function setChatState(open) {
   if (!chatWrap) return;
   chatWrap.dataset.state = open ? 'open' : 'closed';
   chatWrap.setAttribute('aria-hidden', open ? 'false' : 'true');
   if (open) {
     setTimeout(() => input.focus(), 150);
+  } else {
+    if (isEmbedded) {
+      window.parent.postMessage({ type: 'badya-chat-close' }, '*');
+    }
   }
+}
+
+if (isEmbedded) {
+  setChatState(true);
 }
 
 chatToggle.addEventListener('click', () => setChatState(true));

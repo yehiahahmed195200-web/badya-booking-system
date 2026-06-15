@@ -12,6 +12,7 @@ import NotificationBell from "./components/NotificationBell";
 import NotificationCenter from "./components/NotificationCenter";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { API_BASE } from "./config/api";
+import ChatbotWidget from "./components/ChatbotWidget";
 
 async function fetchJson(path) {
   const response = await fetch(`${API_BASE}${path}`);
@@ -27,7 +28,6 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState("");
   const [session, setSession] = useState(null);
   const [metrics, setMetrics] = useState({ facilities: 0, bookings: 0, users: 0 });
-  const [chatbotOpen, setChatbotOpen] = useState(false);
   const [notificationDrawerOpen, setNotificationDrawerOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -49,18 +49,6 @@ export default function App() {
       deviceId = "dev-" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       localStorage.setItem("device_uuid", deviceId);
     }
-
-    function handleMessage(event) {
-      if (event.data?.type === "badya-chat-close") {
-        setChatbotOpen(false);
-      }
-      if (event.data?.type === "badya-chat-state") {
-        setChatbotOpen(event.data.open);
-      }
-    }
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   function onStudentLoginSuccess(user, token) {
@@ -292,37 +280,7 @@ export default function App() {
       </main>
 
       {/* Badya AI Chatbot - Available on all pages */}
-      {chatbotOpen ? (
-        <iframe
-          id="chatbot-widget"
-          src={`http://localhost:3333/?embedded=1${localStorage.getItem("token") ? `&token=${localStorage.getItem("token")}` : ""}`}
-          style={{
-            position: "fixed",
-            bottom: "20px",
-            right: "20px",
-            width: "min(420px, calc(100vw - 40px))",
-            height: "min(620px, calc(100vh - 40px))",
-            border: "none",
-            borderRadius: "18px",
-            boxShadow: "0 18px 50px rgba(0,0,0,0.24)",
-            zIndex: 2000,
-            pointerEvents: "auto"
-          }}
-          title="Badya AI — Intelligent Booking Assistant"
-          allow="camera; microphone"
-        />
-      ) : (
-        <button
-          type="button"
-          className="chatbot-launcher"
-          onClick={() => setChatbotOpen(true)}
-          aria-label="Open Badya AI chat"
-          title="Ask Badya AI — your intelligent booking assistant"
-        >
-          <span className="chatbot-launcher__icon" aria-hidden="true">🤖</span>
-          <span className="sr-only">Open Badya AI chat</span>
-        </button>
-      )}
+      <ChatbotWidget session={session} />
 
 
 

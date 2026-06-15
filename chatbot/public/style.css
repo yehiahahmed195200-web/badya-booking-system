@@ -565,3 +565,43 @@ input[type='file']:focus {
 	}
 }
 
+/* Embedded layout overrides */
+body.is-embedded {
+	background: transparent !important;
+	overflow: hidden;
+}
+
+body.is-embedded .page-shell {
+	width: 100%;
+	height: 100vh;
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+}
+
+body.is-embedded #embedContainer {
+	width: 100%;
+	height: 100%;
+}
+
+body.is-embedded .chat-wrap {
+	position: absolute !important;
+	inset: 0 !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	height: 100% !important;
+	border: none !important;
+	border-radius: 18px !important;
+	box-shadow: none !important;
+	display: flex !important;
+	flex-direction: column !important;
+	transform: none !important;
+	opacity: 1 !important;
+	pointer-events: auto !important;
+}
+
+body.is-embedded .messages {
+	flex: 1 !important;
+	height: auto !important;
+}
+
