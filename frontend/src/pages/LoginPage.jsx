@@ -170,6 +170,21 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
           color: #ffffff;
           box-shadow: 0 4px 12px rgba(28, 178, 191, 0.3);
         }
+        @media (max-width: 768px) {
+          .login-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+          }
+          .login-tab-btn {
+            width: 100%;
+            white-space: normal;
+            min-height: 54px;
+            padding: 8px 4px;
+            font-size: 0.85rem;
+            line-height: 1.25;
+          }
+        }
         .student-quick-card {
           display: flex;
           flex-direction: column;

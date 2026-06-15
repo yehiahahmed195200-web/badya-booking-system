@@ -930,9 +930,27 @@ button {
 
   /* Responsive Login Card */
   .login-card {
-    width: calc(100% - 32px) !important;
-    margin: 16px auto !important;
-    padding: 24px 20px 20px !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 450px !important;
+    min-width: unset !important;
+    margin: 20px auto !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  .login-card * {
+    max-width: 100% !important;
+  }
+
+  .login-card h1,
+  .login-card p,
+  .login-card button,
+  .login-card span,
+  .login-card label,
+  .login-card input {
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
   }
 
   /* Responsive Landing Hero Title */
