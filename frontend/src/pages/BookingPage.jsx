@@ -146,7 +146,7 @@ export default function BookingPage({ session }) {
       setBuddyError("");
     } catch (err) {
       setBuddyError(
-        "❌ الرقم الجامعي غير مسجل في النظام. لن يتم الحجز بدون وجود شركاء مسجلين."
+        "❌ الرقم الجامعي غير مسجل في قاعدة البيانات. لن يتم الحجز إلا بوجود شركاء مسجلين ومسؤولين معك بالكامل."
       );
       setShowMatchmakingPromo(true);
     } finally {
@@ -167,7 +167,7 @@ export default function BookingPage({ session }) {
     // Check if enough buddy IDs are provided
     if (participantsNum > 1 && buddyIds.length < requiredBuddies) {
       setError(
-        `لم تقم بإدخال معرفات (IDs) زملائك بالكامل لمطابقة عدد المشاركين المختار (${participantsNum}). الحجز لن يتم إلا بوجود شركاء مسجلين. يمكنك استخدام ميزة الـ Matchmaking (LFG) لتجد لاعبين آخرين ينضمون إليك.`
+        `الحجز لن يتم. السبب: لقد اخترت عدد مشاركين (${participantsNum}) ولكنك لم تقم بإدخال معرفات زملائك بالكامل لمطابقة هذا العدد (تحتاج لإضافة ${requiredBuddies} من زملائك). لن يتم الحجز إلا بوجود شركاء مسجلين.`
       );
       setShowMatchmakingPromo(true);
       return;
@@ -186,7 +186,7 @@ export default function BookingPage({ session }) {
 
       if (invalidIds.length > 0) {
         setError(
-          `الحجز لن يتم: معرفات الطلاب التالية غير موجودة في قاعدة البيانات: [${invalidIds.join(", ")}]. يرجى التأكد من الأرقام المضافة، أو استخدام ميزة الـ Matchmaking (LFG) لمساعدتك في العثور على لاعبين لتلعب معهم.`
+          `الحجز لن يتم. السبب: معرفات الطلاب التالية غير موجودة بقاعدة البيانات: [${invalidIds.join(", ")}]. لن يتم الحجز إلا بوجود شركاء مسجلين بالكامل.`
         );
         setShowMatchmakingPromo(true);
         return;
@@ -465,6 +465,53 @@ export default function BookingPage({ session }) {
                   </button>
                 </div>
                 {buddyError && <p className="bk-buddy-error">{buddyError}</p>}
+                
+                {showMatchmakingPromo && (
+                  <div className="bk-matchmaking-promo" style={{
+                    background: "linear-gradient(135deg, #eff6ff, #dbeafe)",
+                    border: "1px solid #bfdbfe",
+                    borderRadius: "14px",
+                    padding: "16px 20px",
+                    marginTop: "12px",
+                    marginBottom: "12px",
+                    boxShadow: "0 4px 12px rgba(59, 130, 246, 0.08)",
+                    direction: "rtl",
+                    textAlign: "right"
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "1.4rem" }}>🎯</span>
+                      <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "1.02rem", fontWeight: "700" }}>
+                        تبحث عن ناس تلعب معاهم؟ جرب ميزة الـ Matching!
+                      </h4>
+                    </div>
+                    <p style={{ margin: "0 0 14px 0", color: "#1e40af", fontSize: "0.85rem", lineHeight: "1.5" }}>
+                      لا تشيل هم! إذا لم تجد لاعبين حالياً أو لم تملك معرفاتهم، يمكنك استخدام ميزة <strong>Matching (LFG)</strong> المتوفرة لمساعدتك في العثور على لاعبين آخرين واللعب معهم بسهولة.
+                    </p>
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/dashboard?tab=matchmaking")}
+                        style={{
+                          background: "#2563eb",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "10px",
+                          padding: "8px 16px",
+                          fontSize: "0.85rem",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          boxShadow: "0 2px 6px rgba(37, 99, 235, 0.2)"
+                        }}
+                        onMouseOver={(e) => e.target.style.background = "#1d4ed8"}
+                        onMouseOut={(e) => e.target.style.background = "#2563eb"}
+                      >
+                        🎯 انتقل لميزة الـ Matching الآن
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {buddyIds.length > 0 && (
                   <div className="bk-buddy-chips">
                     {buddyIds.map(id => (
