@@ -598,26 +598,41 @@
   }
 
   .ac-topbar {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 12px !important;
+    padding: 12px 16px 16px !important;
     position: sticky !important;
     top: 0;
+    z-index: 100;
     background: rgba(255, 255, 255, 0.88) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    z-index: 100;
     border-bottom: 1px solid #e2e8f0;
-    padding: 12px 16px 16px;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 12px !important;
-    padding-right: 60px !important;
   }
 
   .ac-topbar-left {
-    width: 100% !important;
+    grid-row: 1 / 2 !important;
+    width: calc(100% - 40px) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .ac-topbar-sub {
+    display: none !important;
+  }
+
+  .ac-topbar-title {
+    font-size: 1.15rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .ac-topbar-actions {
+    grid-row: 2 / 3 !important;
     width: 100% !important;
     display: flex !important;
     align-items: center !important;
@@ -627,7 +642,7 @@
 
   .ac-topbar-actions .notification-bell {
     position: absolute !important;
-    top: 18px !important;
+    top: 12px !important;
     right: 16px !important;
     z-index: 10 !important;
   }
