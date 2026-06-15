@@ -1,12 +1,14 @@
+require('dotenv').config();
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
 
 const PORT = process.env.CHATBOT_PORT || 3333;
-const OPENAI_KEY = process.env.OPENAI_API_KEY || null;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:4000';
+const OPENAI_KEY = process.env.LLM_API_KEY || process.env.OPENAI_API_KEY || null;
+const OPENAI_MODEL = process.env.LLM_MODEL || process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const LLM_BASE_URL = process.env.LLM_BASE_URL || 'https://api.openai.com/v1';
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen2.5:1.5b';
 
@@ -95,12 +97,22 @@ async function callOpenAI(messages) {
     temperature: 0.7,
     top_p: 0.95,
   };
-  const r = await fetch('https://api.openai.com/v1/chat/completions', {
+
+  let baseUrl = LLM_BASE_URL.trim();
+  if (!baseUrl.endsWith('/')) {
+    baseUrl += '/';
+  }
+  const endpoint = baseUrl + 'chat/completions';
+
+  const r = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_KEY}` },
     body: JSON.stringify(body),
   });
   const j = await r.json();
+  if (j.error) {
+    throw new Error(j.error.message || JSON.stringify(j.error));
+  }
   return j?.choices?.[0]?.message?.content || JSON.stringify(j);
 }
 
@@ -240,7 +252,7 @@ const embeddings = []; // each item: { id, vector }
 const queryEmbeddingCache = new Map();
 
 async function getEmbedding(text) {
-  if (!OPENAI_KEY) return null;
+  if (!OPENAI_KEY || !OPENAI_KEY.startsWith('sk-')) return null;
   try {
     const fetch = global.fetch || require('node-fetch');
     const res = await fetch('https://api.openai.com/v1/embeddings', {
@@ -421,9 +433,9 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => console.log(`Chatbot server running at http://localhost:${PORT}`));
 if (OPENAI_KEY) {
-  console.log('OpenAI key detected — remote LLM calls enabled (model=', OPENAI_MODEL, ')');
+  console.log('LLM key detected — remote LLM calls enabled (model=', OPENAI_MODEL, ')');
 } else {
-  console.log('No OpenAI key found — local LLM via Ollama (model=', OLLAMA_MODEL, ')');
+  console.log('No LLM key found — local LLM via Ollama (model=', OLLAMA_MODEL, ')');
 }
 
 // --- Rate limiter implementation
@@ -451,7 +463,7 @@ async function moderateContent(text) {
   const lower = text.toLowerCase();
   for (const w of bannedWords) if (lower.includes(w)) return { ok: false, reason: 'banned_word' };
   // if OpenAI key present, call moderation endpoint
-  if (OPENAI_KEY) {
+  if (OPENAI_KEY && OPENAI_KEY.startsWith('sk-')) {
     try {
       const fetch = global.fetch || require('node-fetch');
       const r = await fetch('https://api.openai.com/v1/moderations', {
