@@ -733,6 +733,9 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
         </nav>
 
         <div className="ac-sidebar-footer">
+          <button className="ac-nav-item" onClick={() => { navigate("/live"); setIsMobileMenuOpen(false); }} style={{ color: "#10b981" }}>
+            <span className="ac-nav-icon">📡</span> Live Feed
+          </button>
           <button className="ac-nav-item" onClick={() => { navigate("/facilities"); setIsMobileMenuOpen(false); }}>
             <span className="ac-nav-icon">⚙️</span> Manage Facilities
           </button>
@@ -775,7 +778,9 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
             <NotificationBell onClick={toggleNotifications} />
             <ThemeToggle />
             <button className="ac-refresh-btn" onClick={fetchAll}>↻ Refresh</button>
-            <span className="ac-live-dot" /> <span style={{ fontSize: "0.8rem", color: "#10b981" }}>Live</span>
+            <button className="ac-live-feed-btn" onClick={() => navigate("/live")} title="View Live Bookings Feed">
+              <span className="ac-live-dot" /> Live Feed
+            </button>
           </div>
         </header>
 

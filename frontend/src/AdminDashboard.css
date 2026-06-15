@@ -1133,3 +1133,30 @@
   width: 0%;
   transition: width 0.1s linear;
 }
+
+/* Admin Dashboard Live Feed Button */
+.ac-live-feed-btn {
+  padding: 8px 16px;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.05);
+  color: #10b981;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-family: inherit;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ac-live-feed-btn:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+}
+
+.ac-live-feed-btn .ac-live-dot {
+  animation: pulse-dot 1.5s infinite;
+  margin: 0;
+}
