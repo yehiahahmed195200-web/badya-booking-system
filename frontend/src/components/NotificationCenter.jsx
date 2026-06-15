@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import './NotificationCenter.css';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function NotificationCenter({ isOpen, onClose }) {
+  const { language, t } = useLanguage();
   const {
     notifications,
     unreadCount,
@@ -95,10 +97,10 @@ export default function NotificationCenter({ isOpen, onClose }) {
   const getPriorityInfo = (n) => {
     let priority = n.priority;
     if (!priority) {
-      const t = n.type || '';
-      if (t.includes('ALERT') || t.includes('SECURITY') || t.includes('CANCELLED')) {
+      const typeStr = n.type || '';
+      if (typeStr.includes('ALERT') || typeStr.includes('SECURITY') || typeStr.includes('CANCELLED')) {
         priority = 'HIGH';
-      } else if (t.includes('CONFIRMED') || t.includes('REMINDER') || t.includes('POINTS')) {
+      } else if (typeStr.includes('CONFIRMED') || typeStr.includes('REMINDER') || typeStr.includes('POINTS')) {
         priority = 'NORMAL';
       } else {
         priority = 'LOW';
@@ -106,10 +108,10 @@ export default function NotificationCenter({ isOpen, onClose }) {
     }
 
     const priorityMap = {
-      CRITICAL: { color: '#ef4444', text: 'Critical', bg: 'rgba(239, 68, 68, 0.08)' },
-      HIGH: { color: '#f97316', text: 'High', bg: 'rgba(249, 115, 22, 0.08)' },
-      NORMAL: { color: '#1cb2bf', text: 'Normal', bg: 'rgba(28, 178, 191, 0.08)' },
-      LOW: { color: '#64748b', text: 'Info', bg: 'rgba(100, 116, 139, 0.08)' },
+      CRITICAL: { color: '#ef4444', text: t('notifications.priorityCritical'), bg: 'rgba(239, 68, 68, 0.08)' },
+      HIGH: { color: '#f97316', text: t('notifications.priorityHigh'), bg: 'rgba(249, 115, 22, 0.08)' },
+      NORMAL: { color: '#1cb2bf', text: t('notifications.priorityNormal'), bg: 'rgba(28, 178, 191, 0.08)' },
+      LOW: { color: '#64748b', text: t('notifications.priorityLow'), bg: 'rgba(100, 116, 139, 0.08)' },
     };
     return priorityMap[priority] || priorityMap.NORMAL;
   };
@@ -121,11 +123,11 @@ export default function NotificationCenter({ isOpen, onClose }) {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (mins < 1) return 'just now';
-    if (mins < 60) return `${mins}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    return new Date(date).toLocaleDateString();
+    if (mins < 1) return t('notifications.justNow');
+    if (mins < 60) return t('notifications.minsAgo', { mins });
+    if (hours < 24) return t('notifications.hoursAgo', { hours });
+    if (days < 7) return t('notifications.daysAgo', { days });
+    return new Date(date).toLocaleDateString(language === 'ar' ? 'ar-EG' : 'en-GB');
   };
 
   return (
@@ -134,21 +136,21 @@ export default function NotificationCenter({ isOpen, onClose }) {
       <div className={`notification-drawer ${isOpen ? 'open' : ''}`}>
         <div className="notification-header">
           <div className="header-title-section">
-            <h2>Notifications</h2>
-            {unreadCount > 0 && <span className="unread-counter-badge">{unreadCount} unread</span>}
+            <h2>{t('notifications.title')}</h2>
+            {unreadCount > 0 && <span className="unread-counter-badge">{t('notifications.unreadBadge', { count: unreadCount })}</span>}
           </div>
           <div className="header-actions">
             <button 
               className={`refresh-btn ${isRefreshing ? 'spinning' : ''}`} 
               onClick={handleRefresh} 
-              title="Refresh notifications"
+              title={language === 'ar' ? 'تحديث الإشعارات' : 'Refresh notifications'}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="23 4 23 10 17 10" />
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
               </svg>
             </button>
-            <button className="close-drawer-btn" onClick={onClose} title="Close Panel">
+            <button className="close-drawer-btn" onClick={onClose} title={language === 'ar' ? 'إغلاق اللوحة' : 'Close Panel'}>
               ✕
             </button>
           </div>
@@ -160,13 +162,13 @@ export default function NotificationCenter({ isOpen, onClose }) {
               className={`filter-pill ${activeFilter === 'all' ? 'active' : ''}`}
               onClick={() => setActiveFilter('all')}
             >
-              All <span className="pill-count">{notifications.length}</span>
+              {t('notifications.allTab')} <span className="pill-count">{notifications.length}</span>
             </button>
             <button
               className={`filter-pill ${activeFilter === 'unread' ? 'active' : ''}`}
               onClick={() => setActiveFilter('unread')}
             >
-              Unread <span className="pill-count">{unreadCount}</span>
+              {t('notifications.unreadTab')} <span className="pill-count">{unreadCount}</span>
             </button>
           </div>
           {unreadCount > 0 && (
@@ -175,7 +177,7 @@ export default function NotificationCenter({ isOpen, onClose }) {
                 <polyline points="20 6 9 17 4 12" />
                 <polyline points="22 10 12 20 9 17" />
               </svg>
-              Mark all read
+              {t('notifications.markAllRead')}
             </button>
           )}
         </div>
@@ -191,8 +193,8 @@ export default function NotificationCenter({ isOpen, onClose }) {
                 </svg>
                 <div className="empty-ring-glow" />
               </div>
-              <h3>You're all caught up!</h3>
-              <p>No {activeFilter === 'unread' ? 'unread ' : ''}notifications at the moment.</p>
+              <h3>{t('notifications.emptyTitle')}</h3>
+              <p>{activeFilter === 'unread' ? t('notifications.emptyDescUnread') : t('notifications.emptyDesc')}</p>
             </div>
           ) : (
             filtered.map((n) => {
@@ -228,7 +230,7 @@ export default function NotificationCenter({ isOpen, onClose }) {
                     <p className="card-desc">{n.message}</p>
                     {n.actionUrl && (
                       <a href={n.actionUrl} className="card-action-btn" onClick={(e) => e.stopPropagation()}>
-                        View details
+                        {t('notifications.viewDetails')}
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="arrow-svg">
                           <line x1="5" y1="12" x2="19" y2="12" />
                           <polyline points="12 5 19 12 12 19" />
@@ -240,7 +242,7 @@ export default function NotificationCenter({ isOpen, onClose }) {
                     {!n.read && (
                       <button
                         className="operation-btn mark-read"
-                        title="Mark as read"
+                        title={language === 'ar' ? 'تحديد كمقروء' : 'Mark as read'}
                         onClick={(e) => handleMarkRead(e, n.id)}
                       >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -250,7 +252,7 @@ export default function NotificationCenter({ isOpen, onClose }) {
                     )}
                     <button
                       className="operation-btn delete-archive"
-                      title="Archive"
+                      title={language === 'ar' ? 'أرشفة' : 'Archive'}
                       onClick={(e) => handleArchive(e, n.id)}
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

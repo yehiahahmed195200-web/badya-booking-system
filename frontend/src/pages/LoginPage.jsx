@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { API_BASE } from "../config/api";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorMessage, message, onOpenRegister }) {
+  const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState("student"); // "student" or "staff"
   
   // Staff form states
@@ -276,11 +278,11 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
       <div className="login-hero-overlay" />
       <div className="login-hero-content">
         <div className="login-header">
-          <h1>{activeTab === "student" ? "Student Portal" : "Staff Portal"}</h1>
+          <h1>{activeTab === "student" ? (language === "en" ? "Student Portal" : "بوابة الطلاب") : (language === "en" ? "Staff Portal" : "بوابة الموظفين")}</h1>
           <p>
             {activeTab === "student"
-              ? "Quick and secure entry to Badya University athletic facilities"
-              : "Staff and administrative access to manage facilities and bookings"}
+              ? (language === "en" ? "Quick and secure entry to Badya University athletic facilities" : "دخول سريع وآمن للمنشآت الرياضية بجامعة باديا")
+              : (language === "en" ? "Staff and administrative access to manage facilities and bookings" : "دخول الموظفين والمسؤولين لإدارة الملاعب والحجوزات")}
           </p>
         </div>
 
@@ -298,7 +300,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                   setLocalSuccess("");
                 }}
               >
-                🎓 Students
+                🎓 {language === "en" ? "Students" : "الطلاب"}
               </button>
               <button
                 type="button"
@@ -309,7 +311,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                   setLocalSuccess("");
                 }}
               >
-                👥 Staff / Coaches
+                👥 {language === "en" ? "Staff / Coaches" : "الموظفون / المدربون"}
               </button>
             </div>
 
@@ -324,14 +326,16 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                       {getInitials(studentName)}
                     </div>
                     <h3 style={{ margin: "0 0 4px", fontSize: "1.35rem" }}>
-                      Welcome back, {studentName} 👋
+                      {language === "en" ? `Welcome back, ${studentName} 👋` : `مرحباً بك مجدداً، ${studentName} 👋`}
                     </h3>
                     <p style={{ margin: "0 0 20px", color: "rgba(255, 255, 255, 0.7)", fontSize: "0.9rem" }}>
-                      Student ID: <strong style={{ color: "#2dd4dc" }}>{selectedStudentId}</strong>
+                      {language === "en" ? "Student ID:" : "الرقم الجامعي:"} <strong style={{ color: "#2dd4dc" }}>{selectedStudentId}</strong>
                     </p>
 
                     <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.6)", background: "rgba(255,255,255,0.04)", padding: "10px 12px", borderRadius: 12, marginBottom: 16, textAlign: "center", lineHeight: "1.5" }}>
-                      🔒 This device is registered and secured to your account. You will be logged in with a single click.
+                      {language === "en"
+                        ? "🔒 This device is registered and secured to your account. You will be logged in with a single click."
+                        : "🔒 هذا الجهاز مسجل ومؤمن لحسابك. سيتم تسجيل دخولك بنقرة واحدة."}
                     </p>
 
                     <button
@@ -340,7 +344,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                       onClick={(e) => handleStudentInit(e, selectedStudentId)}
                       disabled={loading}
                     >
-                      {loading ? "Logging in..." : "⚡ Quick & Secure Entry"}
+                      {loading ? t("common.loading") : (language === "en" ? "⚡ Quick & Secure Entry" : "⚡ دخول سريع وآمن")}
                     </button>
 
                     <button
@@ -352,7 +356,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                         setLocalSuccess("");
                       }}
                     >
-                      Login with another Student ID
+                      {language === "en" ? "Login with another Student ID" : "الدخول برقم جامعي آخر"}
                     </button>
                   </div>
                 )}
@@ -361,13 +365,13 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                 {studentStep === "studentId" && (
                   <form onSubmit={(e) => handleStudentInit(e)} className="login-form">
                     <label className="login-label">
-                      Student ID
+                      {language === "en" ? "Student ID" : "الرقم الجامعي"}
                       <input
                         className="login-input"
                         type="text"
                         value={studentIdInput}
                         onChange={e => setStudentIdInput(e.target.value)}
-                        placeholder="e.g. STD-001"
+                        placeholder={t("login.studentIdPlaceholder")}
                         required
                         autoFocus
                         style={{ direction: "ltr", textAlign: "center" }}
@@ -375,11 +379,13 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                     </label>
 
                     <p style={{ fontSize: "0.82rem", color: "rgba(255, 255, 255, 0.7)", margin: "0 0 10px" }}>
-                      💡 Enter your Student ID. Upon your first login, this device will be automatically registered and locked to your account. You will not be able to log in from any other device without contacting the University Administration.
+                      {language === "en"
+                        ? "💡 Enter your Student ID. Upon your first login, this device will be automatically registered and locked to your account. You will not be able to log in from any other device without contacting the University Administration."
+                        : "💡 أدخل الرقم الجامعي الخاص بك. عند تسجيل دخولك الأول، سيتم تسجيل هذا الجهاز تلقائياً وقفله على حسابك. لن تتمكن من تسجيل الدخول من أي جهاز آخر دون مراجعة إدارة الجامعة."}
                     </p>
 
                     <button type="submit" className="login-primary" disabled={loading}>
-                      {loading ? "Verifying..." : "Continue"}
+                      {loading ? (language === "en" ? "Verifying..." : "جاري التحقق...") : (language === "en" ? "Continue" : "متابعة")}
                       {!loading && <span aria-hidden="true">→</span>}
                     </button>
                   </form>
@@ -393,7 +399,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                     <div style={{ fontSize: "3.5rem", marginBottom: "15px" }}>🔒📱</div>
                     
                     <h3 style={{ color: "#ff5e5e", margin: "0 0 12px", fontSize: "1.25rem", fontWeight: "bold" }}>
-                      Account Linked to Another Device!
+                      {language === "en" ? "Account Linked to Another Device!" : "الحساب مرتبط بجهاز آخر!"}
                     </h3>
                     
                     <p style={{ fontSize: "0.9rem", color: "rgba(255, 255, 255, 0.85)", lineHeight: "1.6", background: "rgba(255, 255, 255, 0.05)", padding: "12px", borderRadius: "8px", marginBottom: "20px" }}>
@@ -402,7 +408,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
 
                     {deviceLockedState.pendingRequest ? (
                       <div style={{ background: "rgba(45, 212, 220, 0.08)", border: "1px solid rgba(45, 212, 220, 0.2)", borderRadius: "8px", padding: "12px", color: "#2dd4dc", fontSize: "0.85rem", marginBottom: "20px" }}>
-                        ⏳ <strong>Pending Review:</strong> Your request to transfer the account to this device has been submitted successfully and is currently under review by the Athletic Administration.
+                        ⏳ <strong>{language === "en" ? "Pending Review:" : "قيد المراجعة:"}</strong> {language === "en" ? "Your request to transfer the account to this device has been submitted successfully and is currently under review by the Athletic Administration." : "تم تقديم طلب نقل الحساب لهذا الجهاز بنجاح وهو قيد المراجعة حالياً من قبل الإدارة الرياضية."}
                       </div>
                     ) : (
                       <button
@@ -412,7 +418,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                         disabled={loading}
                         style={{ background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", border: "none", color: "#000", fontWeight: "bold" }}
                       >
-                        {loading ? "Submitting..." : "🚀 Submit Device Change Request"}
+                        {loading ? (language === "en" ? "Submitting..." : "جاري التقديم...") : (language === "en" ? "🚀 Submit Device Change Request" : "🚀 تقديم طلب تغيير الجهاز")}
                       </button>
                     )}
 
@@ -426,7 +432,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                       }}
                       style={{ marginTop: "15px", display: "inline-block" }}
                     >
-                      Go Back
+                      {t("common.back")}
                     </button>
                   </div>
                 )}
@@ -437,7 +443,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
             {activeTab === "staff" && (
               <form onSubmit={handleStaffSubmit} className="login-form">
                 <label className="login-label">
-                  Email Address
+                  {t("login.email")}
                   <input
                     className="login-input"
                     type="email"
@@ -450,7 +456,7 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                 </label>
 
                 <label className="login-label">
-                  Password
+                  {t("login.password")}
                   <input
                     className="login-input"
                     type="password"
@@ -462,10 +468,10 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
                   />
                 </label>
 
-                <button type="button" className="login-forgot">Forgot password?</button>
+                <button type="button" className="login-forgot">{language === "en" ? "Forgot password?" : "نسيت كلمة المرور؟"}</button>
 
                 <button type="submit" className="login-primary">
-                  Sign In (Staff Portal)
+                  {language === "en" ? "Sign In (Staff Portal)" : "تسجيل الدخول (بوابة الموظفين)"}
                   <span aria-hidden="true">→</span>
                 </button>
               </form>
@@ -482,13 +488,13 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
             {/* Divider and Register (Students only) */}
             {activeTab === "student" && studentStep === "studentId" && (
               <>
-                <div className="login-divider">Don't have an account?</div>
+                <div className="login-divider">{t("login.noAccount")}</div>
                 <button
                   type="button"
                   className="login-secondary"
                   onClick={onOpenRegister}
                 >
-                  Create a New Student Account
+                  {t("login.createAccount")}
                 </button>
               </>
             )}

@@ -4,6 +4,7 @@ import "./StudentDashboard.css";
 import { API_BASE } from "../config/api";
 import AttendanceCard from "../components/AttendanceCard";
 import NotificationBell from "../components/NotificationBell";
+import { useLanguage } from "../context/LanguageContext";
 
 const API = API_BASE;
 const CHATBOT_URL = import.meta.env.VITE_CHATBOT_URL || "http://localhost:3333";
@@ -45,10 +46,14 @@ function StatCard({ icon, value, label, sub, color = "#1cb2bf", warn = false }) 
 }
 
 function BookingCard({ booking, onCancel, onReschedule, onFeedback }) {
+  const { language, t } = useLanguage();
+  const locale = language === "ar" ? "ar-EG" : "en-GB";
   const displayStatus = booking.conflictId && booking.status === "PENDING" ? "CONFLICT" : booking.status;
   const cfg = STATUS_CONFIG[displayStatus] || STATUS_CONFIG.PENDING;
   const start = new Date(booking.startTime);
   const isUpcoming = start > new Date() && ["CONFIRMED", "APPROVED", "PENDING", "CONFLICT"].includes(displayStatus);
+  const statusKey = `status${displayStatus.charAt(0) + displayStatus.slice(1).toLowerCase()}`;
+  const translatedLabel = t(`studentDashboard.${statusKey}`) || cfg.label;
 
   return (
     <div className={`sd-booking-card ${isUpcoming ? "upcoming" : ""}`}>
@@ -56,28 +61,28 @@ function BookingCard({ booking, onCancel, onReschedule, onFeedback }) {
       <div className="sd-booking-main">
         <div className="sd-booking-name">{booking.facility?.name || "Facility"}</div>
         <div className="sd-booking-meta">
-          <span>📅 {start.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</span>
-          <span>🕐 {start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-          <span>👥 {booking.participants} participants</span>
+          <span>📅 {start.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" })}</span>
+          <span>🕐 {start.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}</span>
+          <span>👥 {t("studentDashboard.participantsCount", { count: booking.participants })}</span>
         </div>
         {booking.rejectionReason && (
-          <div className="sd-rejection-reason">Reason: {booking.rejectionReason}</div>
+          <div className="sd-rejection-reason">{t("studentDashboard.rejectionReasonLabel", { reason: booking.rejectionReason })}</div>
         )}
         {displayStatus === "CONFLICT" && (
-          <div className="sd-rejection-reason">Conflict detected — awaiting admin decision.</div>
+          <div className="sd-rejection-reason">{t("studentDashboard.conflictDetectedAwaitingAdmin")}</div>
         )}
       </div>
       <div className="sd-booking-right">
         <span className="sd-status-badge" style={{ background: cfg.bg, color: cfg.color }}>
-          {cfg.icon} {cfg.label}
+          {cfg.icon} {translatedLabel}
         </span>
         <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
           {isUpcoming && (<>
-            <button className="sd-cancel-btn" onClick={() => onCancel(booking.id)}>Cancel</button>
-            <button className="sd-reschedule-btn" onClick={() => onReschedule && onReschedule(booking)}>↩ Reschedule</button>
+            <button className="sd-cancel-btn" onClick={() => onCancel(booking.id)}>{t("studentDashboard.cancelBtn")}</button>
+            <button className="sd-reschedule-btn" onClick={() => onReschedule && onReschedule(booking)}>{t("studentDashboard.rescheduleBtn")}</button>
           </>)}
           {booking.status === "COMPLETED" && onFeedback && (
-            <button className="sd-feedback-btn" onClick={() => onFeedback(booking.facilityId)}>⭐ Feedback</button>
+            <button className="sd-feedback-btn" onClick={() => onFeedback(booking.facilityId)}>{t("studentDashboard.feedbackBtn")}</button>
           )}
         </div>
       </div>
@@ -86,6 +91,8 @@ function BookingCard({ booking, onCancel, onReschedule, onFeedback }) {
 }
 
 export default function StudentDashboard({ session, onLogout, toggleNotifications }) {
+  const { language, t } = useLanguage();
+  const locale = language === "ar" ? "ar-EG" : "en-GB";
   const [bookings, setBookings] = useState([]);
   const [userPoints, setUserPoints] = useState(session?.points || 0);
   const [userWarnings, setUserWarnings] = useState(session?.warnings || 0);
@@ -308,7 +315,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to submit clearance report.");
-      setMedSuccess("Clearance document submitted successfully for verification!");
+      setMedSuccess(t("studentDashboard.uploadSuccessMsg"));
       setMedForm({ documentName: "", description: "", documentUrl: "" });
       setSelectedFile(null);
       setUploadProgress(0);
@@ -372,7 +379,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
   }, [isMobileMenuOpen]);
 
   const handleCancel = async (id) => {
-    if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+    if (!window.confirm(t("studentDashboard.cancelConfirmQuestion"))) return;
     setCancellingId(id);
     try {
       await fetch(`${API}/api/bookings/${id}/cancel`, { method: "PATCH", headers });
@@ -400,7 +407,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
         });
         data = await res.json();
         if (!res.ok) throw new Error(data.message || "Dispute submission failed");
-        setFbSuccess("Your dispute was submitted. Admins will review it.");
+        setFbSuccess(t("studentDashboard.disputeSuccessMsg"));
       } else {
         res = await fetch(`${API}/api/feedback`, {
           method: "POST",
@@ -409,7 +416,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
         });
         data = await res.json();
         if (!res.ok) throw new Error(data.message || "Feedback failed");
-        setFbSuccess("Thank you! Your feedback was submitted.");
+        setFbSuccess(t("studentDashboard.feedbackSuccessMsg"));
       }
       setFbComment(""); setFbRating(5);
       setTimeout(() => { setShowFeedback(false); setFbConflictId(""); setFbBookingId(""); }, 2000);
@@ -442,11 +449,11 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
     }, {});
 
   const filterTabs = [
-    { id: "bookings", label: "All Bookings", count: bookings.length },
-    { id: "upcoming", label: "Upcoming", count: upcoming.length },
-    { id: "conflicts", label: "Conflicts", count: conflictBookings.length },
-    { id: "completed", label: "Completed", count: completed.length },
-    { id: "attendance", label: "Attendance", count: upcoming.length },
+    { id: "bookings", label: t("studentDashboard.allBookings"), count: bookings.length },
+    { id: "upcoming", label: t("studentDashboard.upcoming"), count: upcoming.length },
+    { id: "conflicts", label: t("studentDashboard.conflicts"), count: conflictBookings.length },
+    { id: "completed", label: t("studentDashboard.completed"), count: completed.length },
+    { id: "attendance", label: t("studentDashboard.attendance"), count: upcoming.length },
   ];
 
   const displayBookings =
@@ -484,14 +491,14 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
 
         <nav className="sd-nav">
           {[
-            { id: "bookings", icon: "📅", label: "My Bookings" },
-            { id: "matchmaking", icon: "🎯", label: "Matchmaking (LFG)" },
-            { id: "upcoming", icon: "🔜", label: "Upcoming" },
-            { id: "conflicts", icon: "⚠️", label: "Conflicts" },
-            { id: "completed", icon: "🏁", label: "Completed" },
-            { id: "attendance", icon: "📍", label: "Attendance" },
-            { id: "medical", icon: "⚕️", label: "Medical Clearance" },
-            { id: "fairness", icon: "⚖️", label: "Fairness Index" },
+            { id: "bookings", icon: "📅", label: t("studentDashboard.allBookings") },
+            { id: "matchmaking", icon: "🎯", label: t("studentDashboard.matchmakingTab").replace("🎯 ", "") },
+            { id: "upcoming", icon: "🔜", label: t("studentDashboard.upcoming") },
+            { id: "conflicts", icon: "⚠️", label: t("studentDashboard.conflicts") },
+            { id: "completed", icon: "🏁", label: t("studentDashboard.completed") },
+            { id: "attendance", icon: "📍", label: t("studentDashboard.attendance") },
+            { id: "medical", icon: "⚕️", label: t("studentDashboard.medicalClearance") },
+            { id: "fairness", icon: "⚖️", label: t("studentDashboard.fairnessIndex") },
           ].map(item => (
             <button
               key={item.id}
@@ -509,18 +516,18 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
 
         <div className="sd-sidebar-footer">
           <button className="sd-nav-item" onClick={() => { navigate("/book"); setIsMobileMenuOpen(false); }}>
-            <span>🎯</span> New Booking
+            <span>🎯</span> {t("studentDashboard.newBooking")}
           </button>
           <button className="sd-nav-item danger" onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}>
-            <span>🚪</span> Logout
+            <span>🚪</span> {t("common.logout")}
           </button>
         </div>
 
         {/* Warnings Alert */}
         {session?.warnings > 0 && (
           <div className="sd-warnings-alert">
-            <strong>⚠️ {session.warnings} Warning{session.warnings > 1 ? "s" : ""}</strong>
-            <p>You will be banned after {3 - session.warnings} more violation{3 - session.warnings !== 1 ? "s" : ""}.</p>
+            <strong>⚠️ {session.warnings} {t("studentDashboard.warningsTitle")}</strong>
+            <p>{t("studentDashboard.warningsBanNotice", { count: 3 - session.warnings, plural: (3 - session.warnings !== 1 ? "s" : "") })}</p>
           </div>
         )}
       </aside>
@@ -539,16 +546,16 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
               ☰
             </button>
             <div>
-              <h1 className="sd-topbar-title">🎓 Student Portal</h1>
+              <h1 className="sd-topbar-title">{t("studentDashboard.studentPortal")}</h1>
               <p className="sd-topbar-sub">
-                Welcome back, <strong>{session?.fullName}</strong> — {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+                {t("studentDashboard.welcome")} <strong>{session?.fullName}</strong> — {new Date().toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
               </p>
             </div>
           </div>
           <div className="sd-topbar-right">
             <NotificationBell onClick={toggleNotifications} />
             <button className="sd-book-cta" onClick={() => navigate("/book")}>
-              + Book a Facility
+              {t("studentDashboard.bookFacilityBtn")}
             </button>
           </div>
         </header>
@@ -559,36 +566,37 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
             <>
               {/* Stats Row */}
               <div className="sd-stats-row">
-                <StatCard icon="📅" value={bookings.length} label="Total Bookings" sub="All time" color="#1cb2bf" />
-                <StatCard icon="🔜" value={upcoming.length} label="Upcoming" sub="Confirmed" color="#3b82f6" />
-                <StatCard icon="🏁" value={completed.length} label="Sessions Done" sub="Completed" color="#10b981" />
-                <StatCard icon="⭐" value={userPoints} label="My Points" sub="Earned so far" color="#f59e0b" />
-                <StatCard icon="⚠️" value={userWarnings} label="Warnings" sub="Max 3 = ban" color="#ef4444" warn />
-                <StatCard icon="🎫" value={userCredits} label="Available Credits" sub="Timing allowance" color="#8b5cf6" />
+                <StatCard icon="📅" value={bookings.length} label={t("studentDashboard.totalBookings")} sub={t("studentDashboard.allTime")} color="#1cb2bf" />
+                <StatCard icon="🔜" value={upcoming.length} label={t("studentDashboard.upcoming")} sub={t("studentDashboard.confirmed")} color="#3b82f6" />
+                <StatCard icon="🏁" value={completed.length} label={t("studentDashboard.sessionsDone")} sub={t("studentDashboard.completed")} color="#10b981" />
+                <StatCard icon="⭐" value={userPoints} label={t("studentDashboard.myPoints")} sub={t("studentDashboard.earnedSoFar")} color="#f59e0b" />
+                <StatCard icon="⚠️" value={userWarnings} label={t("studentDashboard.warningsCard")} sub={t("studentDashboard.maxBan")} color="#ef4444" warn />
+                <StatCard icon="🎫" value={userCredits} label={t("studentDashboard.availableCredits")} sub={t("studentDashboard.timingAllowance")} color="#8b5cf6" />
               </div>
 
               {/* Upcoming Timeline (if any) */}
               {upcoming.length > 0 && (
                 <div className="sd-timeline-card">
-                  <h3 className="sd-section-title">📆 Your Schedule</h3>
+                  <h3 className="sd-section-title">{t("studentDashboard.yourSchedule")}</h3>
                   <div className="sd-timeline">
                     {Object.entries(upcomingGrouped).map(([dateStr, items]) => (
                       <div key={dateStr} className="sd-timeline-group">
                         <div className="sd-timeline-date">
-                          {new Date(dateStr).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+                          {new Date(dateStr).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
                         </div>
                         {items.map(b => {
                           const statusKey = b.conflictId && b.status === "PENDING" ? "CONFLICT" : b.status;
                           const cfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.PENDING;
+                          const translatedLabel = t(`studentDashboard.status${statusKey.charAt(0) + statusKey.slice(1).toLowerCase()}`) || cfg.label;
                           return (
                             <div key={b.id} className="sd-timeline-item">
                               <div className="sd-timeline-dot" style={{ background: cfg.color }} />
                               <div className="sd-timeline-body">
                                 <span className="sd-timeline-facility">{FACILITY_ICONS(b.facility?.name)} {b.facility?.name}</span>
                                 <span className="sd-timeline-time">
-                                  {new Date(b.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                  {new Date(b.startTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
                                 </span>
-                                <span className="sd-status-badge" style={{ background: cfg.bg, color: cfg.color }}>{cfg.icon} {cfg.label}</span>
+                                <span className="sd-status-badge" style={{ background: cfg.bg, color: cfg.color }}>{cfg.icon} {translatedLabel}</span>
                               </div>
                             </div>
                           );
@@ -608,10 +616,10 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 <div className="sd-list-header" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h3 className="sd-section-title" style={{ margin: 0 }}>
-                      🎯 Find Me a Game (Auto-Matchmaking)
+                      {t("studentDashboard.matchmakingTitle")}
                     </h3>
                     <p style={{ margin: "4px 0 0", color: "#5a6a80", fontSize: "0.85rem" }}>
-                      Join the queue and get grouped automatically. No social stress, no awkwardness. Anonymous until matched!
+                      {t("studentDashboard.matchmakingSubtitle")}
                     </p>
                   </div>
                   <button 
@@ -620,7 +628,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                     style={{ padding: "6px 14px", margin: 0 }}
                     disabled={matchmakingLoading}
                   >
-                    {matchmakingLoading ? "Updating..." : "🔄 Update Status"}
+                    {matchmakingLoading ? t("studentDashboard.updating") : t("studentDashboard.updateStatusBtn")}
                   </button>
                 </div>
 
@@ -629,13 +637,13 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                   
                   {/* Left Column: Join Queue Form */}
                   <div className="sd-matchmaking-form-panel" style={{ background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                    <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#1e293b' }}>🎯 Join Matchmaking Queue</h4>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#1e293b' }}>{t("studentDashboard.joinMatchmakingQueue")}</h4>
                     {lfgError && <div className="sd-feedback-error" style={{ marginBottom: 12, background: '#fee2e2', color: '#ef4444', padding: '10px 14px', borderRadius: 8, fontSize: '0.88rem' }}>{lfgError}</div>}
                     {lfgSuccess && <div className="sd-feedback-success" style={{ marginBottom: 12, background: '#d1fae5', color: '#10b981', padding: '10px 14px', borderRadius: 8, fontSize: '0.88rem' }}>{lfgSuccess}</div>}
                     
                     <form onSubmit={handleJoinQueue} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       <div>
-                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem', marginBottom: 6, color: '#475569' }}>Sport & Facility</label>
+                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem', marginBottom: 6, color: '#475569' }}>{t("studentDashboard.sportAndFacility")}</label>
                         <select 
                           className="sd-fb-input" 
                           value={lfgForm.optionId} 
@@ -643,7 +651,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                           required
                           style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: '0.9rem', color: '#334155' }}
                         >
-                          <option value="">Select sport...</option>
+                          <option value="">{t("studentDashboard.selectSportPlaceholder")}</option>
                           {matchmakingOptions.map(opt => (
                             <option key={`${opt.facilityId}-${opt.sportId}`} value={`${opt.facilityId}-${opt.sportId}`}>
                               {opt.icon} {opt.sportName} ({opt.facilityName})
@@ -654,7 +662,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
 
                       <div className="sd-matchmaking-form-row">
                         <div>
-                          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem', marginBottom: 6, color: '#475569' }}>Date</label>
+                          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem', marginBottom: 6, color: '#475569' }}>{t("studentDashboard.date")}</label>
                           <input 
                             type="date" 
                             required 
@@ -666,7 +674,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                           />
                         </div>
                         <div>
-                          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem', marginBottom: 6, color: '#475569' }}>Time Slot (8 AM - 3 PM)</label>
+                          <label style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem', marginBottom: 6, color: '#475569' }}>{t("studentDashboard.timeSlot")}</label>
                           <select 
                             className="sd-fb-input" 
                             value={lfgForm.timeSlot} 
@@ -687,55 +695,60 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                         disabled={lfgLoading || !lfgForm.optionId}
                         style={{ marginTop: 8, width: '100%', padding: '12px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}
                       >
-                        {lfgLoading ? "Joining Queue..." : "🎯 Join Anonymous Queue"}
+                        {lfgLoading ? t("studentDashboard.joiningQueue") : t("studentDashboard.joinAnonymousQueueBtn")}
                       </button>
                     </form>
                   </div>
 
                   {/* Right Column: Active Queues */}
                   <div className="sd-matchmaking-queues-panel" style={{ background: '#fff', padding: 20, borderRadius: 12, border: '1px solid #e2e8f0', minHeight: 200 }}>
-                    <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#1e293b' }}>⏳ Your Active Queues (Anonymous)</h4>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem', color: '#1e293b' }}>{t("studentDashboard.activeQueuesAnonymous")}</h4>
                     {myQueues.length === 0 ? (
                       <div className="sd-empty" style={{ padding: '40px 20px', textAlign: 'center', border: '2px dashed #cbd5e1', borderRadius: 8 }}>
                         <div style={{ fontSize: '2.5rem' }}>⏳</div>
-                        <h4 style={{ margin: '12px 0 4px', color: '#475569' }}>No Active Queues</h4>
-                        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>You are not currently waiting in any matchmaking queues.</p>
+                        <h4 style={{ margin: '12px 0 4px', color: '#475569' }}>{t("studentDashboard.noActiveQueues")}</h4>
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>{t("studentDashboard.notWaitingInQueues")}</p>
                       </div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                        {myQueues.map(q => (
-                          <div key={q.id} className="sd-queue-card">
-                            <div className="sd-conflict-left">
-                              <div className="sd-conflict-fac" style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>
-                                {FACILITY_ICONS(q.facility?.name)} {q.sport?.name}
+                        {myQueues.map(q => {
+                          const statusStr = q.playersCount >= q.idealCount 
+                            ? t("studentDashboard.statusCreatingMatch") 
+                            : t("studentDashboard.statusWaitingPlayers", { count: (q.idealCount || 10) - (q.playersCount || 1) });
+                          return (
+                            <div key={q.id} className="sd-queue-card">
+                              <div className="sd-conflict-left">
+                                <div className="sd-conflict-fac" style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>
+                                  {FACILITY_ICONS(q.facility?.name)} {q.sport?.name}
+                                </div>
+                                <div className="sd-conflict-time" style={{ fontSize: '0.85rem', color: '#64748b', marginTop: 4 }}>
+                                  📅 {q.date} | 🕐 {q.timeSlot}
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                                  <span style={{ display: 'inline-block', background: '#3b82f6', color: '#fff', fontSize: '0.75rem', padding: '3px 8px', borderRadius: 4, fontWeight: 700 }}>
+                                    {t("studentDashboard.playersCount", { count: q.playersCount || 1, ideal: q.idealCount || 10 })}
+                                  </span>
+                                  <span style={{ display: 'inline-block', background: '#e2e8f0', color: '#475569', fontSize: '0.75rem', padding: '3px 8px', borderRadius: 4, fontWeight: 700 }}>
+                                    {t("studentDashboard.minPlayersCount", { min: q.minCount || 6 })}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: (q.playersCount >= q.minCount) ? '#10b981' : '#f59e0b', fontWeight: 600, marginTop: 6 }}>
+                                  🔔 Status: {statusStr}
+                                </div>
                               </div>
-                              <div className="sd-conflict-time" style={{ fontSize: '0.85rem', color: '#64748b', marginTop: 4 }}>
-                                📅 {q.date} | 🕐 {q.timeSlot}
-                              </div>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                                <span style={{ display: 'inline-block', background: '#3b82f6', color: '#fff', fontSize: '0.75rem', padding: '3px 8px', borderRadius: 4, fontWeight: 700 }}>
-                                  👤 Players: {q.playersCount || 1} / {q.idealCount || 10}
-                                </span>
-                                <span style={{ display: 'inline-block', background: '#e2e8f0', color: '#475569', fontSize: '0.75rem', padding: '3px 8px', borderRadius: 4, fontWeight: 700 }}>
-                                  🎯 Min: {q.minCount || 6}
-                                </span>
-                              </div>
-                              <div style={{ fontSize: '0.8rem', color: (q.playersCount >= q.minCount) ? '#10b981' : '#f59e0b', fontWeight: 600, marginTop: 6 }}>
-                                🔔 Status: {q.playersCount >= q.idealCount ? "Creating match..." : `Waiting for ${(q.idealCount || 10) - (q.playersCount || 1)} more players`}
+                              <div className="sd-conflict-right">
+                                <button 
+                                  className="sd-cancel-btn"
+                                  style={{ margin: 0, padding: '6px 12px', fontSize: '0.85rem' }}
+                                  onClick={() => handleLeaveQueue(q.sportId, q.date, q.timeSlot)}
+                                  disabled={lfgLoading}
+                                >
+                                  {t("studentDashboard.leaveBtn")}
+                                </button>
                               </div>
                             </div>
-                            <div className="sd-conflict-right">
-                              <button 
-                                className="sd-cancel-btn"
-                                style={{ margin: 0, padding: '6px 12px', fontSize: '0.85rem' }}
-                                onClick={() => handleLeaveQueue(q.sportId, q.date, q.timeSlot)}
-                                disabled={lfgLoading}
-                              >
-                                Leave
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -744,12 +757,12 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
 
                 {/* Section: Matched Games / Balanced Teams */}
                 <div className="sd-matched-games-section" style={{ marginTop: 32 }}>
-                  <h3 className="sd-section-title" style={{ marginBottom: 16 }}>🎯 Your Matched Games & Teams</h3>
+                  <h3 className="sd-section-title" style={{ marginBottom: 16 }}>{t("studentDashboard.matchedGamesAndTeams")}</h3>
                   {myMatches.length === 0 ? (
                     <div className="sd-empty" style={{ padding: '60px 20px', textAlign: 'center', border: '1px solid #e2e8f0', borderRadius: 12 }}>
                       <div style={{ fontSize: '3rem' }}>⚔️</div>
-                      <h4 style={{ margin: '16px 0 6px', color: '#475569' }}>No Matched Games</h4>
-                      <p style={{ fontSize: '0.88rem', color: '#64748b', maxWidth: 400, margin: '0 auto' }}>Once enough players join a queue, you'll be matched and your balanced teams will appear here!</p>
+                      <h4 style={{ margin: '16px 0 6px', color: '#475569' }}>{t("studentDashboard.noMatchedGames")}</h4>
+                      <p style={{ fontSize: '0.88rem', color: '#64748b', maxWidth: 400, margin: '0 auto' }}>{t("studentDashboard.matchedGamesDesc")}</p>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -760,18 +773,18 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                           <div className="sd-match-header">
                             <div>
                               <span style={{ fontWeight: 800, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 6, color: '#1e293b' }}>
-                                {FACILITY_ICONS(m.sportName)} {m.sportName} Match
+                                {FACILITY_ICONS(m.sportName)} {t("studentDashboard.matchTitle", { sportName: m.sportName })}
                               </span>
                               <span style={{ fontSize: '0.82rem', color: '#64748b', display: 'block', marginTop: 2 }}>
-                                🏟️ Court: {m.facilityName}
+                                🏟️ {t("studentDashboard.courtLabel", { facility: m.facilityName })}
                               </span>
                             </div>
                             <div style={{ textAlign: 'right' }}>
                               <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.95rem' }}>
-                                📅 {new Date(m.startTime).toLocaleDateString("en-GB", { day: 'numeric', month: 'short' })} | 🕐 {new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                📅 {new Date(m.startTime).toLocaleDateString(locale, { day: 'numeric', month: 'short' })} | 🕐 {new Date(m.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                               </div>
                               <span className="sd-status-badge" style={{ background: '#d1fae5', color: '#10b981', display: 'inline-block', marginTop: 6, fontWeight: 700 }}>
-                                Match Found ✅
+                                {t("studentDashboard.matchFound")}
                               </span>
                             </div>
                           </div>
@@ -782,8 +795,8 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                             {/* Team A */}
                             <div style={{ border: m.myTeam === "A" ? '2px solid #3b82f6' : '1px solid #e2e8f0', background: m.myTeam === "A" ? '#eff6ff' : '#fff', padding: 16, borderRadius: 8 }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                <span style={{ fontWeight: 800, color: '#1e293b' }}>Team A (اليمين)</span>
-                                {m.myTeam === "A" && <span style={{ background: '#3b82f6', color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: '0.68rem', fontWeight: 800 }}>YOUR TEAM</span>}
+                                <span style={{ fontWeight: 800, color: '#1e293b' }}>{t("studentDashboard.teamRight")}</span>
+                                {m.myTeam === "A" && <span style={{ background: '#3b82f6', color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: '0.68rem', fontWeight: 800 }}>{t("studentDashboard.yourTeamTag")}</span>}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {m.teamA.map((p, idx) => (
@@ -807,8 +820,8 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                             {/* Team B */}
                             <div style={{ border: m.myTeam === "B" ? '2px solid #3b82f6' : '1px solid #e2e8f0', background: m.myTeam === "B" ? '#eff6ff' : '#fff', padding: 16, borderRadius: 8 }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                                <span style={{ fontWeight: 800, color: '#1e293b' }}>Team B (اليسار)</span>
-                                {m.myTeam === "B" && <span style={{ background: '#3b82f6', color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: '0.68rem', fontWeight: 800 }}>YOUR TEAM</span>}
+                                <span style={{ fontWeight: 800, color: '#1e293b' }}>{t("studentDashboard.teamLeft")}</span>
+                                {m.myTeam === "B" && <span style={{ background: '#3b82f6', color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: '0.68rem', fontWeight: 800 }}>{t("studentDashboard.yourTeamTag")}</span>}
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {m.teamB.map((p, idx) => (
@@ -844,10 +857,10 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 <div className="sd-list-header" style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h3 className="sd-section-title" style={{ margin: 0 }}>
-                      ⚕️ Student Medical Clearance History
+                      {t("studentDashboard.studentMedicalHistory")}
                     </h3>
                     <p style={{ margin: "4px 0 0", color: "#5a6a80", fontSize: "0.85rem" }}>
-                      Submit and track your medical reports required for university athletic compliance.
+                      {t("studentDashboard.medicalHistoryDesc")}
                     </p>
                   </div>
                   <button 
@@ -860,7 +873,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                     className="sd-book-cta" 
                     style={{ margin: 0 }}
                   >
-                    + Upload New Report
+                    {t("studentDashboard.uploadNewReportBtn")}
                   </button>
                 </div>
 
@@ -868,25 +881,28 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 {(() => {
                   const hasApproved = medicalRecords.some(r => r.status === "APPROVED");
                   const hasPending = medicalRecords.some(r => r.status === "PENDING");
-                  let badgeText = "NON-COMPLIANT";
+                  let statusKey = "statusNonCompliant";
                   let badgeColor = "#ef4444";
                   let badgeBg = "#fee2e2";
-                  let badgeDesc = "You do not have an active approved medical clearance. Please submit your clearance report to participate in sports bookings.";
+                  let badgeDescKey = "nonCompliantDesc";
                   let badgeIcon = "❌";
 
                   if (hasApproved) {
-                    badgeText = "COMPLIANT";
+                    statusKey = "statusCompliant";
                     badgeColor = "#10b981";
                     badgeBg = "#d1fae5";
-                    badgeDesc = "Your medical clearance is active and approved. You are cleared for all sports bookings and athletic activities.";
+                    badgeDescKey = "compliantDesc";
                     badgeIcon = "✅";
                   } else if (hasPending) {
-                    badgeText = "PENDING REVIEW";
+                    statusKey = "statusPendingReview";
                     badgeColor = "#f59e0b";
                     badgeBg = "#fef3c7";
-                    badgeDesc = "Your latest medical clearance report is currently under review by the university coaching staff.";
+                    badgeDescKey = "pendingReviewDesc";
                     badgeIcon = "⏳";
                   }
+
+                  const badgeText = t(`studentDashboard.${statusKey}`);
+                  const badgeDesc = t(`studentDashboard.${badgeDescKey}`);
 
                   return (
                     <div style={{
@@ -902,7 +918,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                     }}>
                       <div style={{ fontSize: "2rem" }}>{badgeIcon}</div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>Compliance Status: {badgeText}</div>
+                        <div style={{ fontWeight: 700, fontSize: "1.1rem" }}>{t("studentDashboard.complianceStatusLabel", { status: badgeText })}</div>
                         <div style={{ color: "#334155", fontSize: "0.88rem", marginTop: 4 }}>{badgeDesc}</div>
                       </div>
                     </div>
@@ -912,25 +928,25 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 {medLoading ? (
                   <div className="sd-loading">
                     <div className="sd-spinner" />
-                    <p>Loading your medical clearance records...</p>
+                    <p>{t("studentDashboard.loadingMedicalRecords")}</p>
                   </div>
                 ) : medicalRecords.length === 0 ? (
                   <div className="sd-empty">
                     <div style={{ fontSize: "3rem" }}>⚕️</div>
-                    <h3>No Medical Records Uploaded</h3>
-                    <p>You haven't uploaded any medical clearance documents yet. Click 'Upload New Report' above to submit your first record.</p>
+                    <h3>{t("studentDashboard.noMedicalRecordsUploaded")}</h3>
+                    <p>{t("studentDashboard.medicalRecordsUploadPrompt")}</p>
                   </div>
                 ) : (
                   <div className="ac-table-wrap" style={{ marginTop: 12 }}>
                     <table className="ac-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
                         <tr>
-                          <th>Document Name</th>
-                          <th>Submitted Date</th>
-                          <th>Submitted By</th>
-                          <th>Status</th>
-                          <th>Description</th>
-                          <th>Download/View</th>
+                          <th>{t("studentDashboard.docNameCol")}</th>
+                          <th>{t("studentDashboard.submittedDateCol")}</th>
+                          <th>{t("studentDashboard.submittedByCol")}</th>
+                          <th>{t("studentDashboard.statusCol")}</th>
+                          <th>{t("studentDashboard.descriptionCol")}</th>
+                          <th>{t("studentDashboard.downloadCol")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -941,7 +957,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                                 📄 {r.documentName}
                               </div>
                             </td>
-                            <td>{new Date(r.createdAt).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                            <td>{new Date(r.createdAt).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                             <td>
                               <span className="ac-role-badge" data-role={r.submittedBy}>{r.submittedBy}</span>
                             </td>
@@ -953,7 +969,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                                 borderRadius: 6,
                                 fontWeight: 700
                               }}>
-                                {r.status}
+                                {t(`studentDashboard.status${r.status.charAt(0) + r.status.slice(1).toLowerCase()}`) || r.status}
                               </span>
                             </td>
                             <td style={{ fontSize: "0.85rem", color: "#475569", maxWidth: 250, whiteSpace: "pre-wrap" }}>
@@ -968,10 +984,10 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                                 style={{ textDecoration: 'none', display: 'inline-block', padding: '4px 10px', fontSize: '0.82rem' }}
                                 onClick={(e) => {
                                   e.preventDefault();
-                                  alert(`Downloading simulated file: ${r.documentName}\nPath: ${r.documentUrl}`);
+                                  alert(t("studentDashboard.simulatedDownloadAlert", { name: r.documentName, url: r.documentUrl }));
                                 }}
                               >
-                                📥 Download
+                                📥 {t("studentDashboard.downloadBtn")}
                               </a>
                             </td>
                           </tr>
@@ -988,10 +1004,10 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 <div className="sd-list-header" style={{ marginBottom: 24 }}>
                   <div>
                     <h3 className="sd-section-title" style={{ margin: 0 }}>
-                      ⚖️ Fairness & Court Rotation Transparency Index
+                      {t("studentDashboard.fairnessIndexTitle")}
                     </h3>
                     <p style={{ margin: "4px 0 0", color: "#5a6a80", fontSize: "0.85rem" }}>
-                      Real-time status of the multi-purpose court balancing engine (Basketball & Volleyball)
+                      {t("studentDashboard.fairnessIndexSub")}
                     </p>
                   </div>
                   <button 
@@ -1000,20 +1016,20 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                     style={{ padding: "6px 14px" }}
                     disabled={fairnessLoading}
                   >
-                    {fairnessLoading ? "Refreshing..." : "🔄 Refresh Metrics"}
+                    {fairnessLoading ? t("studentDashboard.refreshing") : t("studentDashboard.refreshMetricsBtn")}
                   </button>
                 </div>
 
                 {fairnessLoading && !fairnessData ? (
                   <div className="sd-loading">
                     <div className="sd-spinner" />
-                    <p>Fetching real-time fairness metrics...</p>
+                    <p>{t("studentDashboard.fetchingFairness")}</p>
                   </div>
                 ) : !fairnessData ? (
                   <div className="sd-empty">
                     <div style={{ fontSize: "3rem" }}>⚠️</div>
-                    <h3>Fairness Data Unavailable</h3>
-                    <p>Could not load the court rotation engine statistics. Please check back later.</p>
+                    <h3>{t("studentDashboard.fairnessUnavailable")}</h3>
+                    <p>{t("studentDashboard.fairnessUnavailableDesc")}</p>
                   </div>
                 ) : (
                   <div className="sd-fairness-content">
@@ -1024,14 +1040,14 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                       <div className="sd-fairness-info-card priority">
                         <div className="sd-info-card-header">
                           <span className="sd-info-card-icon">👑</span>
-                          <span className="sd-info-card-title">This Week's Priority</span>
+                          <span className="sd-info-card-title">{t("studentDashboard.weeksPriority")}</span>
                         </div>
                         <div className="sd-info-card-body">
                           <div className="sd-priority-badge-large">
                             {fairnessData.currentPrioritySport === "Basketball" ? "🏀 Basketball" : "🏐 Volleyball"}
                           </div>
                           <p className="sd-info-card-desc">
-                            Currently favored for standard booking slots based on active player density and recent quota deficit.
+                            {t("studentDashboard.weeksPriorityDesc")}
                           </p>
                         </div>
                       </div>
@@ -1040,15 +1056,15 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                       <div className="sd-fairness-info-card prime-time">
                         <div className="sd-info-card-header">
                           <span className="sd-info-card-icon">⚡</span>
-                          <span className="sd-info-card-title">Prime Time Allocation (5pm - 9pm)</span>
+                          <span className="sd-info-card-title">{t("studentDashboard.primeTimePriority")}</span>
                         </div>
                         <div className="sd-info-card-body">
                           <div className="sd-priority-badge-large prime">
                             {fairnessData.primeTimePrioritySport === "Basketball" ? "🏀 Basketball" : 
-                             fairnessData.primeTimePrioritySport === "Volleyball" ? "🏐 Volleyball" : "🌟 Shared / Free"}
+                             fairnessData.primeTimePrioritySport === "Volleyball" ? "🏐 Volleyball" : t("studentDashboard.sharedFree")}
                           </div>
                           <p className="sd-info-card-desc">
-                            Prime hours rotate weekly. The priority sport has exclusive booking privileges until 24h before the slot, when it releases to all.
+                            {t("studentDashboard.primeTimePriorityDesc")}
                           </p>
                         </div>
                       </div>
@@ -1057,7 +1073,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                       <div className="sd-fairness-info-card scores">
                         <div className="sd-info-card-header">
                           <span className="sd-info-card-icon">📊</span>
-                          <span className="sd-info-card-title">Mathematical Priority Scores</span>
+                          <span className="sd-info-card-title">{t("studentDashboard.priorityScores")}</span>
                         </div>
                         <div className="sd-info-card-body">
                           <div className="sd-score-comparison">
@@ -1077,7 +1093,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                             </div>
                           </div>
                           <p className="sd-info-card-desc" style={{ marginTop: 8 }}>
-                            Higher score = higher priority. Formula factors: player base ratio, weekly quota debt, and prime-time disadvantage.
+                            {t("studentDashboard.priorityScoresDesc")}
                           </p>
                         </div>
                       </div>
@@ -1087,52 +1103,52 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                     {/* Quota Progress & Details */}
                     <div className="sd-fairness-details-section">
                       <div className="sd-quota-section">
-                        <h4 className="sd-details-title">📅 Weekly Quota Achievement (84 Total Hours)</h4>
+                        <h4 className="sd-details-title">{t("studentDashboard.weeklyQuotaTitle")}</h4>
                         
                         <div className="sd-quota-progress-card">
                           <div className="sd-quota-label-row">
-                            <span className="sd-quota-sport">🏀 Basketball Quota Achievement</span>
+                            <span className="sd-quota-sport">{t("studentDashboard.basketballQuota")}</span>
                             <span className="sd-quota-percent">{fairnessData.quotaAchievement.Basketball}%</span>
                           </div>
                           <div className="sd-quota-progress-bg">
                             <div className="sd-quota-progress-fill bb" style={{ width: `${Math.min(100, fairnessData.quotaAchievement.Basketball)}%` }} />
                           </div>
                           <div className="sd-quota-meta-row">
-                            <span>Booked: <strong>{fairnessData.bookedHours.Basketball} hrs</strong></span>
-                            <span>Active Players: <strong>{fairnessData.activePlayers.Basketball}</strong></span>
+                            <span>{t("studentDashboard.bookedHoursLabel", { count: fairnessData.bookedHours.Basketball })}</span>
+                            <span>{t("studentDashboard.activePlayersLabel", { count: fairnessData.activePlayers.Basketball })}</span>
                           </div>
                         </div>
 
                         <div className="sd-quota-progress-card" style={{ marginTop: 16 }}>
                           <div className="sd-quota-label-row">
-                            <span className="sd-quota-sport">🏐 Volleyball Quota Achievement</span>
+                            <span className="sd-quota-sport">{t("studentDashboard.volleyballQuota")}</span>
                             <span className="sd-quota-percent">{fairnessData.quotaAchievement.Volleyball}%</span>
                           </div>
                           <div className="sd-quota-progress-bg">
                             <div className="sd-quota-progress-fill vb" style={{ width: `${Math.min(100, fairnessData.quotaAchievement.Volleyball)}%` }} />
                           </div>
                           <div className="sd-quota-meta-row">
-                            <span>Booked: <strong>{fairnessData.bookedHours.Volleyball} hrs</strong></span>
-                            <span>Active Players: <strong>{fairnessData.activePlayers.Volleyball}</strong></span>
+                            <span>{t("studentDashboard.bookedHoursLabel", { count: fairnessData.bookedHours.Volleyball })}</span>
+                            <span>{t("studentDashboard.activePlayersLabel", { count: fairnessData.activePlayers.Volleyball })}</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Fairness Policy Guidelines */}
                       <div className="sd-policies-section">
-                        <h4 className="sd-details-title">🛡️ Smart Fairness Policies</h4>
+                        <h4 className="sd-details-title">{t("studentDashboard.smartFairnessPolicies")}</h4>
                         <ul className="sd-policies-list">
                           <li>
-                            <strong>🚫 Anti-Monopoly Rules:</strong> Users have a 24-hour reservation cooldown and a limit of maximum 3 bookings per week.
+                            <strong>{t("studentDashboard.antiMonopolyRule")}</strong>
                           </li>
                           <li>
-                            <strong>⏱️ Consecutive Slot Limit:</strong> Any consecutive bookings totaling more than 2 hours for a single group/team (defined as 50% or more player overlap) are blocked.
+                            <strong>{t("studentDashboard.consecutiveLimitRule")}</strong>
                           </li>
                           <li>
-                            <strong>⚡ Auto-Resolution of Overlaps:</strong> If court times overlap, the booking request with the higher Priority Score wins instantly. Lower-priority bookings are rescheduled or canceled transparently.
+                            <strong>{t("studentDashboard.overlapResolutionRule")}</strong>
                           </li>
                           <li>
-                            <strong>🌍 Public Transparency:</strong> Real-time parameters and algorithms are published to guarantee equal access and eliminate court hogging.
+                            <strong>{t("studentDashboard.publicTransparencyRule")}</strong>
                           </li>
                         </ul>
                       </div>
@@ -1146,11 +1162,11 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
             <div className="sd-list-card">
               <div className="sd-list-header">
                 <h3 className="sd-section-title" style={{ margin: 0 }}>
-                  {activeTab === "attendance" ? "📍 Check-in/Check-out" :
-                    activeTab === "conflicts" ? "⚠️ Booking Conflicts" :
-                    activeTab === "upcoming" ? "🔜 Upcoming Bookings" :
-                      activeTab === "completed" ? "🏁 Completed Sessions" :
-                        "📋 All Bookings"}
+                  {activeTab === "attendance" ? t("studentDashboard.checkinCheckoutTab") :
+                    activeTab === "conflicts" ? t("studentDashboard.bookingConflictsTab") :
+                    activeTab === "upcoming" ? t("studentDashboard.upcomingBookingsTab") :
+                    activeTab === "completed" ? t("studentDashboard.completedSessionsTab") :
+                    t("studentDashboard.allBookingsTab")}
                 </h3>
                 <div className="sd-filter-tabs">
                   {filterTabs.map(t => (
@@ -1169,14 +1185,14 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
               {loading ? (
                 <div className="sd-loading">
                   <div className="sd-spinner" />
-                  <p>Loading your bookings…</p>
+                  <p>{t("common.loading")}</p>
                 </div>
               ) : activeTab === "attendance" ? (
                 upcoming.length === 0 ? (
                   <div className="sd-empty">
                     <div style={{ fontSize: "3.5rem" }}>📍</div>
-                    <h3>No upcoming bookings</h3>
-                    <p>Book a facility to start checking in.</p>
+                    <h3>{t("studentDashboard.noUpcomingBookings")}</h3>
+                    <p>{t("studentDashboard.bookFacilityToStart")}</p>
                   </div>
                 ) : (
                   <div className="sd-booking-list">
@@ -1203,8 +1219,8 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 conflictsById.length === 0 ? (
                   <div className="sd-empty">
                     <div style={{ fontSize: "3.5rem" }}>⚠️</div>
-                    <h3>No conflicts</h3>
-                    <p>You have no booking conflicts right now.</p>
+                    <h3>{t("studentDashboard.noConflicts")}</h3>
+                    <p>{t("studentDashboard.noConflictsDesc")}</p>
                   </div>
                 ) : (
                   <div className="sd-booking-list">
@@ -1217,20 +1233,22 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                         <div className="sd-conflict-card" key={c.id}>
                           <div className="sd-conflict-left">
                             <div className="sd-conflict-fac">{FACILITY_ICONS(sample.facility?.name)} {sample.facility?.name}</div>
-                            <div className="sd-conflict-time">{start.toLocaleString()}</div>
-                            <div className="sd-conflict-count">{c.bookings.length} bookings — {otherCount} other{otherCount!==1?"s":""}</div>
+                            <div className="sd-conflict-time">{start.toLocaleString(locale)}</div>
+                            <div className="sd-conflict-count">
+                              {t("studentDashboard.bookingsCountLabel", { count: c.bookings.length, otherCount, plural: (otherCount !== 1 ? "s" : "") })}
+                            </div>
                           </div>
                           <div className="sd-conflict-right">
-                            <button className="sd-view-conflict" onClick={() => { setActiveConflict(c); setShowConflictDetail(true); }}>View details</button>
+                            <button className="sd-view-conflict" onClick={() => { setActiveConflict(c); setShowConflictDetail(true); }}>{t("studentDashboard.viewDetailsBtn")}</button>
                             <button className="sd-dispute-btn" onClick={() => {
                               // prefill dispute modal with student's booking id and conflict id
                               const myBooking = c.bookings.find(b => b.userId === session?.id);
                               setFbFacility(myBooking?.facilityId || sample.facilityId);
                               setFbBookingId(myBooking?.id || "");
                               setFbConflictId(c.id);
-                              setFbComment(`Dispute regarding conflict at ${sample.facility?.name} on ${start.toLocaleString()}`);
+                              setFbComment(`Dispute regarding conflict at ${sample.facility?.name} on ${start.toLocaleString(locale)}`);
                               setShowFeedback(true);
-                            }}>Report dispute</button>
+                            }}>{t("studentDashboard.reportDisputeBtn")}</button>
                           </div>
                         </div>
                       );
@@ -1240,14 +1258,14 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
               ) : displayBookings.length === 0 ? (
                 <div className="sd-empty">
                   <div style={{ fontSize: "3.5rem" }}>🏟️</div>
-                  <h3>{activeTab === "conflicts" ? "No conflicts" : "No bookings yet"}</h3>
+                  <h3>{activeTab === "conflicts" ? t("studentDashboard.noConflicts") : t("studentDashboard.noBookingsYet")}</h3>
                   <p>
                     {activeTab === "conflicts"
-                      ? "You have no booking conflicts right now."
-                      : "Book your first facility to get started."}
+                      ? t("studentDashboard.noConflictsDesc")
+                      : t("studentDashboard.bookFirstFacilityPrompt")}
                   </p>
                   {activeTab !== "conflicts" && (
-                    <button className="sd-book-cta" onClick={() => navigate("/book")}>Book Now</button>
+                    <button className="sd-book-cta" onClick={() => navigate("/book")}>{t("studentDashboard.bookNowBtn")}</button>
                   )}
                 </div>
               ) : (
@@ -1275,14 +1293,14 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
         <div className="sd-modal-overlay" onClick={() => setShowFeedback(false)}>
           <div className="sd-modal" onClick={e => e.stopPropagation()}>
             <button className="sd-modal-close" onClick={() => setShowFeedback(false)}>✕</button>
-            <h2 className="sd-modal-title">⭐ Give Feedback</h2>
-            <p className="sd-modal-sub">Help us improve your experience</p>
+            <h2 className="sd-modal-title">{t("studentDashboard.giveFeedbackHeader")}</h2>
+            <p className="sd-modal-sub">{t("studentDashboard.helpUsImprove")}</p>
             {fbSuccess ? (
               <div className="sd-feedback-success">{fbSuccess}</div>
             ) : (
               <form onSubmit={submitFeedback} className="sd-feedback-form">
                 {fbError && <div className="sd-feedback-error">{fbError}</div>}
-                <label>Rating
+                <label>{t("studentDashboard.ratingLabel")}
                   <div className="sd-star-row">
                     {[1, 2, 3, 4, 5].map(n => (
                       <button key={n} type="button"
@@ -1291,18 +1309,18 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                     ))}
                   </div>
                 </label>
-                <label>Category
+                <label>{t("studentDashboard.categoryLabel")}
                   <select className="sd-fb-input" value={fbFacility} onChange={e => setFbFacility(e.target.value)} required>
-                    <option value="">Select facility…</option>
+                    <option value="">{t("studentDashboard.selectFacilityPlaceholder")}</option>
                     {facilities.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                   </select>
                 </label>
-                <label>Comment
-                  <textarea className="sd-fb-input" rows={4} placeholder="Your feedback…"
+                <label>{t("studentDashboard.commentLabel")}
+                  <textarea className="sd-fb-input" rows={4} placeholder={t("studentDashboard.yourFeedbackPlaceholder")}
                     value={fbComment} onChange={e => setFbComment(e.target.value)} />
                 </label>
                 <button type="submit" className="sd-fb-submit" disabled={fbLoading}>
-                  {fbLoading ? "Submitting…" : "Submit Feedback"}
+                  {fbLoading ? t("studentDashboard.submittingFeedback") : t("studentDashboard.submitFeedbackBtn")}
                 </button>
               </form>
             )}
@@ -1315,19 +1333,21 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
         <div className="sd-modal-overlay" onClick={() => setShowConflictDetail(false)}>
           <div className="sd-modal" onClick={e => e.stopPropagation()}>
             <button className="sd-modal-close" onClick={() => setShowConflictDetail(false)}>✕</button>
-            <h2 className="sd-modal-title">⚠️ Conflict Details</h2>
-            <p className="sd-modal-sub">Bookings involved in this conflict</p>
+            <h2 className="sd-modal-title">{t("studentDashboard.conflictDetailsHeader")}</h2>
+            <p className="sd-modal-sub">{t("studentDashboard.involvedBookings")}</p>
             <div className="sd-conflict-detail-list">
               {activeConflict.bookings.map(b => (
                 <div key={b.id} className="sd-conflict-detail-item">
                   <div className="sd-conflict-detail-left">
                     <div className="sd-conflict-fac-small">{FACILITY_ICONS(b.facility?.name)} {b.facility?.name}</div>
-                    <div className="sd-conflict-time-small">{new Date(b.startTime).toLocaleString()}</div>
-                    <div className="sd-conflict-user">{b.user?.fullName ? b.user.fullName : (b.userId === session?.id ? "You" : "Student")}</div>
+                    <div className="sd-conflict-time-small">{new Date(b.startTime).toLocaleString(locale)}</div>
+                    <div className="sd-conflict-user">{b.user?.fullName ? b.user.fullName : (b.userId === session?.id ? t("studentDashboard.youTag") : t("studentDashboard.studentTag"))}</div>
                   </div>
                   <div className="sd-conflict-detail-right">
-                    <span className="sd-status-badge" style={{ background: "#fee2e2", color: "#ef4444" }}>{b.status}</span>
-                    {b.userId === session?.id && <span className="sd-you-tag">Your booking</span>}
+                    <span className="sd-status-badge" style={{ background: "#fee2e2", color: "#ef4444" }}>
+                      {t(`studentDashboard.status${b.status.charAt(0) + b.status.slice(1).toLowerCase()}`) || b.status}
+                    </span>
+                    {b.userId === session?.id && <span className="sd-you-tag">{t("studentDashboard.yourBookingTag")}</span>}
                   </div>
                 </div>
               ))}
@@ -1338,11 +1358,11 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 const sample = activeConflict.bookings[0];
                 setFbFacility(myBooking?.facilityId || sample.facilityId);
                 setFbBookingId(myBooking?.id || "");
-                setFbComment(`Dispute regarding conflict at ${sample.facility?.name} on ${new Date(sample.startTime).toLocaleString()}`);
+                setFbComment(`Dispute regarding conflict at ${sample.facility?.name} on ${new Date(sample.startTime).toLocaleString(locale)}`);
                 setShowFeedback(true);
                 setShowConflictDetail(false);
-              }}>Report dispute</button>
-              <button className="sd-close-btn" onClick={() => setShowConflictDetail(false)}>Close</button>
+              }}>{t("studentDashboard.reportDisputeBtn")}</button>
+              <button className="sd-close-btn" onClick={() => setShowConflictDetail(false)}>{t("studentDashboard.closeBtn")}</button>
             </div>
           </div>
         </div>
@@ -1353,15 +1373,15 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
         <div className="sd-modal-overlay" onClick={() => { if (!medUploading) setShowUploadMedical(false); }}>
           <div className="sd-modal" onClick={e => e.stopPropagation()}>
             <button className="sd-modal-close" onClick={() => { if (!medUploading) setShowUploadMedical(false); }}>✕</button>
-            <h2 className="sd-modal-title">⚕️ Submit Medical Clearance</h2>
-            <p className="sd-modal-sub">Upload your medical clearance certificate from your device</p>
+            <h2 className="sd-modal-title">{t("studentDashboard.submitMedicalClearanceHeader")}</h2>
+            <p className="sd-modal-sub">{t("studentDashboard.uploadCertificateSub")}</p>
             {medSuccess ? (
               <div className="sd-feedback-success" style={{ margin: 0, padding: 16 }}>{medSuccess}</div>
             ) : (
               <form onSubmit={handleUploadMedical} className="sd-feedback-form">
                 {medError && <div className="sd-feedback-error">{medError}</div>}
                 
-                <label>Clearance Certificate (PDF or Image)
+                <label>{t("studentDashboard.docNameCol")}
                   {!selectedFile ? (
                     <div 
                       className={`sd-dropzone ${isDragOver ? "dragover" : ""}`}
@@ -1377,9 +1397,9 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                       onClick={() => document.getElementById("clearance-file-input").click()}
                     >
                       <span className="sd-dropzone-icon">📁</span>
-                      <span className="sd-dropzone-text">Drag & drop your medical certificate here</span>
-                      <span className="sd-dropzone-subtext">or click to browse from your device</span>
-                      <span className="sd-dropzone-subtext" style={{ fontSize: '0.68rem', color: '#a0aec0' }}>Supports PDF, PNG, JPG (Max 5MB)</span>
+                      <span className="sd-dropzone-text">{t("studentDashboard.dragDropPrompt")}</span>
+                      <span className="sd-dropzone-subtext">{t("studentDashboard.browseFilePrompt")}</span>
+                      <span className="sd-dropzone-subtext" style={{ fontSize: '0.68rem', color: '#a0aec0' }}>{t("studentDashboard.fileFormatsPrompt")}</span>
                       <input 
                         id="clearance-file-input"
                         type="file"
@@ -1414,7 +1434,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 {medUploading && uploadProgress > 0 && (
                   <div className="sd-progress-container">
                     <div className="sd-progress-label">
-                      <span>Simulating secure upload...</span>
+                      <span>{t("studentDashboard.simulatedUploadProgress")}</span>
                       <span>{uploadProgress}%</span>
                     </div>
                     <div className="sd-progress-bg">
@@ -1423,11 +1443,11 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                   </div>
                 )}
 
-                <label>Medical Clearance Notes / Description
+                <label>{t("studentDashboard.notesDescriptionLabel")}
                   <textarea 
                     className="sd-fb-input" 
                     rows={4} 
-                    placeholder="Provide any doctor details or specific notes (e.g., cleared for high-intensity sports)..." 
+                    placeholder={t("studentDashboard.notesPlaceholder")} 
                     value={medForm.description} 
                     onChange={e => setMedForm(p => ({ ...p, description: e.target.value }))} 
                     required 
@@ -1435,7 +1455,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                 </label>
 
                 <button type="submit" className="sd-fb-submit" disabled={medUploading || (!selectedFile && !medForm.documentName)}>
-                  {medUploading ? "Uploading & Submitting..." : "Submit for Approval"}
+                  {medUploading ? t("studentDashboard.uploadingAndSubmitting") : t("studentDashboard.submitForApprovalBtn")}
                 </button>
               </form>
             )}

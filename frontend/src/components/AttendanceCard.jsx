@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import "../AdminDashboard.css"; // استخدام نفس الـ styling
+import { useLanguage } from "../context/LanguageContext";
 
 export default function AttendanceCard({
   booking,
@@ -7,6 +8,8 @@ export default function AttendanceCard({
   onCheckOut,
   API,
 }) {
+  const { language, t } = useLanguage();
+  const locale = language === "ar" ? "ar-EG" : "en-GB";
   const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState(null);
   const [distance, setDistance] = useState(null);
@@ -25,7 +28,7 @@ export default function AttendanceCard({
   const getCurrentLocation = async () => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
-        setError("متصفحك لا يدعم تحديد الموقع الجغرافي");
+        setError(t("attendance.browserNoSupport"));
         resolve(null);
         return;
       }
@@ -38,13 +41,13 @@ export default function AttendanceCard({
         },
         (error) => {
           const errorMessages = {
-            "1": "يجب السماح بالوصول إلى موقعك الجغرافي",
-            "2": "لم نتمكن من تحديد موقعك الجغرافي",
-            "3": "انتهت مهلة تحديد الموقع",
+            "1": t("attendance.locationPermissionDenied"),
+            "2": t("attendance.locationUnavailable"),
+            "3": t("attendance.locationTimeout"),
           };
           setError(
             errorMessages[error.code] ||
-              "خطأ في تحديد الموقع الجغرافي"
+              t("attendance.locationErrorDefault")
           );
           resolve(null);
         }
@@ -138,7 +141,7 @@ export default function AttendanceCard({
     ctx.fillStyle = "#FFFFFF";
     ctx.font = "10px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("المنشأة", centerX, centerY - 15);
+    ctx.fillText(t("attendance.mapLabelFacility"), centerX, centerY - 15);
 
     // رسم موقع الطالب (إن وجد)
     if (studentLat !== undefined && studentLon !== undefined) {
@@ -160,7 +163,7 @@ export default function AttendanceCard({
       ctx.fillStyle = "#FFFFFF";
       ctx.font = "10px Arial";
       ctx.textAlign = "center";
-      ctx.fillText("أنت", studentX, studentY - 12);
+      ctx.fillText(t("attendance.mapLabelYou"), studentX, studentY - 12);
 
       // رسم خط يربط بين الموقعين
       ctx.strokeStyle = "#FFA500";
@@ -195,7 +198,7 @@ export default function AttendanceCard({
 
     const data = await response.json();
     if (!response.ok || data.success === false) {
-      throw new Error(data.message || "فشل تحديث الموقع");
+      throw new Error(data.message || t("attendance.locationFail"));
     }
     if (typeof data.insideField === "boolean") {
       setInsideField(data.insideField);
@@ -211,7 +214,7 @@ export default function AttendanceCard({
     try {
       const loc = await getCurrentLocation();
       if (!loc) {
-        setError("لم نتمكن من الحصول على موقعك الجغرافي");
+        setError(t("attendance.locationFail"));
         setLoading(false);
         return;
       }
@@ -232,7 +235,7 @@ export default function AttendanceCard({
       const data = await response.json();
 
       if (data.success) {
-        setSuccess("تم تسجيل حضورك بنجاح! ✓");
+        setSuccess(t("attendance.checkinSuccess"));
         onCheckIn(true, data.message);
         drawMap(
           booking.facility?.latitude || 30.0544,
@@ -245,7 +248,7 @@ export default function AttendanceCard({
         onCheckIn(false, data.message);
       }
     } catch (err) {
-      setError("خطأ في الاتصال: " + err.message);
+      setError(t("attendance.connError") + err.message);
       onCheckIn(false, err.message);
     } finally {
       setLoading(false);
@@ -273,14 +276,14 @@ export default function AttendanceCard({
       const data = await response.json();
 
       if (data.success) {
-        setSuccess("تم تسجيل انصرافك بنجاح! ✓");
+        setSuccess(t("attendance.checkoutSuccess"));
         onCheckOut(true, data.message);
       } else {
         setError(data.message);
         onCheckOut(false, data.message);
       }
     } catch (err) {
-      setError("خطأ في الاتصال: " + err.message);
+      setError(t("attendance.connError") + err.message);
       onCheckOut(false, err.message);
     } finally {
       setLoading(false);
@@ -371,22 +374,22 @@ export default function AttendanceCard({
       backgroundColor: "#fafafa",
     }}>
       <h4 style={{ marginBottom: "10px", color: "#333" }}>
-        📍 {booking.facility?.name || "منشأة"}
+        📍 {booking.facility?.name || t("attendance.facility")}
       </h4>
 
       <p style={{ marginBottom: "8px", color: "#666", fontSize: "14px" }}>
-        <strong>الموعد:</strong> {startTime.toLocaleString("ar-EG")}
+        <strong>{t("attendance.time")}</strong> {startTime.toLocaleString(locale)}
       </p>
 
       <p style={{ marginBottom: "8px", color: canCheckInNow ? "#2e7d32" : "#92400e", fontSize: "13px" }}>
-        <strong>نافذة الحضور:</strong> {checkInOpensAt.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+        <strong>{t("attendance.window")}</strong> {checkInOpensAt.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
         {" "}→{" "}
-        {checkInClosesAt.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}
+        {checkInClosesAt.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
       </p>
 
       {location && (
         <p style={{ marginBottom: "8px", color: "#5a6a80", fontSize: "12px" }}>
-          <strong>موقعك الحالي:</strong> {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
+          <strong>{t("attendance.yourLocation")}</strong> {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
         </p>
       )}
 
@@ -404,7 +407,7 @@ export default function AttendanceCard({
           color: "#1f2937"
         }}
       >
-        📡 تحديث الموقع على الخريطة
+        {t("attendance.updateLocationBtn")}
       </button>
 
       <div ref={mapContainer} style={{ marginBottom: "15px" }} />
@@ -417,7 +420,7 @@ export default function AttendanceCard({
           borderRadius: "4px",
           color: distance * 1000 <= Math.min((booking.facility?.geofencingRadius ?? 0.004) * 1000, 4) ? "#2e7d32" : "#c62828",
         }}>
-          <strong>المسافة:</strong> {Math.round(distance * 1000)} متر من المنشأة
+          <strong>{t("attendance.distance")}</strong> {Math.round(distance * 1000)} {t("attendance.metersFromFacility")}
         </p>
       )}
 
@@ -431,13 +434,13 @@ export default function AttendanceCard({
           color: insideField ? "#2e7d32" : "#c62828",
           fontWeight: "bold",
         }}>
-          {insideField ? "🟢 الحالة الآن: داخل الملعب" : "🔴 الحالة الآن: خارج الملعب"}
+          {insideField ? t("attendance.insideField") : t("attendance.outsideField")}
         </p>
       )}
 
       {booking.checkedInAt && (
         <p style={{ marginBottom: "8px", color: "#666", fontSize: "14px" }}>
-          <strong>✓ وقت الحضور:</strong> {new Date(booking.checkedInAt).toLocaleTimeString("ar-EG")}
+          <strong>{t("attendance.checkedInTime")}</strong> {new Date(booking.checkedInAt).toLocaleTimeString(locale)}
         </p>
       )}
 
@@ -484,7 +487,7 @@ export default function AttendanceCard({
               fontWeight: "bold",
             }}
           >
-            {loading ? "جاري التحميل..." : "✓ تسجيل الحضور"}
+            {loading ? t("attendance.loading") : t("attendance.checkinBtn")}
           </button>
         )}
 
@@ -504,7 +507,7 @@ export default function AttendanceCard({
               fontWeight: "bold",
             }}
           >
-            {loading ? "جاري التحميل..." : "↪ تسجيل الانصراف"}
+            {loading ? t("attendance.loading") : t("attendance.checkoutBtn")}
           </button>
         )}
 
@@ -518,7 +521,7 @@ export default function AttendanceCard({
             textAlign: "center",
             fontWeight: "bold",
           }}>
-            ✓ تم الانتهاء
+            {t("attendance.doneBtn")}
           </div>
         )}
       </div>
@@ -532,16 +535,14 @@ export default function AttendanceCard({
         color: "#999",
       }}>
         <p style={{ marginBottom: "5px" }}>
-          <strong>ملاحظات:</strong>
+          <strong>{t("attendance.notesTitle")}</strong>
         </p>
         <ul style={{ margin: "5px 0", paddingLeft: "20px" }}>
-          <li>يمكنك تسجيل الحضور من 15 دقيقة قبل بدء الحجز</li>
+          <li>{t("attendance.note1")}</li>
           <li>
-            يجب أن تكون ضمن نطاق{" "}
-            {Math.min(Math.round((booking.facility?.geofencingRadius ?? 0.004) * 1000), 4)} متر من
-            المنشأة
+            {t("attendance.note2", { radius: Math.min(Math.round((booking.facility?.geofencingRadius ?? 0.004) * 1000), 4) })}
           </li>
-          <li>سيتم حساب نقاط المشاركة فقط عند تسجيل الحضور</li>
+          <li>{t("attendance.note3")}</li>
         </ul>
       </div>
     </div>

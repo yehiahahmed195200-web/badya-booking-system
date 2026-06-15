@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import "./App.css";
+import { useLanguage } from "./context/LanguageContext";
 
 import LoginPage from "./pages/LoginPage";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -23,6 +24,7 @@ async function fetchJson(path) {
 }
 
 export default function App() {
+  const { language, toggleLanguage, t } = useLanguage();
   const [form, setForm] = useState({ email: "admin@badya.edu", password: "Admin@123" });
   const [message, setMessage] = useState("Use demo account and click Sign In");
   const [errorMessage, setErrorMessage] = useState("");
@@ -246,12 +248,12 @@ export default function App() {
           <header className="site-nav" id="brand">
             <div className="nav-inner">
               <nav className="nav-links">
-                <a href="/#about">About Us</a>
-                <a href="/#contact">Contact Us</a>
-                <Link to="/login">Login</Link>
+                <a href="/#about">{t("navbar.about")}</a>
+                <a href="/#contact">{t("navbar.contact")}</a>
+                {!session && <Link to="/login">{t("navbar.login")}</Link>}
               </nav>
               <div className="brand-wrap">
-                <div className="brand">Badya University</div>
+                <div className="brand">{t("login.title")}</div>
                 <img
                   className="brand-logo"
                   src="/badya-logo.png"
@@ -295,7 +297,7 @@ export default function App() {
         <div className="modal-overlay" onClick={() => setShowRegister(false)}>
           <div className="modal-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Create Account</h2>
+              <h2>{t("login.createAccount")}</h2>
               <button className="modal-close" onClick={() => setShowRegister(false)}>✕</button>
             </div>
             {regSuccess ? (
@@ -306,32 +308,32 @@ export default function App() {
               <form onSubmit={onRegisterSubmit} className="login-form">
                 {regError && <div className="login-error">{regError}</div>}
                 <label className="login-label">
-                  Full Name
-                  <input className="login-input" type="text" required placeholder="Ahmed Mohamed"
+                  {t("login.fullName")}
+                  <input className="login-input" type="text" required placeholder={t("login.fullNamePlaceholder")}
                     value={regForm.fullName} onChange={e => setRegForm(p => ({ ...p, fullName: e.target.value }))} />
                 </label>
                 <label className="login-label">
-                  Student ID
-                  <input className="login-input" type="text" required placeholder="STD-2024-001"
+                  {t("login.fullName").includes("الاسم") ? "الرقم الجامعي" : "Student ID"}
+                  <input className="login-input" type="text" required placeholder={t("login.studentIdPlaceholder")}
                     value={regForm.studentId} onChange={e => setRegForm(p => ({ ...p, studentId: e.target.value }))} />
                 </label>
                 <label className="login-label">
-                  Email Address
-                  <input className="login-input" type="email" required placeholder="name@badya.edu"
+                  {t("login.email")}
+                  <input className="login-input" type="email" required placeholder={t("login.emailPlaceholder")}
                     value={regForm.email} onChange={e => setRegForm(p => ({ ...p, email: e.target.value }))} />
                 </label>
                 <label className="login-label">
-                  Password
+                  {t("login.password")}
                   <input className="login-input" type="password" required placeholder="Min. 6 characters"
                     value={regForm.password} onChange={e => setRegForm(p => ({ ...p, password: e.target.value }))} />
                 </label>
                 <label className="login-label">
-                  Confirm Password
+                  {t("login.confirmPassword")}
                   <input className="login-input" type="password" required placeholder="Repeat password"
                     value={regForm.confirmPassword} onChange={e => setRegForm(p => ({ ...p, confirmPassword: e.target.value }))} />
                 </label>
                 <button type="submit" className="login-primary" disabled={regLoading}>
-                  {regLoading ? "Creating..." : "Create Account"}
+                  {regLoading ? t("common.loading") : t("login.submitRegister")}
                   {!regLoading && <span aria-hidden="true">→</span>}
                 </button>
               </form>
@@ -339,6 +341,37 @@ export default function App() {
           </div>
         </div>
       )}
+      
+      {/* Floating Language Toggle Button */}
+      <button 
+        onClick={toggleLanguage} 
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          left: "20px",
+          zIndex: 1000,
+          background: "linear-gradient(135deg, #1cb2bf, #0d8b96)",
+          color: "#fff",
+          border: "none",
+          borderRadius: "50%",
+          width: "50px",
+          height: "50px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 4px 12px rgba(13, 139, 150, 0.3)",
+          cursor: "pointer",
+          fontWeight: "bold",
+          fontSize: "0.85rem",
+          transition: "transform 0.2s ease"
+        }}
+        title={language === "en" ? "تحويل للعربية" : "Switch to English"}
+        onMouseOver={(e) => e.currentTarget.style.transform = "scale(1.1)"}
+        onMouseOut={(e) => e.currentTarget.style.transform = "scale(1.0)"}
+      >
+        {language === "en" ? "عربي" : "EN"}
+      </button>
+
       </div>
     </NotificationProvider>
   );

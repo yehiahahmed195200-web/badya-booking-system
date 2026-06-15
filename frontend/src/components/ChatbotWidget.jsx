@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import "./ChatbotWidget.css";
+import { useLanguage } from "../context/LanguageContext";
 
 // Fallback Gemini API key (Base64 obfuscated to prevent GitHub Push Protection triggers)
 const OBFUSCATED_KEY = "QVEuQWI4Uk42SlFsZHUwdVE5OFp0ank3Zzc0UGNYRVNCSWFEZUdKNDliaDJoUEJSd0g5eXc=";
@@ -29,6 +30,7 @@ const DEFAULT_KNOWLEDGE = `
 `;
 
 export default function ChatbotWidget({ session }) {
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -36,10 +38,17 @@ export default function ChatbotWidget({ session }) {
   const [isTyping, setIsTyping] = useState(false);
   const [uploadedDocs, setUploadedDocs] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [fileStatus, setFileStatus] = useState("لم يتم اختيار ملف");
+  const [fileStatus, setFileStatus] = useState(language === "ar" ? "لم يتم اختيار ملف" : "No file chosen");
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Sync fileStatus on language change
+  useEffect(() => {
+    if (!selectedFile) {
+      setFileStatus(language === "ar" ? "لم يتم اختيار ملف" : "No file chosen");
+    }
+  }, [language, selectedFile]);
 
   // Auto-scroll to the bottom of the message container
   useEffect(() => {
@@ -52,11 +61,11 @@ export default function ChatbotWidget({ session }) {
       setMessages([
         {
           role: "bot",
-          content: "أهلاً بك في Badya Concierge.\nأستطيع مساعدتك في الحجز، استعراض المرافق المتاحة، إظهار الإشعارات، أو الإجابة على أي أسئلة حول القواعد والسياسات.\n\nجرب أحد الاختصارات بالأسفل أو اكتب سؤالك مباشرة."
+          content: t("chatbot.welcome")
         }
       ]);
     }
-  }, [messages]);
+  }, [messages, t]);
 
   // Headers for backend calls
   const getBackendHeaders = () => {
@@ -324,25 +333,14 @@ If the user wants to book a facility:
       query.includes("my data")
     ) {
       if (!session) {
-        return isArabic 
-          ? "يرجى تسجيل الدخول أولاً لعرض بياناتك."
-          : "Please log in first to view your account details.";
+        return t("chatbot.loginRequired");
       }
-      if (isArabic) {
-        return `بيانات حسابك الحالي:\n` +
-               `- 👤 الاسم: ${session.fullName}\n` +
-               `- 🆔 الرقم الجامعي: ${session.studentId || "غير محدد"}\n` +
-               `- ⭐ النقاط المكتسبة: ${session.earnedPoints || session.points || 0} نقطة\n` +
-               `- ⚠️ التحذيرات: ${session.warnings || 0} (الحد الأقصى 3 قبل الحظر)\n` +
-               `- 🎫 الرصيد المتاح: ${session.credits != null ? session.credits : 10} رصيد`;
-      } else {
-        return `Your current account details:\n` +
-               `- 👤 Name: ${session.fullName}\n` +
-               `- 🆔 Student ID: ${session.studentId || "N/A"}\n` +
-               `- ⭐ Earned Points: ${session.earnedPoints || session.points || 0} pts\n` +
-               `- ⚠️ Warnings: ${session.warnings || 0} (Max 3 before ban)\n` +
-               `- 🎫 Available Credits: ${session.credits != null ? session.credits : 10}`;
-      }
+      return t("chatbot.accountDetailsHeader") + "\n" +
+             t("chatbot.profileName", { name: session.fullName }) + "\n" +
+             t("chatbot.profileId", { id: session.studentId || "N/A" }) + "\n" +
+             t("chatbot.profilePoints", { points: session.earnedPoints || session.points || 0 }) + "\n" +
+             t("chatbot.profileWarnings", { warnings: session.warnings || 0 }) + "\n" +
+             t("chatbot.profileCredits", { credits: session.credits != null ? session.credits : 10 });
     }
 
     // 1. Check if they want facilities
@@ -357,34 +355,23 @@ If the user wants to book a facility:
     ) {
       const facilities = await fetchFacilities();
       if (facilities && !facilities.error) {
-        if (isArabic) {
-          const list = facilities.map(f => `- [ملعب #${f.id}] ${f.name} (${f.category}): متاح من ${f.openTime} إلى ${f.closeTime}`).join("\n");
-          return `المرافق المتاحة حالياً:\n${list}`;
-        } else {
-          const list = facilities.map(f => `- [#${f.id}] ${f.name} (${f.category}): Open ${f.openTime} to ${f.closeTime}`).join("\n");
-          return `Available facilities:\n${list}`;
-        }
+        const list = facilities.map(f => t("chatbot.availableFacilitiesFormat", { id: f.id, name: f.name, category: f.category, open: f.openTime, close: f.closeTime })).join("\n");
+        return t("chatbot.availableFacilitiesHeader") + "\n" + list;
       }
     }
 
     // 2. Check if they want notifications
     if (query.includes("إشعارات") || query.includes("اشعارات") || query.includes("notification")) {
       if (!session) {
-        return isArabic 
-          ? "يرجى تسجيل الدخول أولاً لعرض إشعاراتك."
-          : "Please log in first to view your notifications.";
+        return t("chatbot.loginRequiredNotifications");
       }
       const notifications = await fetchNotifications(session.id);
       if (notifications && !notifications.error) {
         if (Array.isArray(notifications) && notifications.length > 0) {
           const list = notifications.map(n => `- ${n.title}: ${n.message}`).join("\n");
-          return isArabic 
-            ? `إشعاراتك الأخيرة:\n${list}`
-            : `Your recent notifications:\n${list}`;
+          return t("chatbot.recentNotificationsHeader") + "\n" + list;
         } else {
-          return isArabic 
-            ? "لا توجد إشعارات حالياً."
-            : "You have no notifications at this time.";
+          return t("chatbot.noNotifications");
         }
       }
     }
@@ -405,15 +392,11 @@ If the user wants to book a facility:
 
     if (hits.length > 0 || uploadedHits.length > 0) {
       const context = [...hits, ...uploadedHits].join("\n");
-      return isArabic
-        ? `أكيد. هذا سياق مرتبط بطلبك من التعليمات والقواعد المحلية:\n\n${context}`
-        : `Here is the closest information from our local rules and policies:\n\n${context}`;
+      return t("chatbot.closestRulesHeader") + "\n\n" + context;
     }
 
     // 4. Default message
-    return isArabic
-      ? "أكيد. لم أتمكن من العثور على إجابة مطابقة في قاعدة المعرفة المحلية حالياً، ولكن يمكنك استخدام الميزات الأخرى للنظام لحجز الملاعب مباشرة."
-      : "I couldn't find a direct match in our local knowledge base, but you can use the booking portal to reserve facilities directly.";
+    return t("chatbot.fallbackAnswer");
   };
 
   const handleSendMessage = async (textToSend) => {
@@ -495,7 +478,7 @@ If the user wants to book a facility:
       if (!GEMINI_API_KEY) {
         setMessages(prev => [
           ...prev,
-          { role: "bot", content: "عذراً، لم يتم العثور على مفتاح API لـ Gemini. يرجى إضافته في إعدادات البيئة (VITE_LLM_API_KEY) لتشغيل الخدمة." }
+          { role: "bot", content: t("chatbot.geminiKeyError") }
         ]);
         setIsTyping(false);
         return;
@@ -543,7 +526,7 @@ If the user wants to book a facility:
           }
           iterations++;
         } else {
-          finalReply = message?.content || "لم أتمكن من إيجاد رد.";
+          finalReply = message?.content || (language === "ar" ? "لم أتمكن من إيجاد رد." : "Could not find a response.");
           continueLoop = false;
         }
       }
@@ -560,7 +543,7 @@ If the user wants to book a facility:
       } catch (e) {
         setMessages(prev => [
           ...prev,
-          { role: "bot", content: "عذراً، حدث خطأ أثناء الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت أو المحاولة مرة أخرى." }
+          { role: "bot", content: t("chatbot.generalError") }
         ]);
       }
     } finally {
@@ -576,25 +559,27 @@ If the user wants to book a facility:
       setFileStatus(file.name);
     } else {
       setSelectedFile(null);
-      setFileStatus("لم يتم اختيار ملف");
+      setFileStatus(language === "ar" ? "لم يتم اختيار ملف" : "No file chosen");
     }
   };
 
   const handleUploadFile = () => {
     if (!selectedFile) {
-      alert("يرجى اختيار ملف أولاً");
+      alert(language === "ar" ? "يرجى اختيار ملف أولاً" : "Please select a file first");
       return;
     }
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target.result;
       setUploadedDocs(prev => [...prev, { title: selectedFile.name, text }]);
-      alert(`تم رفع وقراءة الملف "${selectedFile.name}" بنجاح! تم تضمينه في ذاكرة الشات بوت.`);
+      alert(language === "ar"
+        ? `تم رفع وقراءة الملف "${selectedFile.name}" بنجاح! تم تضمينه في ذاكرة الشات بوت.`
+        : `File "${selectedFile.name}" uploaded and parsed successfully! Integrated into chatbot memory.`);
       setSelectedFile(null);
-      setFileStatus("لم يتم اختيار ملف");
+      setFileStatus(language === "ar" ? "لم يتم اختيار ملف" : "No file chosen");
     };
     reader.onerror = () => {
-      alert("خطأ أثناء قراءة الملف.");
+      alert(language === "ar" ? "خطأ أثناء قراءة الملف." : "Error reading file.");
     };
     reader.readAsText(selectedFile);
   };
@@ -603,7 +588,9 @@ If the user wants to book a facility:
     setMessages([
       {
         role: "bot",
-        content: "تمت إعادة تعيين المحادثة بنجاح. كيف يمكنني مساعدتك اليوم؟"
+        content: language === "ar" 
+          ? "تمت إعادة تعيين المحادثة بنجاح. كيف يمكنني مساعدتك اليوم؟"
+          : "Chat history reset successfully. How can I help you today?"
       }
     ]);
   };
@@ -631,9 +618,9 @@ If the user wants to book a facility:
             <div className="chatbot-brand">
               <div className="chatbot-brand__logo">B</div>
               <div className="chatbot-brand__copy">
-                <span className="chatbot-brand__eyebrow">Official Support Assistant</span>
-                <div className="chatbot-brand__title">Badya Concierge</div>
-                <div className="chatbot-brand__subtitle">حجز، مرافق، إشعارات، ودعم ذكي</div>
+                <span className="chatbot-brand__eyebrow">{t("chatbot.eyebrow")}</span>
+                <div className="chatbot-brand__title">{t("chatbot.title")}</div>
+                <div className="chatbot-brand__subtitle">{t("chatbot.subtitle")}</div>
               </div>
             </div>
             <button
@@ -650,20 +637,20 @@ If the user wants to book a facility:
             <section className="chatbot-intro">
               <div className="chatbot-status-pill">
                 <span className="chatbot-status-pill__dot"></span>
-                <span>متاح الآن · متوسط الرد خلال ثوانٍ</span>
+                <span>{t("chatbot.statusPill")}</span>
               </div>
               <div className="chatbot-intro-grid">
                 <article className="chatbot-intro-card">
-                  <strong>Support</strong>
-                  <span>مساعدة فورية للحجوزات والطلبات</span>
+                  <strong>{t("chatbot.supportCardTitle")}</strong>
+                  <span>{t("chatbot.supportCardDesc")}</span>
                 </article>
                 <article className="chatbot-intro-card">
-                  <strong>Facilities</strong>
-                  <span>استعراض الملاعب والأوقات المتاحة</span>
+                  <strong>{t("chatbot.facilitiesCardTitle")}</strong>
+                  <span>{t("chatbot.facilitiesCardDesc")}</span>
                 </article>
                 <article className="chatbot-intro-card">
-                  <strong>Account</strong>
-                  <span>متابعة إشعاراتك وإدارة الحجوزات</span>
+                  <strong>{t("chatbot.accountCardTitle")}</strong>
+                  <span>{t("chatbot.accountCardDesc")}</span>
                 </article>
               </div>
             </section>
@@ -701,36 +688,36 @@ If the user wants to book a facility:
             <button
               type="button"
               className="chatbot-quick-btn"
-              onClick={() => handleSendMessage("ما هي المرافق المتاحة الآن؟")}
+              onClick={() => handleSendMessage(t("chatbot.quickActionFacilities"))}
             >
-              عرض المرافق
+              {language === "ar" ? "عرض المرافق" : "Show Facilities"}
             </button>
             <button
               type="button"
               className="chatbot-quick-btn"
-              onClick={() => handleSendMessage("أريد حجز ملعب اليوم")}
+              onClick={() => handleSendMessage(t("chatbot.quickActionBook"))}
             >
-              إنشاء حجز
+              {language === "ar" ? "إنشاء حجز" : "Create Booking"}
             </button>
             <button
               type="button"
               className="chatbot-quick-btn"
               onClick={() => {
                 if (session) {
-                  handleSendMessage(`ما هي الإشعارات الخاصة بي؟ (رقم المستخدم ${session.id})`);
+                  handleSendMessage(language === "ar" ? `ما هي الإشعارات الخاصة بي؟ (رقم المستخدم ${session.id})` : `What are my notifications? (User ID ${session.id})`);
                 } else {
-                  handleSendMessage("ما هي الإشعارات الخاصة بي؟");
+                  handleSendMessage(language === "ar" ? "ما هي الإشعارات الخاصة بي؟" : "What are my notifications?");
                 }
               }}
             >
-              الإشعارات
+              {language === "ar" ? "الإشعارات" : "Notifications"}
             </button>
             <button
               type="button"
               className="chatbot-quick-btn"
-              onClick={() => handleSendMessage("أشرح لي قواعد الحجز والسياسات بشكل مختصر")}
+              onClick={() => handleSendMessage(language === "ar" ? "أشرح لي قواعد الحجز والسياسات بشكل مختصر" : "Explain booking rules and policies briefly")}
             >
-              شرح القواعد
+              {language === "ar" ? "شرح القواعد" : "Explain Rules"}
             </button>
           </section>
 
@@ -747,7 +734,7 @@ If the user wants to book a facility:
                 className="chatbot-input"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="اكتب سؤالك أو استخدم أحد الاختصارات..."
+                placeholder={t("chatbot.inputPlaceholder")}
                 autocomplete="off"
                 disabled={isTyping}
               />
@@ -756,7 +743,7 @@ If the user wants to book a facility:
                 type="submit"
                 disabled={isTyping}
               >
-                إرسال
+                {t("chatbot.sendBtn")}
               </button>
             </form>
 
@@ -775,7 +762,7 @@ If the user wants to book a facility:
                   onClick={() => fileInputRef.current.click()}
                   style={{ borderColor: "rgba(255,255,255,0.15)", color: "#b0c0d0" }}
                 >
-                  {selectedFile ? "تغيير الملف" : "اختيار ملف"}
+                  {selectedFile ? t("chatbot.changeFileBtn") : t("chatbot.selectFileBtn")}
                 </button>
                 {selectedFile && (
                   <button
@@ -784,7 +771,7 @@ If the user wants to book a facility:
                     onClick={handleUploadFile}
                     style={{ borderColor: "rgba(19, 183, 166, 0.4)", color: "#13b7a6" }}
                   >
-                    رفع
+                    {t("chatbot.uploadBtn")}
                   </button>
                 )}
                 <span style={{ fontSize: "10px", color: "rgba(234, 240, 247, 0.5)", maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -797,7 +784,7 @@ If the user wants to book a facility:
                 className="chatbot-reset-btn"
                 onClick={handleResetChat}
               >
-                محادثة جديدة
+                {t("chatbot.newChatBtn")}
               </button>
             </div>
           </div>

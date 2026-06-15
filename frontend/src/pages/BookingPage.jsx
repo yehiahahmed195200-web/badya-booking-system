@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "../BookingPage.css";
+import { useLanguage } from "../context/LanguageContext";
 import { API_BASE } from "../config/api";
 
 const API = API_BASE;
@@ -39,6 +40,32 @@ function getMinDate() {
 }
 
 export default function BookingPage({ session }) {
+  const { language, t } = useLanguage();
+
+  const translateBackendError = useCallback((msg) => {
+    if (!msg) return msg;
+    if (msg.includes("Sport selection is required")) return t("bookingPage.errSportRequired");
+    if (msg.includes("Invalid sport selection")) return t("bookingPage.errInvalidSport");
+    if (msg.includes("Basketball has exceeded its weekly quota")) return t("bookingPage.errQuotaBasketball");
+    if (msg.includes("Volleyball has exceeded its weekly quota")) return t("bookingPage.errQuotaVolleyball");
+    if (msg.includes("account is banned")) return t("bookingPage.errBanned");
+    if (msg.includes("Insufficient credits")) return t("bookingPage.errCredits");
+    if (msg.includes("warning threshold reached")) return t("bookingPage.errAutoBanned");
+    if (msg.includes("Facility is deactivated")) return t("bookingPage.errDeactivated");
+    if (msg.includes("Participants outside allowed range")) return t("bookingPage.errParticipantsRange");
+    if (msg.includes("Booking duration must be between")) return t("bookingPage.errDuration");
+    if (msg.includes("Booking start time cannot be in the past")) return t("bookingPage.errPast");
+    if (msg.includes("Booking exceeds advance window")) return t("bookingPage.errAdvanceWindow");
+    if (msg.includes("Daily booking limit reached")) return t("bookingPage.errDailyLimit");
+    if (msg.includes("Booking must fall within facility operating hours")) return t("bookingPage.errOperatingHours");
+    if (msg.includes("Back-to-back bookings are disabled")) return t("bookingPage.errBackToBack");
+    if (msg.includes("already booked during the requested time slot")) {
+      const idx = msg.indexOf("Available times today: ");
+      const times = idx !== -1 ? msg.substring(idx + "Available times today: ".length) : "";
+      return t("bookingPage.errAlreadyBooked", { times: times || (language === "en" ? "None" : "لا يوجد") });
+    }
+    return msg;
+  }, [t, language]);
   const [facilities, setFacilities]       = useState([]);
   const [loading, setLoading]             = useState(true);
   const [selectedFacility, setSelectedFacility] = useState(null);
@@ -157,7 +184,7 @@ export default function BookingPage({ session }) {
       setBuddyError("");
     } catch (err) {
       setBuddyError(
-        "❌ الرقم الجامعي غير مسجل في قاعدة البيانات. لن يتم الحجز إلا بوجود شركاء مسجلين ومسؤولين معك بالكامل."
+        t("bookingPage.buddyAddError")
       );
       setShowMatchmakingPromo(true);
     } finally {
@@ -178,7 +205,7 @@ export default function BookingPage({ session }) {
     // Check if enough buddy IDs are provided
     if (participantsNum > 1 && buddyIds.length < requiredBuddies) {
       setError(
-        `الحجز لن يتم. السبب: لقد اخترت عدد مشاركين (${participantsNum}) ولكنك لم تقم بإدخال معرفات زملائك بالكامل لمطابقة هذا العدد (تحتاج لإضافة ${requiredBuddies} من زملائك). لن يتم الحجز إلا بوجود شركاء مسجلين.`
+        t("bookingPage.buddyMissingError", { participants: participantsNum, required: requiredBuddies })
       );
       setShowMatchmakingPromo(true);
       return;
@@ -197,13 +224,13 @@ export default function BookingPage({ session }) {
 
       if (invalidIds.length > 0) {
         setError(
-          `الحجز لن يتم. السبب: معرفات الطلاب التالية غير موجودة بقاعدة البيانات: [${invalidIds.join(", ")}]. لن يتم الحجز إلا بوجود شركاء مسجلين بالكامل.`
+          t("bookingPage.buddyInvalidError", { ids: invalidIds.join(", ") })
         );
         setShowMatchmakingPromo(true);
         return;
       }
     } catch (err) {
-      setError("حدث خطأ أثناء التحقق من معرفات الطلاب. يرجى المحاولة مرة أخرى.");
+      setError(language === "en" ? "Error validating Student IDs. Please try again." : "حدث خطأ أثناء التحقق من معرفات الطلاب. يرجى المحاولة مرة أخرى.");
       return;
     } finally {
       setBuddyLoading(false);
@@ -239,7 +266,7 @@ export default function BookingPage({ session }) {
       setSuccess(data);
       setTimeout(() => navigate("/dashboard"), 3000);
     } catch (err) {
-      setError(err.message);
+      setError(translateBackendError(err.message));
     } finally {
       setSubmitting(false);
     }
@@ -256,14 +283,14 @@ export default function BookingPage({ session }) {
       <div className="bk-shell">
         <div className="bk-success-screen">
           <div className="bk-success-icon">🎉</div>
-          <h2>Booking Submitted!</h2>
-          <p>Your reservation at <strong>{selectedFacility?.name}</strong> has been submitted.</p>
+          <h2>{t("bookingPage.successTitle")}</h2>
+          <p>{t("bookingPage.successRecap")} <strong>{selectedFacility?.name}</strong>.</p>
           {success.pointsAwarded && (
             <div className="bk-points-award">
-              +{success.pointsAwarded} pts {success.isOffPeak ? "🌙 Off-peak bonus!" : ""}
+              +{success.pointsAwarded} {t("common.pts")} {success.isOffPeak ? (language === "en" ? "🌙 Off-peak bonus!" : "🌙 مكافأة الأوقات الهادئة!") : ""}
             </div>
           )}
-          <p className="bk-success-sub">Redirecting to your dashboard…</p>
+          <p className="bk-success-sub">{t("bookingPage.redirecting")}</p>
           <div className="bk-success-bar"><div className="bk-success-fill" /></div>
         </div>
       </div>
@@ -275,14 +302,14 @@ export default function BookingPage({ session }) {
       {/* Header */}
       <div className="bk-header">
         <button className="bk-back-btn" onClick={() => step === 1 ? navigate("/dashboard") : setStep(step - 1)}>
-          ← {step === 1 ? "Back to Dashboard" : "Back"}
+          ← {step === 1 ? (language === "en" ? "Back to Dashboard" : "العودة للوحة التحكم") : t("common.back")}
         </button>
         <div className="bk-header-title">
-          <h1>Reserve a Facility</h1>
-          <p>Book your spot in advance — reservations require at least 1 hour notice</p>
+          <h1>{t("bookingPage.title")}</h1>
+          <p>{t("bookingPage.subtitle")}</p>
         </div>
         <div className="bk-steps">
-          {["Choose Facility", "Set Details", "Confirm"].map((label, i) => (
+          {[t("bookingPage.step1"), t("bookingPage.step2"), t("bookingPage.step3")].map((label, i) => (
             <div key={i} className={`bk-step ${step > i + 1 ? "done" : ""} ${step === i + 1 ? "active" : ""}`}>
               <div className="bk-step-dot">{step > i + 1 ? "✓" : i + 1}</div>
               <span>{label}</span>
@@ -298,13 +325,13 @@ export default function BookingPage({ session }) {
           <div className="bk-step1">
             <div className="bk-search-wrap">
               <span className="bk-search-icon">🔍</span>
-              <input className="bk-search" placeholder="Search courts, gyms, pools…" value={search} onChange={e => setSearch(e.target.value)} />
+              <input className="bk-search" placeholder={t("bookingPage.searchPlaceholder")} value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             {loading ? (
-              <div className="bk-loading"><div className="bk-spinner" /><p>Loading…</p></div>
+              <div className="bk-loading"><div className="bk-spinner" /><p>{t("common.loading")}</p></div>
             ) : (
               <div className="bk-facility-grid">
-                {filtered.length === 0 && <p className="bk-empty">No facilities found.</p>}
+                {filtered.length === 0 && <p className="bk-empty">{t("bookingPage.noFacilities")}</p>}
                 {filtered.map(f => (
                   <button key={f.id} className={`bk-facility-card ${selectedFacility?.id === f.id ? "selected" : ""}`}
                     onClick={() => selectFacility(f)} disabled={!isFacilityBookable(f)}>
@@ -315,7 +342,7 @@ export default function BookingPage({ session }) {
                       <div className="bk-facility-meta">
                         <span>🕐 {f.openTime} – {f.closeTime}</span>
                         <span>👥 {f.minParticipants}–{f.maxParticipants}</span>
-                        <span>⏱ {f.defaultSlotMins} min</span>
+                        <span>⏱ {f.defaultSlotMins} {language === "en" ? "min" : "دقيقة"}</span>
                       </div>
                     </div>
                     <div className="bk-facility-status">
@@ -343,9 +370,9 @@ export default function BookingPage({ session }) {
               </div>
               {/* FR-2.8 Repeat user */}
               {repeatInfo?.isRepeatUser && (
-                <div className="bk-repeat-badge">🔄 You've been here {repeatInfo.previousBookings}× before</div>
+                <div className="bk-repeat-badge">🔄 {language === "en" ? `You've been here ${repeatInfo.previousBookings}× before` : `لقد قمت بزيارة هذا المكان ${repeatInfo.previousBookings} مرات من قبل`}</div>
               )}
-              <button className="bk-change-btn" onClick={() => setStep(1)}>Change ↩</button>
+              <button className="bk-change-btn" onClick={() => setStep(1)}>{t("bookingPage.changeBtn")}</button>
             </div>
 
             <form onSubmit={handleDetailsSubmit} className="bk-details-form">
@@ -359,17 +386,17 @@ export default function BookingPage({ session }) {
                   marginTop: "-10px",
                   marginBottom: "20px",
                   boxShadow: "0 4px 12px rgba(59, 130, 246, 0.08)",
-                  direction: "rtl",
-                  textAlign: "right"
+                  direction: language === "en" ? "ltr" : "rtl",
+                  textAlign: language === "en" ? "left" : "right"
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                     <span style={{ fontSize: "1.4rem" }}>🎯</span>
                     <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "1.05rem", fontWeight: "700" }}>
-                      هل تبحث عن زملاء للعب؟ جرب ميزة الـ Matchmaking!
+                      {t("bookingPage.matchmakingPromoTitle")}
                     </h4>
                   </div>
                   <p style={{ margin: "0 0 14px 0", color: "#1e40af", fontSize: "0.88rem", lineHeight: "1.5" }}>
-                    لا تشيل هم! إذا لم تجد لاعبين حالياً، يمكنك استخدام ميزة <strong>Matchmaking (LFG)</strong> المتوفرة في لوحة التحكم لمساعدتك في العثور على لاعبين آخرين واللعب معهم بسهولة.
+                    {t("bookingPage.matchmakingPromoDesc")}
                   </p>
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <button
@@ -390,7 +417,7 @@ export default function BookingPage({ session }) {
                       onMouseOver={(e) => e.target.style.background = "#1d4ed8"}
                       onMouseOut={(e) => e.target.style.background = "#2563eb"}
                     >
-                      🎯 انتقل إلى صفحة الـ Matchmaking
+                      {t("bookingPage.matchmakingGoBtn")}
                     </button>
                   </div>
                 </div>
@@ -398,33 +425,33 @@ export default function BookingPage({ session }) {
 
               <div className="bk-form-row">
                 <div className="bk-field">
-                  <label>📅 Date</label>
+                  <label>📅 {language === "en" ? "Date" : "التاريخ"}</label>
                   <input type="date" required min={getMinDate()} value={form.date}
                     onChange={e => setForm(p => ({ ...p, date: e.target.value }))} className="bk-input" />
                 </div>
                 <div className="bk-field">
-                  <label>🕐 Start Time</label>
+                  <label>🕐 {language === "en" ? "Start Time" : "وقت البدء"}</label>
                   <input type="time" required value={form.time} min={selectedFacility.openTime} max={selectedFacility.closeTime}
                     onChange={e => setForm(p => ({ ...p, time: e.target.value }))} className="bk-input" />
                 </div>
                 <div className="bk-field">
-                  <label>👥 Participants</label>
+                  <label>👥 {t("bookingPage.participants")}</label>
                   <input type="number" required min={selectedFacility.minParticipants} max={selectedFacility.maxParticipants}
                     value={form.participants} onChange={e => setForm(p => ({ ...p, participants: e.target.value }))} className="bk-input" />
-                  <small className="bk-hint">Range: {selectedFacility.minParticipants}–{selectedFacility.maxParticipants}</small>
+                  <small className="bk-hint">{t("bookingPage.participantsHint")}: {selectedFacility.minParticipants}–{selectedFacility.maxParticipants}</small>
                 </div>
               </div>
 
               {selectedFacility.sports && selectedFacility.sports.includes(",") && (
                 <div className="bk-field" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
-                  <label>🏀 Select Sport</label>
+                  <label>🏀 {t("bookingPage.sportSelect")}</label>
                   <select
                     required
                     value={form.sport}
                     onChange={e => setForm(p => ({ ...p, sport: e.target.value }))}
                     className="bk-input"
                   >
-                    <option value="">-- Choose sport (Basketball or Volleyball) --</option>
+                    <option value="">{t("bookingPage.sportChoose")}</option>
                     {selectedFacility.sports.split(",").map(s => (
                       <option key={s.trim()} value={s.trim()}>{s.trim()}</option>
                     ))}
@@ -435,9 +462,9 @@ export default function BookingPage({ session }) {
               {/* FR-2.1 Time Slot Availability Grid */}
               {form.date && (
                 <div className="bk-avail-section">
-                  <h4 className="bk-avail-title">📊 Slot Availability — {form.date}</h4>
+                  <h4 className="bk-avail-title">📊 {t("bookingPage.slotAvailability")} — {form.date}</h4>
                   {availLoading ? (
-                    <div className="bk-avail-loading"><div className="bk-spinner" style={{ width: 20, height: 20 }} /> Checking…</div>
+                    <div className="bk-avail-loading"><div className="bk-spinner" style={{ width: 20, height: 20 }} /> {t("common.loading")}</div>
                   ) : availability?.slots ? (
                     <div className="bk-slot-grid">
                       {availability.slots.map(slot => (
@@ -445,7 +472,7 @@ export default function BookingPage({ session }) {
                           className={`bk-slot ${slot.available ? "free" : "taken"} ${form.time === slot.time ? "selected" : ""}`}
                           onClick={() => slot.available && setForm(p => ({ ...p, time: slot.time }))}
                           disabled={!slot.available}
-                          title={slot.available ? "Available — click to select" : "Already booked"}
+                          title={slot.available ? "Available" : "Booked"}
                         >
                           {slot.time}
                         </button>
@@ -453,26 +480,26 @@ export default function BookingPage({ session }) {
                     </div>
                   ) : null}
                   <div className="bk-slot-legend">
-                    <span className="bk-legend free">Free</span>
-                    <span className="bk-legend taken">Booked</span>
-                    <span className="bk-legend selected">Selected</span>
+                    <span className="bk-legend free">{language === "en" ? "Free" : "متاح"}</span>
+                    <span className="bk-legend taken">{language === "en" ? "Booked" : "محجوز"}</span>
+                    <span className="bk-legend selected">{language === "en" ? "Selected" : "محدد"}</span>
                   </div>
                 </div>
               )}
 
               {/* FR-2.12 Buddy Booking */}
               <div className="bk-buddy-section">
-                <h4 className="bk-avail-title">👫 Buddy Booking <span className="bk-optional">optional</span></h4>
-                <p className="bk-buddy-desc">Add teammate Student IDs — they'll be notified about this booking.</p>
+                <h4 className="bk-avail-title">👫 {t("bookingPage.buddyBooking")} <span className="bk-optional">{language === "en" ? "optional" : "اختياري"}</span></h4>
+                <p className="bk-buddy-desc">{t("bookingPage.buddyBookingSub")}</p>
                 <div className="bk-buddy-row">
-                  <input className="bk-input" placeholder="Enter Student ID (e.g. S20210001)"
+                  <input className="bk-input" placeholder={t("bookingPage.buddyInputPlaceholder")}
                     value={buddyInput} onChange={e => setBuddyInput(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addBuddy())}
                     style={{ flex: 1 }}
                     disabled={buddyLoading}
                   />
                   <button type="button" className="bk-buddy-add-btn" onClick={addBuddy} disabled={buddyLoading}>
-                    {buddyLoading ? "Checking..." : "+ Add"}
+                    {buddyLoading ? t("common.loading") : t("bookingPage.buddyAddBtn")}
                   </button>
                 </div>
                 {buddyError && <p className="bk-buddy-error">{buddyError}</p>}
@@ -486,17 +513,17 @@ export default function BookingPage({ session }) {
                     marginTop: "12px",
                     marginBottom: "12px",
                     boxShadow: "0 4px 12px rgba(59, 130, 246, 0.08)",
-                    direction: "rtl",
-                    textAlign: "right"
+                    direction: language === "en" ? "ltr" : "rtl",
+                    textAlign: language === "en" ? "left" : "right"
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                       <span style={{ fontSize: "1.4rem" }}>🎯</span>
                       <h4 style={{ margin: 0, color: "#1e3a8a", fontSize: "1.02rem", fontWeight: "700" }}>
-                        تبحث عن ناس تلعب معاهم؟ جرب ميزة الـ Matching!
+                        {t("bookingPage.matchmakingPromoTitle")}
                       </h4>
                     </div>
                     <p style={{ margin: "0 0 14px 0", color: "#1e40af", fontSize: "0.85rem", lineHeight: "1.5" }}>
-                      لا تشيل هم! إذا لم تجد لاعبين حالياً أو لم تملك معرفاتهم، يمكنك استخدام ميزة <strong>Matching (LFG)</strong> المتوفرة لمساعدتك في العثور على لاعبين آخرين واللعب معهم بسهولة.
+                      {t("bookingPage.matchmakingPromoDesc")}
                     </p>
                     <div style={{ display: "flex", justifyContent: "flex-end" }}>
                       <button
@@ -517,7 +544,7 @@ export default function BookingPage({ session }) {
                         onMouseOver={(e) => e.target.style.background = "#1d4ed8"}
                         onMouseOut={(e) => e.target.style.background = "#2563eb"}
                       >
-                        🎯 انتقل لميزة الـ Matching الآن
+                        {t("bookingPage.matchmakingGoBtn")}
                       </button>
                     </div>
                   </div>
@@ -537,10 +564,10 @@ export default function BookingPage({ session }) {
 
               <div className="bk-info-box">
                 <span>ℹ️</span>
-                <div><strong>Session duration:</strong> {selectedFacility.defaultSlotMins} min · <strong>Hours:</strong> {selectedFacility.openTime} – {selectedFacility.closeTime}</div>
+                <div><strong>{language === "en" ? "Session duration:" : "مدة الجلسة:"}</strong> {selectedFacility.defaultSlotMins} {language === "en" ? "min" : "دقيقة"} · <strong>{language === "en" ? "Hours:" : "الساعات:"}</strong> {selectedFacility.openTime} – {selectedFacility.closeTime}</div>
               </div>
 
-              <button type="submit" className="bk-submit-btn">Review Booking →</button>
+              <button type="submit" className="bk-submit-btn">{t("bookingPage.reviewBtn")}</button>
             </form>
           </div>
         )}
@@ -548,63 +575,64 @@ export default function BookingPage({ session }) {
         {/* ── STEP 3: CONFIRM ── */}
         {step === 3 && selectedFacility && (
           <div className="bk-step3">
-            <h2 className="bk-confirm-title">Confirm Your Reservation</h2>
+            <h2 className="bk-confirm-title">{t("bookingPage.confirmTitle")}</h2>
             <div className="bk-confirm-card">
               <div className="bk-confirm-icon">{getFacilityIcon(selectedFacility.name)}</div>
               <div className="bk-confirm-details">
-                <div className="bk-confirm-row"><span>Facility</span><strong>{selectedFacility.name}</strong></div>
-                <div className="bk-confirm-row"><span>Category</span><strong>{selectedFacility.category}</strong></div>
+                <div className="bk-confirm-row"><span>{t("bookingPage.facilityLabel")}</span><strong>{selectedFacility.name}</strong></div>
+                <div className="bk-confirm-row"><span>{t("bookingPage.categoryLabel")}</span><strong>{selectedFacility.category}</strong></div>
                 <div className="bk-confirm-row">
-                  <span>Date & Time</span>
-                  <strong>{new Date(`${form.date}T${form.time}`).toLocaleString("en-GB", { dateStyle: "full", timeStyle: "short" })}</strong>
+                  <span>{t("bookingPage.dateTimeLabel")}</span>
+                  <strong>{new Date(`${form.date}T${form.time}`).toLocaleString(language === "en" ? "en-GB" : "ar-EG", { dateStyle: "full", timeStyle: "short" })}</strong>
                 </div>
-                <div className="bk-confirm-row"><span>Duration</span><strong>{selectedFacility.defaultSlotMins} minutes</strong></div>
-                <div className="bk-confirm-row"><span>Participants</span><strong>{form.participants}</strong></div>
-                <div className="bk-confirm-row"><span>Booked by</span><strong>{session?.fullName}</strong></div>
+                <div className="bk-confirm-row"><span>{t("bookingPage.durationLabel")}</span><strong>{selectedFacility.defaultSlotMins} {language === "en" ? "minutes" : "دقائق"}</strong></div>
+                <div className="bk-confirm-row"><span>{t("bookingPage.participantsLabel")}</span><strong>{form.participants}</strong></div>
+                <div className="bk-confirm-row"><span>{t("bookingPage.bookedByLabel")}</span><strong>{session?.fullName}</strong></div>
                 {buddyIds.length > 0 && (
-                  <div className="bk-confirm-row"><span>Buddies</span><strong>{buddyIds.join(", ")}</strong></div>
+                  <div className="bk-confirm-row"><span>{t("bookingPage.buddiesLabel")}</span><strong>{buddyIds.join(", ")}</strong></div>
                 )}
                 {form.sport && (
-                  <div className="bk-confirm-row"><span>Sport</span><strong>{form.sport}</strong></div>
+                  <div className="bk-confirm-row"><span>{t("bookingPage.sportLabel")}</span><strong>{form.sport}</strong></div>
                 )}
                 <div className="bk-confirm-row">
-                  <span>Points to earn</span>
+                  <span>{t("bookingPage.pointsEarnLabel")}</span>
                   <strong style={{ color: "#10b981" }}>
                     {new Date(`${form.date}T${form.time}`).getHours() < 10 ||
                      new Date(`${form.date}T${form.time}`).getHours() >= 19
-                      ? "+25 pts 🌙 Off-peak bonus!" : "+10 pts"}
+                      ? (language === "en" ? "+25 pts 🌙 Off-peak bonus!" : "+25 نقطة 🌙 مكافأة الأوقات الهادئة!") 
+                      : (language === "en" ? "+10 pts" : "+10 نقاط")}
                   </strong>
                 </div>
               </div>
             </div>
 
             <div className="bk-rules-notice">
-              <strong>📋 Booking Rules:</strong>
+              <strong>📋 {t("bookingPage.rulesTitle")}:</strong>
               <ul>
-                <li>Reservations must be made at least 1 hour in advance.</li>
-                <li>Cancellations must be requested at least 24 hours before the slot.</li>
-                <li>This booking will be reviewed by an admin if required.</li>
-                <li>Earn <strong>+25 pts</strong> for off-peak bookings (before 10:00 or after 19:00).</li>
+                <li>{t("bookingPage.rule1")}</li>
+                <li>{t("bookingPage.rule2")}</li>
+                <li>{t("bookingPage.rule3")}</li>
+                <li>{t("bookingPage.rule4")}</li>
               </ul>
             </div>
 
             {/* FR-2.7 Terms & Conditions */}
             <label className="bk-terms-label">
               <input type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)} />
-              <span>I have read and agree to the <strong>facility terms and conditions</strong> and the cancellation policy.</span>
+              <span>{t("bookingPage.termsLabel")}</span>
             </label>
 
             {error && <div className="bk-error"><span>⚠️</span> {error}</div>}
 
             <div className="bk-confirm-actions">
-              <button className="bk-back-link" onClick={() => setStep(2)}>← Edit Details</button>
+              <button className="bk-back-link" onClick={() => setStep(2)}>{t("bookingPage.editDetailsBtn")}</button>
               <button className="bk-submit-btn" onClick={handleSubmit} disabled={submitting || !termsAccepted}>
-                {submitting ? "Submitting…" : "✓ Confirm & Submit"}
+                {submitting ? t("bookingPage.submitting") : t("bookingPage.confirmSubmitBtn")}
               </button>
             </div>
             {!termsAccepted && (
               <p style={{ textAlign: "center", color: "#9ab0c4", fontSize: "0.82rem", marginTop: 8 }}>
-                Please accept the terms and conditions to proceed.
+                {t("bookingPage.termsRequired")}
               </p>
             )}
           </div>
