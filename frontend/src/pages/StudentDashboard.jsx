@@ -542,46 +542,51 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
         </header>
 
         <div className="sd-content">
-          {/* Stats Row */}
-          <div className="sd-stats-row">
-            <StatCard icon="📅" value={bookings.length} label="Total Bookings" sub="All time" color="#1cb2bf" />
-            <StatCard icon="🔜" value={upcoming.length} label="Upcoming" sub="Confirmed" color="#3b82f6" />
-            <StatCard icon="🏁" value={completed.length} label="Sessions Done" sub="Completed" color="#10b981" />
-            <StatCard icon="⭐" value={userPoints} label="My Points" sub="Earned so far" color="#f59e0b" />
-            <StatCard icon="⚠️" value={userWarnings} label="Warnings" sub="Max 3 = ban" color="#ef4444" warn />
-            <StatCard icon="🎫" value={userCredits} label="Available Credits" sub="Timing allowance" color="#8b5cf6" />
-          </div>
-
-          {/* Upcoming Timeline (if any) */}
-          {upcoming.length > 0 && activeTab !== "completed" && activeTab !== "fairness" && activeTab !== "medical" && (
-            <div className="sd-timeline-card">
-              <h3 className="sd-section-title">📆 Your Schedule</h3>
-              <div className="sd-timeline">
-                {Object.entries(upcomingGrouped).map(([dateStr, items]) => (
-                  <div key={dateStr} className="sd-timeline-group">
-                    <div className="sd-timeline-date">
-                      {new Date(dateStr).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
-                    </div>
-                    {items.map(b => {
-                      const statusKey = b.conflictId && b.status === "PENDING" ? "CONFLICT" : b.status;
-                      const cfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.PENDING;
-                      return (
-                        <div key={b.id} className="sd-timeline-item">
-                          <div className="sd-timeline-dot" style={{ background: cfg.color }} />
-                          <div className="sd-timeline-body">
-                            <span className="sd-timeline-facility">{FACILITY_ICONS(b.facility?.name)} {b.facility?.name}</span>
-                            <span className="sd-timeline-time">
-                              {new Date(b.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </span>
-                            <span className="sd-status-badge" style={{ background: cfg.bg, color: cfg.color }}>{cfg.icon} {cfg.label}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+          {/* Stats Row & Timeline (only on overview/bookings tab) */}
+          {activeTab === "bookings" && (
+            <>
+              {/* Stats Row */}
+              <div className="sd-stats-row">
+                <StatCard icon="📅" value={bookings.length} label="Total Bookings" sub="All time" color="#1cb2bf" />
+                <StatCard icon="🔜" value={upcoming.length} label="Upcoming" sub="Confirmed" color="#3b82f6" />
+                <StatCard icon="🏁" value={completed.length} label="Sessions Done" sub="Completed" color="#10b981" />
+                <StatCard icon="⭐" value={userPoints} label="My Points" sub="Earned so far" color="#f59e0b" />
+                <StatCard icon="⚠️" value={userWarnings} label="Warnings" sub="Max 3 = ban" color="#ef4444" warn />
+                <StatCard icon="🎫" value={userCredits} label="Available Credits" sub="Timing allowance" color="#8b5cf6" />
               </div>
-            </div>
+
+              {/* Upcoming Timeline (if any) */}
+              {upcoming.length > 0 && (
+                <div className="sd-timeline-card">
+                  <h3 className="sd-section-title">📆 Your Schedule</h3>
+                  <div className="sd-timeline">
+                    {Object.entries(upcomingGrouped).map(([dateStr, items]) => (
+                      <div key={dateStr} className="sd-timeline-group">
+                        <div className="sd-timeline-date">
+                          {new Date(dateStr).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+                        </div>
+                        {items.map(b => {
+                          const statusKey = b.conflictId && b.status === "PENDING" ? "CONFLICT" : b.status;
+                          const cfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.PENDING;
+                          return (
+                            <div key={b.id} className="sd-timeline-item">
+                              <div className="sd-timeline-dot" style={{ background: cfg.color }} />
+                              <div className="sd-timeline-body">
+                                <span className="sd-timeline-facility">{FACILITY_ICONS(b.facility?.name)} {b.facility?.name}</span>
+                                <span className="sd-timeline-time">
+                                  {new Date(b.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                </span>
+                                <span className="sd-status-badge" style={{ background: cfg.bg, color: cfg.color }}>{cfg.icon} {cfg.label}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Bookings List */}
