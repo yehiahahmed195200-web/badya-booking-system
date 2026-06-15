@@ -51,6 +51,12 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    const handleOpenNotifications = () => setNotificationDrawerOpen(true);
+    window.addEventListener('open-notifications', handleOpenNotifications);
+    return () => window.removeEventListener('open-notifications', handleOpenNotifications);
+  }, []);
+
   function onStudentLoginSuccess(user, token) {
     setSession(user);
     localStorage.setItem("token", token);
