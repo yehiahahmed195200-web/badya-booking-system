@@ -7,7 +7,9 @@ body,
   overflow-x: hidden;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -320,7 +322,10 @@ body {
 }
 
 .login-card {
-  width: min(460px, 92vw);
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  box-sizing: border-box;
   padding: 30px 30px 26px;
   border-radius: 24px;
   background: rgba(18, 30, 44, 0.6);
@@ -331,6 +336,9 @@ body {
   backdrop-filter: blur(22px);
   color: #f7fbff;
   animation: login-card-enter 0.7s ease-out;
+  position: relative;
+  left: auto;
+  transform: none;
 }
 
 @keyframes login-card-enter {
@@ -918,6 +926,24 @@ button {
 
   .chatbot-launcher__icon {
     font-size: 1.25rem;
+  }
+
+  /* Responsive Login Card */
+  .login-card {
+    width: calc(100% - 32px) !important;
+    margin: 16px auto !important;
+    padding: 24px 20px 20px !important;
+  }
+
+  /* Responsive Landing Hero Title */
+  .hero-title {
+    font-size: 2.8rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .hero-content p {
+    font-size: 1.1rem !important;
+    margin-top: 16px !important;
   }
 }
 
