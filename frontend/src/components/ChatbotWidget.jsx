@@ -217,6 +217,75 @@ If the user wants to book a facility:
     return await res.json();
   };
 
+  const renderMessageContent = (content) => {
+    if (typeof content !== "string") return content;
+
+    const lines = content.split("\n");
+    const parsedLines = lines.map((line, idx) => {
+      const trimmed = line.trim();
+      const isRtl = /[\u0600-\u06FF]/.test(trimmed);
+
+      const facilityMatch = trimmed.match(/^-\s*\[(?:ملعب\s*)?#(\d+|[a-zA-Z0-9_-]+)\]\s*(.+?)\s*\((.+?)\):\s*(.+)$/i);
+      if (facilityMatch) {
+        const id = facilityMatch[1];
+        const name = facilityMatch[2];
+        const category = facilityMatch[3];
+        const details = facilityMatch[4];
+
+        const isFitness = category.toLowerCase().includes("fitness") || category.includes("لياقة");
+        const badgeClass = isFitness ? "facility-badge fitness" : "facility-badge sport";
+
+        const icon = name.toLowerCase().includes("tennis") || name.toLowerCase().includes("padel") ? "🎾"
+                   : name.toLowerCase().includes("basket") ? "🏀"
+                   : name.toLowerCase().includes("swim") || name.toLowerCase().includes("pool") ? "🏊"
+                   : name.toLowerCase().includes("gym") ? "🏋️"
+                   : name.toLowerCase().includes("volleyball") ? "🏐"
+                   : "🏅";
+
+        return (
+          <div key={idx} className={`chatbot-facility-card ${isRtl ? "rtl" : ""}`}>
+            <span className="chatbot-facility-card__icon">{icon}</span>
+            <div className="chatbot-facility-card__main">
+              <div className="chatbot-facility-card__title">
+                <strong>{name}</strong>
+                <span className={badgeClass}>{category}</span>
+              </div>
+              <div className="chatbot-facility-card__time">
+                <span>🕐 {details}</span>
+                <span className="chatbot-facility-card__id">ID: #{id}</span>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const listMatch = trimmed.match(/^-\s*(.+)$/);
+      if (listMatch) {
+        const bulletContent = listMatch[1];
+        const colonIdx = bulletContent.indexOf(":");
+        if (colonIdx > 0 && colonIdx < 30 && !bulletContent.startsWith("http")) {
+          const title = bulletContent.slice(0, colonIdx);
+          const desc = bulletContent.slice(colonIdx + 1);
+          return (
+            <div key={idx} className={`chatbot-list-item warning-item ${isRtl ? "rtl" : ""}`}>
+              <strong>🔔 {title}</strong>
+              <p>{desc.trim()}</p>
+            </div>
+          );
+        }
+        return (
+          <div key={idx} className={`chatbot-list-item ${isRtl ? "rtl" : ""}`}>
+            • {bulletContent}
+          </div>
+        );
+      }
+
+      return <div key={idx} className={isRtl ? "rtl" : ""}>{line}</div>;
+    });
+
+    return <div className="chatbot-parsed-content">{parsedLines}</div>;
+  };
+
   const handleLocalFallback = async (text) => {
     const query = text.toLowerCase();
     const isArabic = /[\u0600-\u06FF]/.test(text);
@@ -488,7 +557,7 @@ If the user wants to book a facility:
                   {msg.role === "bot" ? "B" : "YOU"}
                 </div>
                 <div className="chatbot-msg__bubble">
-                  {msg.content}
+                  {renderMessageContent(msg.content)}
                 </div>
               </div>
             ))}

@@ -462,3 +462,153 @@
     gap: 6px;
   }
 }
+
+/* Custom Parsed Content Formatting */
+.chatbot-parsed-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chatbot-facility-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin: 6px 0;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  text-align: left;
+}
+
+.chatbot-facility-card.rtl {
+  direction: rtl;
+  text-align: right;
+  flex-direction: row; /* Emojis should still be on one side, but we can reverse it if needed. Let's keep flex-direction row or row-reverse. direction: rtl handles alignment. */
+}
+
+.chatbot-facility-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(91, 140, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.chatbot-facility-card__icon {
+  font-size: 20px;
+  background: rgba(91, 140, 255, 0.12);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.chatbot-facility-card.rtl .chatbot-facility-card__icon {
+  margin-left: 0;
+}
+
+.chatbot-facility-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.chatbot-facility-card__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.chatbot-facility-card__title strong {
+  font-size: 13px;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.facility-badge {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+
+.facility-badge.sport {
+  background: rgba(19, 183, 166, 0.15);
+  color: #13b7a6;
+}
+
+.facility-badge.fitness {
+  background: rgba(91, 140, 255, 0.15);
+  color: #5b8cff;
+}
+
+.chatbot-facility-card__time {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: rgba(234, 240, 247, 0.7);
+}
+
+.chatbot-facility-card__id {
+  font-size: 9.5px;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: rgba(234, 240, 247, 0.5);
+}
+
+.chatbot-list-item {
+  font-size: 13px;
+  color: #f4f8fc;
+  margin: 3px 0;
+  text-align: left;
+}
+
+.chatbot-list-item.rtl {
+  text-align: right;
+  direction: rtl;
+}
+
+.chatbot-list-item.warning-item {
+  background: rgba(246, 199, 109, 0.08);
+  border: 1px solid rgba(246, 199, 109, 0.15);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin: 6px 0;
+  text-align: left;
+}
+
+.chatbot-list-item.warning-item.rtl {
+  text-align: right;
+  direction: rtl;
+}
+
+.chatbot-list-item.warning-item strong {
+  display: block;
+  font-size: 12.5px;
+  color: #f6c76d;
+  margin-bottom: 2px;
+}
+
+.chatbot-list-item.warning-item p {
+  margin: 0;
+  font-size: 11.5px;
+  color: rgba(234, 240, 247, 0.8);
+}
+
+.rtl {
+  direction: rtl;
+  text-align: right;
+}
+
