@@ -32,8 +32,17 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserAccount> all() {
-        return userRepository.findAll();
+    public ResponseEntity<?> all(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            if (current.getRole() != UserRole.ADMIN) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: Admin access required"));
+            }
+            List<UserAccount> users = userRepository.findAll();
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized: Valid token required"));
+        }
     }
 
     /**
@@ -80,9 +89,8 @@ public class UserController {
 
     @PostMapping
     public UserAccount create(@Valid @RequestBody UserAccount user) {
-        if (user.getRole() == null) {
-            user.setRole(UserRole.STUDENT);
-        }
+        // Enforce student role on public signup to prevent privilege escalation
+        user.setRole(UserRole.STUDENT);
         return userRepository.save(user);
     }
 
@@ -93,8 +101,9 @@ public class UserController {
     @PostMapping("/admin/{userId}/warn")
     public ResponseEntity<?> warnUser(
             @PathVariable Long userId,
-            @RequestBody Map<String, String> body) {
-        UserAccount admin = getCurrentAdmin();
+            @RequestBody Map<String, String> body,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -138,8 +147,9 @@ public class UserController {
     @PostMapping("/admin/{userId}/ban")
     public ResponseEntity<?> banUser(
             @PathVariable Long userId,
-            @RequestBody Map<String, String> body) {
-        UserAccount admin = getCurrentAdmin();
+            @RequestBody Map<String, String> body,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -177,8 +187,8 @@ public class UserController {
      * POST /api/admin/users/{userId}/unban
      */
     @PostMapping("/admin/{userId}/unban")
-    public ResponseEntity<?> unbanUser(@PathVariable Long userId) {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> unbanUser(@PathVariable Long userId, @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -209,8 +219,9 @@ public class UserController {
     @PostMapping("/admin/{userId}/adjust-credits")
     public ResponseEntity<?> adjustCredits(
             @PathVariable Long userId,
-            @RequestBody Map<String, Integer> body) {
-        UserAccount admin = getCurrentAdmin();
+            @RequestBody Map<String, Integer> body,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -252,8 +263,8 @@ public class UserController {
      * POST /api/users/admin/{userId}/reset-device
      */
     @PostMapping("/admin/{userId}/reset-device")
-    public ResponseEntity<?> resetDevice(@PathVariable Long userId) {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> resetDevice(@PathVariable Long userId, @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -287,8 +298,8 @@ public class UserController {
      * POST /api/users/admin/{userId}/approve-device-change
      */
     @PostMapping("/admin/{userId}/approve-device-change")
-    public ResponseEntity<?> approveDeviceChange(@PathVariable Long userId) {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> approveDeviceChange(@PathVariable Long userId, @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -346,8 +357,8 @@ public class UserController {
      * POST /api/users/admin/{userId}/reject-device-change
      */
     @PostMapping("/admin/{userId}/reject-device-change")
-    public ResponseEntity<?> rejectDeviceChange(@PathVariable Long userId) {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> rejectDeviceChange(@PathVariable Long userId, @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -397,8 +408,8 @@ public class UserController {
      * POST /api/users/admin/{userId}/summon-device-change
      */
     @PostMapping("/admin/{userId}/summon-device-change")
-    public ResponseEntity<?> summonDeviceChange(@PathVariable Long userId) {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> summonDeviceChange(@PathVariable Long userId, @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -448,8 +459,8 @@ public class UserController {
      * POST /api/users/admin/reset-all-credits
      */
     @PostMapping("/admin/reset-all-credits")
-    public ResponseEntity<?> resetAllCredits() {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> resetAllCredits(@RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -463,11 +474,16 @@ public class UserController {
         ));
     }
 
-    private UserAccount getCurrentAdmin() {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == UserRole.ADMIN)
-                .findFirst()
-                .orElse(null);
+    private UserAccount getCurrentAdmin(String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            if (current != null && current.getRole() == UserRole.ADMIN) {
+                return current;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
     }
 
     /**

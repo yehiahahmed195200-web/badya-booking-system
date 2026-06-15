@@ -1,6 +1,7 @@
 package com.badya.booking.service;
 
 import com.badya.booking.model.Booking;
+import com.badya.booking.model.BookingStatus;
 import com.badya.booking.repository.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -24,13 +25,16 @@ public class ReminderService {
     @Scheduled(fixedRate = 60000)
     public void sendReminders() {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime windowStart = now.plusMinutes(reminderMinutes);
-        LocalDateTime windowEnd = windowStart.plusSeconds(59);
+        LocalDateTime windowStart = now;
+        LocalDateTime windowEnd = now.plusMinutes(reminderMinutes);
 
-        List<Booking> upcoming = bookingRepository.findByStartTimeBetween(windowStart, windowEnd);
+        List<Booking> upcoming = bookingRepository.findByStatusAndReminderSentFalseAndStartTimeBetween(
+                BookingStatus.CONFIRMED, windowStart, windowEnd);
         for (Booking b : upcoming) {
             try {
                 notificationService.sendBookingReminder(b, true);
+                b.setReminderSent(true);
+                bookingRepository.save(b);
             } catch (Exception ex) {
                 System.err.println("Reminder send failed for booking " + b.getId() + ": " + ex.getMessage());
             }

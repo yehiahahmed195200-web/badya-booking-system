@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,8 +31,8 @@ public class SystemRuleController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getRules() {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> getRules(@RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
         }
@@ -39,8 +40,8 @@ public class SystemRuleController {
     }
 
     @PatchMapping
-    public ResponseEntity<?> updateRules(@RequestBody UpdateSystemRuleRequest request) {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> updateRules(@RequestBody UpdateSystemRuleRequest request, @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
         }
@@ -60,10 +61,32 @@ public class SystemRuleController {
         return ResponseEntity.ok(updated);
     }
 
-    private UserAccount getCurrentAdmin() {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == UserRole.ADMIN)
-                .findFirst()
-                .orElse(null);
+    private UserAccount getCurrentAdmin(String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            if (current != null && current.getRole() == UserRole.ADMIN) {
+                return current;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
+    }
+
+    private UserAccount getAuthenticatedUser(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Unauthorized: Missing bearer token.");
+        }
+        String token = authHeader.replace("Bearer ", "").trim();
+        if (!token.startsWith("demo-token-")) {
+            throw new IllegalArgumentException("Unauthorized: Invalid token format.");
+        }
+        try {
+            Long userId = Long.parseLong(token.replace("demo-token-", ""));
+            return userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Unauthorized: User not found."));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Unauthorized: Invalid token signature.");
+        }
     }
 }

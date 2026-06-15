@@ -14,6 +14,7 @@ import com.badya.booking.repository.MatchmakingQueueRepository;
 import com.badya.booking.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -411,5 +412,50 @@ public class MatchmakingService {
         double hours = Double.parseDouble(parts[0]);
         double minutes = parts.length > 1 ? Double.parseDouble(parts[1]) : 0.0;
         return hours + minutes / 60.0;
+    }
+
+    @Scheduled(cron = "0 */10 * * * *") // Run every 10 minutes
+    @Transactional
+    public void processRelaxedQueues() {
+        List<MatchmakingQueue> allQueueItems = matchmakingQueueRepository.findAll();
+        if (allQueueItems.isEmpty()) return;
+
+        // Group active queues by unique slot: facilityId + sportId + date + timeSlot
+        Map<String, List<MatchmakingQueue>> groups = allQueueItems.stream()
+                .collect(Collectors.groupingBy(q -> 
+                    q.getFacility().getId() + "|" + q.getSportId() + "|" + q.getDate() + "|" + q.getTimeSlot()
+                ));
+
+        for (var entry : groups.entrySet()) {
+            String[] parts = entry.getKey().split("\\|");
+            Long facilityId = Long.parseLong(parts[0]);
+            String sportId = parts[1];
+            String date = parts[2];
+            String timeSlot = parts[3];
+
+            LocalDateTime start;
+            try {
+                if (timeSlot.length() == 5) {
+                    start = LocalDateTime.parse(date + "T" + timeSlot + ":00");
+                } else {
+                    start = LocalDateTime.parse(date + "T" + timeSlot);
+                }
+            } catch (Exception e) {
+                continue;
+            }
+
+            LocalDateTime now = LocalDateTime.now();
+            if (start.isAfter(now) && start.isBefore(now.plusHours(24))) {
+                try {
+                    processQueue(sportId, facilityId, date, timeSlot);
+                } catch (Exception ex) {
+                    System.err.println("Error running relaxed matchmaking for " + entry.getKey() + ": " + ex.getMessage());
+                }
+            } else if (start.isBefore(now)) {
+                // Prune/Clean up expired queue entries
+                matchmakingQueueRepository.deleteAll(entry.getValue());
+                System.out.println("Cleaned up expired matchmaking queue for " + entry.getKey());
+            }
+        }
     }
 }

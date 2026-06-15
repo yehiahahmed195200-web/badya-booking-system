@@ -28,9 +28,10 @@ public class AuditLogController {
     @GetMapping
     public ResponseEntity<?> getAllLogs(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @RequestParam(defaultValue = "50") int size,
+            @RequestHeader("Authorization") String authHeader) {
 
-        UserAccount admin = getCurrentAdmin();
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null || !admin.getRole().name().equals("ADMIN")) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -53,9 +54,10 @@ public class AuditLogController {
     public ResponseEntity<?> filterLogs(
             @RequestParam(required = false) String action,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
+            @RequestParam(defaultValue = "50") int size,
+            @RequestHeader("Authorization") String authHeader) {
 
-        UserAccount admin = getCurrentAdmin();
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null || !admin.getRole().name().equals("ADMIN")) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -103,11 +105,32 @@ public class AuditLogController {
         ));
     }
 
-    private UserAccount getCurrentAdmin() {
-        // Temporary fallback until authentication context is wired.
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == UserRole.ADMIN)
-                .findFirst()
-                .orElse(null);
+    private UserAccount getCurrentAdmin(String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            if (current != null && current.getRole() == UserRole.ADMIN) {
+                return current;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
+    }
+
+    private UserAccount getAuthenticatedUser(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Unauthorized: Missing bearer token.");
+        }
+        String token = authHeader.replace("Bearer ", "").trim();
+        if (!token.startsWith("demo-token-")) {
+            throw new IllegalArgumentException("Unauthorized: Invalid token format.");
+        }
+        try {
+            Long userId = Long.parseLong(token.replace("demo-token-", ""));
+            return userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Unauthorized: User not found."));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Unauthorized: Invalid token signature.");
+        }
     }
 }

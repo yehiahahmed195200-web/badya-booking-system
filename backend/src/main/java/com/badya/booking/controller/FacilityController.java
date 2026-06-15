@@ -43,37 +43,40 @@ public class FacilityController {
     }
 
     @PostMapping
-    public Facility create(@Valid @RequestBody Facility facility) {
+    public Facility create(@Valid @RequestBody Facility facility, @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
+        if (admin == null) {
+            throw new IllegalArgumentException("Unauthorized: Admin privilege required.");
+        }
         Facility created = facilityService.create(facility);
 
         // Log the action
-        UserAccount admin = getCurrentAdmin();
-        if (admin != null) {
-            auditLogService.log(admin, "FACILITY_CREATED", Map.of(
-                    "facilityId", created.getId(),
-                    "facilityName", created.getName(),
-                    "category", created.getCategory()
-            ));
-        }
+        auditLogService.log(admin, "FACILITY_CREATED", Map.of(
+                "facilityId", created.getId(),
+                "facilityName", created.getName(),
+                "category", created.getCategory()
+        ));
 
         return created;
     }
     @PatchMapping("/{id}/status")
     public Facility updateStatus(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateFacilityStatusRequest request) {
+            @Valid @RequestBody UpdateFacilityStatusRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
+        if (admin == null) {
+            throw new IllegalArgumentException("Unauthorized: Admin privilege required.");
+        }
         Facility updated = facilityService.updateStatus(id, request.active(), request.policy());
 
         // Log the action
-        UserAccount admin = getCurrentAdmin();
-        if (admin != null) {
-            auditLogService.log(admin, "FACILITY_UPDATED", Map.of(
-                    "facilityId", updated.getId(),
-                    "facilityName", updated.getName(),
-                    "active", updated.getActive() != null ? updated.getActive() : false,
-                    "policy", request.policy()
-            ));
-        }
+        auditLogService.log(admin, "FACILITY_UPDATED", Map.of(
+                "facilityId", updated.getId(),
+                "facilityName", updated.getName(),
+                "active", updated.getActive() != null ? updated.getActive() : false,
+                "policy", request.policy()
+        ));
 
         return updated;
     }
@@ -84,19 +87,21 @@ public class FacilityController {
     @PostMapping("/{id}/status/change")
     public Facility changeStatus(
             @PathVariable Long id,
-            @Valid @RequestBody ChangeFacilityStatusRequest request) {
+            @Valid @RequestBody ChangeFacilityStatusRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
+        if (admin == null) {
+            throw new IllegalArgumentException("Unauthorized: Admin privilege required.");
+        }
         Facility updated = facilityService.changeStatus(id, request.status(), request.reason());
 
         // Log the action
-        UserAccount admin = getCurrentAdmin();
-        if (admin != null) {
-            auditLogService.log(admin, "FACILITY_STATUS_CHANGED", Map.of(
-                    "facilityId", updated.getId(),
-                    "facilityName", updated.getName(),
-                    "status", updated.getStatus(),
-                    "reason", request.reason() != null ? request.reason() : "N/A"
-            ));
-        }
+        auditLogService.log(admin, "FACILITY_STATUS_CHANGED", Map.of(
+                "facilityId", updated.getId(),
+                "facilityName", updated.getName(),
+                "status", updated.getStatus(),
+                "reason", request.reason() != null ? request.reason() : "N/A"
+        ));
 
         return updated;
     }
@@ -107,7 +112,12 @@ public class FacilityController {
     @PatchMapping("/{id}/config")
     public Facility updateConfig(
             @PathVariable Long id,
-            @Valid @RequestBody UpdateFacilityConfigRequest request) {
+            @Valid @RequestBody UpdateFacilityConfigRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
+        if (admin == null) {
+            throw new IllegalArgumentException("Unauthorized: Admin privilege required.");
+        }
         Facility facility = new Facility();
         facility.setName(request.name());
         facility.setCategory(request.category());
@@ -120,14 +130,11 @@ public class FacilityController {
         Facility updated = facilityService.updateConfiguration(id, facility);
 
         // Log the action
-        UserAccount admin = getCurrentAdmin();
-        if (admin != null) {
-            auditLogService.log(admin, "FACILITY_CONFIG_UPDATED", Map.of(
-                    "facilityId", updated.getId(),
-                    "facilityName", updated.getName(),
-                    "sports", updated.getSports() != null ? updated.getSports() : "N/A"
-            ));
-        }
+        auditLogService.log(admin, "FACILITY_CONFIG_UPDATED", Map.of(
+                "facilityId", updated.getId(),
+                "facilityName", updated.getName(),
+                "sports", updated.getSports() != null ? updated.getSports() : "N/A"
+        ));
 
         return updated;
     }
@@ -148,10 +155,32 @@ public class FacilityController {
         );
     }
 
-    private UserAccount getCurrentAdmin() {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == UserRole.ADMIN)
-                .findFirst()
-                .orElse(null);
+    private UserAccount getCurrentAdmin(String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            if (current != null && current.getRole() == UserRole.ADMIN) {
+                return current;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
+    }
+
+    private UserAccount getAuthenticatedUser(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Unauthorized: Missing bearer token.");
+        }
+        String token = authHeader.replace("Bearer ", "").trim();
+        if (!token.startsWith("demo-token-")) {
+            throw new IllegalArgumentException("Unauthorized: Invalid token format.");
+        }
+        try {
+            Long userId = Long.parseLong(token.replace("demo-token-", ""));
+            return userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Unauthorized: User not found."));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Unauthorized: Invalid token signature.");
+        }
     }
 }

@@ -86,8 +86,8 @@ public class BookingController {
      * POST /api/bookings/admin/{id}/approve
      */
     @PostMapping("/admin/{id}/approve")
-    public ResponseEntity<?> adminApprove(@PathVariable Long id) {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> adminApprove(@PathVariable Long id, @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -127,8 +127,9 @@ public class BookingController {
     @PostMapping("/admin/{id}/reject")
     public ResponseEntity<?> adminReject(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
-        UserAccount admin = getCurrentAdmin();
+            @RequestBody Map<String, String> body,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -169,8 +170,8 @@ public class BookingController {
      * GET /api/bookings/admin/conflicts
      */
     @GetMapping("/admin/conflicts")
-    public ResponseEntity<?> listConflicts() {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> listConflicts(@RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -213,8 +214,9 @@ public class BookingController {
     @PostMapping("/admin/conflicts/{conflictId}/resolve")
     public ResponseEntity<?> resolveConflict(
             @PathVariable String conflictId,
-            @RequestBody Map<String, Long> body) {
-        UserAccount admin = getCurrentAdmin();
+            @RequestBody Map<String, Long> body,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
         }
@@ -284,11 +286,16 @@ public class BookingController {
         ));
     }
 
-    private UserAccount getCurrentAdmin() {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == UserRole.ADMIN)
-                .findFirst()
-                .orElse(null);
+    private UserAccount getCurrentAdmin(String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            if (current != null && current.getRole() == UserRole.ADMIN) {
+                return current;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
     }
 
     /**

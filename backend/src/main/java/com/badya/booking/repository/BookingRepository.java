@@ -25,6 +25,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
 
+    List<Booking> findByStatusAndReminderSentFalseAndStartTimeBetween(BookingStatus status, LocalDateTime start, LocalDateTime end);
+
     List<Booking> findByFacilityIdAndStartTimeBetween(Long facilityId, LocalDateTime start, LocalDateTime end);
 
     long countByUserIdAndStatusInAndStartTimeBetween(Long userId, List<BookingStatus> statuses, LocalDateTime start, LocalDateTime end);

@@ -63,6 +63,9 @@ public class Booking {
     @Column(name = "scanned_id_data", nullable = true)
     private String scannedIdData;
 
+    @Column(name = "reminder_sent", nullable = false)
+    private boolean reminderSent = false;
+
     public Long getId() {
         return id;
     }
@@ -193,6 +196,14 @@ public class Booking {
 
     public void setScannedIdData(String scannedIdData) {
         this.scannedIdData = scannedIdData;
+    }
+
+    public boolean isReminderSent() {
+        return reminderSent;
+    }
+
+    public void setReminderSent(boolean reminderSent) {
+        this.reminderSent = reminderSent;
     }
 
     @PrePersist

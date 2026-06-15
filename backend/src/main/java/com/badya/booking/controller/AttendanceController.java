@@ -88,6 +88,16 @@ public class AttendanceController {
                 ));
             }
 
+            // تحقق من أن وقت الحجز لم ينتهِ بعد
+            if (now.isAfter(booking.getEndTime())) {
+                booking.setAttendanceStatus(AttendanceStatus.NO_SHOW);
+                bookingRepository.save(booking);
+                return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "عذراً، لقد انتهى وقت هذا الحجز بالفعل ولا يمكن تسجيل الحضور الآن."
+                ));
+            }
+
             // حساب المسافة من المنشأة
             Double distance = geofencingService.calculateDistance(
                 facility.getLatitude(),

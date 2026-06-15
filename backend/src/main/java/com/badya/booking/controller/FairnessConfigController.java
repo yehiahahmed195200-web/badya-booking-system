@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,11 +32,33 @@ public class FairnessConfigController {
         this.auditLogService = auditLogService;
     }
 
-    private UserAccount getCurrentAdmin() {
-        return userRepository.findAll().stream()
-                .filter(u -> u.getRole() == UserRole.ADMIN)
-                .findFirst()
-                .orElse(null);
+    private UserAccount getCurrentAdmin(String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            if (current != null && current.getRole() == UserRole.ADMIN) {
+                return current;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
+    }
+
+    private UserAccount getAuthenticatedUser(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Unauthorized: Missing bearer token.");
+        }
+        String token = authHeader.replace("Bearer ", "").trim();
+        if (!token.startsWith("demo-token-")) {
+            throw new IllegalArgumentException("Unauthorized: Invalid token format.");
+        }
+        try {
+            Long userId = Long.parseLong(token.replace("demo-token-", ""));
+            return userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("Unauthorized: User not found."));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Unauthorized: Invalid token signature.");
+        }
     }
 
     private FairnessConfig getOrCreateConfig() {
@@ -58,8 +81,8 @@ public class FairnessConfigController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getConfig() {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> getConfig(@RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
         }
@@ -67,8 +90,8 @@ public class FairnessConfigController {
     }
 
     @PutMapping
-    public ResponseEntity<?> updateConfig(@RequestBody UpdateFairnessConfigRequest request) {
-        UserAccount admin = getCurrentAdmin();
+    public ResponseEntity<?> updateConfig(@RequestBody UpdateFairnessConfigRequest request, @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
         }
