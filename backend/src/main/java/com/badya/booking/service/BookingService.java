@@ -264,9 +264,13 @@ public class BookingService {
         List<Booking> overlaps = bookingRepository
                 .findByFacilityIdAndStatusInAndStartTimeLessThanAndEndTimeGreaterThan(
                         persistedFacilityId,
-                List.of(BookingStatus.CONFIRMED),
+                        List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
                         endTime,
                         startTime);
+
+        if (!overlaps.isEmpty()) {
+            throw new IllegalArgumentException("Booking rejected: This court is already booked during the requested time slot.");
+        }
 
         Booking booking = new Booking();
         booking.setUser(user);
@@ -287,38 +291,8 @@ public class BookingService {
         user.setCredits(user.getCredits() - 1);
         userRepository.save(user);
 
-        if (overlaps.isEmpty()) {
-            booking.setConflictId(null);
-            Booking saved = bookingRepository.save(booking);
-            return saved;
-        }
-
-        String conflictId = overlaps.stream()
-                .map(Booking::getConflictId)
-                .filter(id -> id != null && !id.isBlank())
-                .findFirst()
-                .orElse("conflict-" + UUID.randomUUID());
-
-        booking.setConflictId(conflictId);
+        booking.setConflictId(null);
         Booking saved = bookingRepository.save(booking);
-
-        for (Booking overlap : overlaps) {
-            boolean changed = false;
-            if (!conflictId.equals(overlap.getConflictId())) {
-                overlap.setConflictId(conflictId);
-                changed = true;
-            }
-            if (changed) {
-                bookingRepository.save(overlap);
-            }
-        }
-
-        try {
-            notificationService.sendConflictAlert(saved, true);
-        } catch (Exception ex) {
-            System.err.println("Failed to send conflict notification: " + ex.getMessage());
-        }
-
         return saved;
     }
 
