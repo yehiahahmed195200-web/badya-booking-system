@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Badya Sports Portal Presentation</title>
+  <!-- Google Fonts: Space Grotesk & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #060a13;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --teal: #13b7a6;
+      --blue: #5b8cff;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --text: #eaf0f7;
+      --text-muted: rgba(234, 240, 247, 0.65);
+      --font-display: 'Outfit', sans-serif;
+      --font-body: 'Space Grotesk', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(19, 183, 166, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(91, 140, 255, 0.08) 0%, transparent 40%);
+    }
+
+    /* Presentation Wrapper */
+    .presentation-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      position: relative;
+    }
+
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1100px;
+      height: 100%;
+      max-height: 620px;
+      background: rgba(12, 20, 38, 0.45);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 32px;
+      padding: 50px;
+      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transform: translateX(40px) scale(0.98);
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+
+    /* Slide Header */
+    .slide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+      padding-bottom: 16px;
+    }
+
+    .slide-header h2 {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 0%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slide-header .slide-badge {
+      background: rgba(19, 183, 166, 0.12);
+      border: 1px solid rgba(19, 183, 166, 0.25);
+      color: var(--teal);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      border-radius: 99px;
+    }
+
+    /* Slide Body Content */
+    .slide-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      min-height: 0;
+    }
+
+    .slide-text-side {
+      flex: 1.2;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .slide-visual-side {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Slide Footer branding */
+    .slide-footer-brand {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      color: rgba(234, 240, 247, 0.35);
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      margin-top: 20px;
+    }
+
+    .slide-footer-brand a {
+      color: var(--teal);
+      text-decoration: none;
+    }
+
+    /* Typography & Utilities */
+    .highlight-teal { color: var(--teal); }
+    .highlight-blue { color: var(--blue); }
+    .highlight-amber { color: var(--amber); }
+    
+    p.lead-text {
+      font-size: 1.15rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    ul.check-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    ul.check-list li {
+      position: relative;
+      padding-left: 28px;
+      font-size: 1.05rem;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    ul.check-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--teal);
+      font-weight: 900;
+      font-size: 1.1rem;
+    }
+
+    ul.check-list.arabic-align li {
+      padding-left: 0;
+      padding-right: 28px;
+    }
+    ul.check-list.arabic-align li::before {
+      left: auto;
+      right: 0;
+    }
+
+    /* Cover Slide Specific Styles */
+    .cover-slide-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 100%;
+      gap: 25px;
+    }
+
+    .project-eyebrow {
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: var(--teal);
+      text-shadow: 0 0 20px rgba(19, 183, 166, 0.45);
+    }
+
+    .project-title h1 {
+      font-family: var(--font-display);
+      font-size: 3.8rem;
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #ffffff 10%, #8caaff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+
+    .project-subtitle {
+      font-size: 1.4rem;
+      color: var(--text-muted);
+      max-width: 800px;
+      font-weight: 300;
+    }
+
+    .divider-glow {
+      width: 150px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--teal), var(--blue), transparent);
+      border-radius: 99px;
+      margin: 10px 0;
+    }
+
+    .credits-grid {
+      display: flex;
+      gap: 60px;
+      margin-top: 30px;
+    }
+
+    .credit-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .credit-box span.role {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: rgba(234, 240, 247, 0.4);
+      font-weight: 700;
+    }
+
+    .credit-box strong.name {
+      font-size: 1.25rem;
+      color: #ffffff;
+      font-family: var(--font-display);
+      font-weight: 600;
+    }
+
+    /* Grid layout for cards */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+
+    .slide-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px;
+      transition: all 0.3s ease;
+    }
+
+    .slide-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(91, 140, 255, 0.25);
+      transform: translateY(-3px);
+    }
+
+    .slide-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      color: #ffffff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slide-card p {
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    /* Visual elements styling */
+    .mock-ui-box {
+      width: 100%;
+      height: 280px;
+      background: rgba(4, 9, 20, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      padding: 20px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+      overflow: hidden;
+    }
+
+    .mock-ui-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      font-weight: bold;
+      color: var(--teal);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding-bottom: 8px;
+    }
+
+    .mock-ui-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      text-align: center;
+    }
+
+    /* Controls Panel */
+    .controls-panel {
+      background: rgba(7, 12, 24, 0.85);
+      border-top: 1px solid var(--card-border);
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      color: #ffffff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      font-family: var(--font-body);
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--teal);
+      color: var(--teal);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .dot.active {
+      background: var(--teal);
+      box-shadow: 0 0 10px rgba(19, 183, 166, 0.6);
+      width: 24px;
+      border-radius: 99px;
+    }
+
+    /* Comparison Table Styling */
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .custom-table th {
+      text-align: left;
+      padding: 10px;
+      color: #ffffff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      font-weight: 600;
+      font-family: var(--font-display);
+    }
+
+    .custom-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .custom-table tr:hover td {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    /* Leaflet Simulation Graphic */
+    .leaflet-sim {
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      background: #0f172a;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .geofence-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: rgba(19, 183, 166, 0.08);
+      border: 2px dashed var(--teal);
+      animation: pulse-ring 3s infinite ease-in-out;
+    }
+
+    .court-pin {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 12px var(--blue);
+    }
+
+    .user-pin {
+      position: absolute;
+      top: 60%;
+      left: 58%;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--teal);
+      box-shadow: 0 0 10px var(--teal);
+      animation: float-user 4s infinite ease-in-out;
+    }
+
+    .user-outside {
+      top: 25%;
+      left: 25%;
+      background: var(--red);
+      box-shadow: 0 0 10px var(--red);
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+      50% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.5; }
+      100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+    }
+
+    @keyframes float-user {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-4px, -4px); }
+    }
+
+    /* Key-value summary list */
+    .summary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.015);
+      border-left: 3px solid var(--blue);
+      border-radius: 4px;
+    }
+
+    .summary-item.teal-left {
+      border-left-color: var(--teal);
+    }
+
+    .summary-item span.label {
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .summary-item span.val {
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Slide Wrapper -->
+  <div class="presentation-container">
+
+    <!-- Slide 1: Cover Page -->
+    <div class="slide active" id="slide-1">
+      <div class="cover-slide-body">
+        <div class="project-eyebrow">Graduation Project</div>
+        <div class="project-title">
+          <h1>Badya Sports Booking Portal</h1>
+        </div>
+        <div class="project-subtitle">
+          An Intelligent scheduling, algorithmic fairness-rotation, geofenced verification, and bilingual sports facility management portal.
+        </div>
+        <div class="divider-glow"></div>
+        
+        <div class="credits-grid">
+          <div class="credit-box">
+            <span class="role">Prepared By</span>
+            <strong class="name">Yehia Ahmed</strong>
+          </div>
+          <div class="credit-box">
+            <span class="role">Prepared By</span>
+            <strong class="name">Omar Abdelaziz</strong>
+          </div>
+          <div class="credit-box">
+            <span class="role">Supervised By</span>
+            <strong class="name">Dr. Amira</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: Core Pain Points -->
+    <div class="slide" id="slide-2">
+      <div class="slide-header">
+        <h2>❌ The Campus Scheduling Challenge</h2>
+        <span class="slide-badge">The Problem</span>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text-side">
+          <p class="lead-text">
+            Traditional sports booking portals fail to control booking abuse, leaving physical courts empty or monopolized by specific groups.
+          </p>
+          <ul class="check-list">
+            <li><strong>Monopoly & Court Hogging</strong>: Groups blocking prime-time slots back-to-back.</li>
+            <li><strong>No-Show Waste</strong>: Facilities booked but never checked into, locking out other active students.</li>
+            <li><strong>Attendance Fraud</strong>: Remote logins checking in from outside the venue boundaries.</li>
+            <li><strong>Teammate Matching Friction</strong>: Solo players unable to organize teams or match Student IDs.</li>
+          </ul>
+        </div>
+        <div class="slide-visual-side">
+          <div class="cards-grid">
+            <div class="slide-card">
+              <h3 style="color: var(--red);">🔒 Monopolies</h3>
+              <p>Same group booking slots consecutively, preventing student rotation.</p>
+            </div>
+            <div class="slide-card">
+              <h3 style="color: var(--amber);">📍 Attendance Fraud</h3>
+              <p>Remote check-ins checking in without being physically on court.</p>
+            </div>
+            <div class="slide-card">
+              <h3 style="color: var(--blue);">🎯 Team Friction</h3>
+              <p>Solo players cannot easily coordinate or find missing teammates.</p>
+            </div>
+            <div class="slide-card" style="border-color: rgba(19, 183, 166, 0.25);">
+              <h3 style="color: var(--teal);">🌐 Language</h3>
+              <p>Lack of localized interfaces and error messages in Arabic.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer-brand">
+        <span>Badya Sports Portal</span>
+        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
+      </div>
+    </div>
+
+    <!-- Slide 3: Global Bilingual Engine -->
+    <div class="slide" id="slide-3">
+      <div class="slide-header">
+        <h2>🌐 Dual-Language Layout Engine</h2>
+        <span class="slide-badge">Bilingual Integration</span>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text-side">
+          <p class="lead-text">
+            To accommodate both international and national students, the portal features a floating toggle switch that flips the entire website context.
+          </p>
+          <ul class="check-list">
+            <li><strong>Dynamic Layout Shifts</strong>: Instantly flips layout direction (LTR ↔ RTL) and dynamically applies `.rtl-mode` styles.</li>
+            <li><strong>Contextual Translations</strong>: Every tab, attendance map, chatbot bubble, and form updates instantly.</li>
+            <li><strong>Smart Exception Mapping</strong>: Automatically intercepts complex backend database constraints and translates them on-the-fly to readable Arabic.</li>
+          </ul>
+        </div>
+        <div class="slide-visual-side">
+          <div class="mock-ui-box">
+            <div class="mock-ui-header">
+              <span>BILINGUAL INTERCEPTOR</span>
+              <span class="highlight-teal">RTL / LTR Active</span>
+            </div>
+            <div class="mock-ui-body" style="width: 100%;">
+              <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid var(--red); padding: 12px; border-radius: 10px; font-size: 0.85rem; width: 100%;">
+                <span style="color: var(--red); display: block; font-weight: bold; margin-bottom: 4px;">Backend Exception Caught:</span>
+                <code style="color: #ffcdcd; font-size: 0.78rem;">IllegalArgumentException: already booked</code>
+              </div>
+              <div style="font-size: 1.5rem; margin: 4px 0;">⬇</div>
+              <div style="background: rgba(19, 183, 166, 0.08); border: 1px solid var(--teal); padding: 12px; border-radius: 10px; font-size: 0.85rem; width: 100%; direction: rtl; text-align: right;">
+                <span style="color: var(--teal); display: block; font-weight: bold; margin-bottom: 4px;">الترجمة للغة العربية:</span>
+                <span style="color: #eaf0f7; font-size: 0.85rem;">تم رفض الحجز: هذا الملعب محجوز بالفعل خلال الفترة المطلوبة.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer-brand">
+        <span>Badya Sports Portal</span>
+        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
+      </div>
+    </div>
+
+    <!-- Slide 4: Algorithmic Fairness Engine -->
+    <div class="slide" id="slide-4">
+      <div class="slide-header">
+        <h2>⚖️ Fairness Rules & Weekly Quotas</h2>
+        <span class="slide-badge">Rotation Policy</span>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text-side">
+          <p class="lead-text">
+            An automated balancing engine enforces rules to prevent monopolization and optimize court utility.
+          </p>
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Rule / Policy</th>
+                <th>Threshold Limit</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color: #ffffff; font-weight: 600;">Weekly Booking Limit</td>
+                <td class="highlight-teal">Max 3 Bookings / Week</td>
+                <td>Resets every Monday morning at 08:00 AM automatically.</td>
+              </tr>
+              <tr>
+                <td style="color: #ffffff; font-weight: 600;">Booking Cooldown</td>
+                <td class="highlight-blue">24-Hour Buffer</td>
+                <td>Prevents users from spamming court reservations.</td>
+              </tr>
+              <tr>
+                <td style="color: #ffffff; font-weight: 600;">Consecutive Slot Guard</td>
+                <td class="highlight-amber">Max 2 Hours / Group</td>
+                <td>Blocks bookings sharing 50%+ teammate overlap consecutively.</td>
+              </tr>
+              <tr>
+                <td style="color: #ffffff; font-weight: 600;">Priority Score</td>
+                <td style="color: #fff;">Dynamic Weight</td>
+                <td>Overlapping slots resolved automatically based on weekly quota debt.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="slide-visual-side">
+          <div class="mock-ui-box">
+            <div class="mock-ui-header">
+              <span>REAL-TIME FAIRNESS METRICS</span>
+              <span class="highlight-blue">Engine Active</span>
+            </div>
+            <div class="mock-ui-body" style="width: 100%; align-items: stretch;">
+              <div class="summary-item teal-left">
+                <span class="label">Priority Sport</span>
+                <span class="val highlight-teal">Basketball (Favored)</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Weekly Hours Filled</span>
+                <span class="val">54 / 84 Hours</span>
+              </div>
+              <div class="summary-item teal-left">
+                <span class="label">Active Player Ratio</span>
+                <span class="val">Basketball 60% vs Volleyball 40%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer-brand">
+        <span>Badya Sports Portal</span>
+        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
+      </div>
+    </div>
+
+    <!-- Slide 5: Geofenced Verification -->
+    <div class="slide" id="slide-5">
+      <div class="slide-header">
+        <h2>📍 Geofenced Attendance Verification</h2>
+        <span class="slide-badge">Fraud Prevention</span>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text-side">
+          <p class="lead-text">
+            Ensures students are physically present at the sports facility during their booking time window to claim attendance points.
+          </p>
+          <ul class="check-list">
+            <li><strong>Leaflet Maps Integration</strong>: Dynamic map tracking displaying student position and geofence boundary coordinates.</li>
+            <li><strong>50m Radius Guard</strong>: The check-in button remains locked if the browser's coordinates are outside the 50m facility radius.</li>
+            <li><strong>No-Show Automatic Ban</strong>: Failing to check in within 15 minutes of the slot start cancels the booking, penalizing the user. 3 violations lead to a temporary 1-week account ban.</li>
+          </ul>
+        </div>
+        <div class="slide-visual-side">
+          <div class="leaflet-sim">
+            <div class="geofence-circle"></div>
+            <div class="court-pin" title="Facility Center"></div>
+            <div class="user-pin" title="Student (Inside)"></div>
+            <div class="user-pin user-outside" title="Student (Outside)"></div>
+            <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.8); padding: 6px 12px; border-radius: 8px; font-size: 0.72rem;">
+              <span class="highlight-teal">● Inside: Scanner Unlocked</span><br/>
+              <span class="highlight-red">● Outside: Scanner Locked</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer-brand">
+        <span>Badya Sports Portal</span>
+        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
+      </div>
+    </div>
+
+    <!-- Slide 6: Anonymous Matchmaking (LFG) -->
+    <div class="slide" id="slide-6">
+      <div class="slide-header">
+        <h2>🎯 Teammate Discovery & Anonymous Lobby</h2>
+        <span class="slide-badge">Matchmaking</span>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text-side">
+          <p class="lead-text">
+            Students who lack a team can join an anonymous matchmaking queue instead of leaving the court underutilized.
+          </p>
+          <ul class="check-list">
+            <li><strong>Anonymous Waiting</strong>: Queues mask user details to ensure privacy and eliminate social anxiety.</li>
+            <li><strong>Automated Scheduling</strong>: The system groups balanced lists of players, reserves the court, and generates balanced teams (Team A vs Team B).</li>
+            <li><strong>Teammate ID Promos</strong>: Attempts to book with participants > 1 without entering teammate IDs are blocked and display an option directing the user to the matchmaking portal.</li>
+          </ul>
+        </div>
+        <div class="slide-visual-side">
+          <div class="mock-ui-box">
+            <div class="mock-ui-header">
+              <span>ACTIVE MATCHMAKING QUEUES</span>
+              <span class="highlight-amber">LFG Active</span>
+            </div>
+            <div class="mock-ui-body" style="width: 100%; align-items: stretch; gap: 8px;">
+              <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 10px; padding: 10px; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong>🏐 Volleyball Match</strong><br/>
+                  <span style="color: var(--text-muted); font-size: 0.75rem;">Outdoor Court | 12:00 PM</span>
+                </div>
+                <span style="background: rgba(91,140,255,0.15); color: var(--blue); padding: 4px 10px; border-radius: 6px; font-weight: bold;">8 / 12 Players</span>
+              </div>
+              <div style="background: rgba(19, 183, 166, 0.06); border: 1px solid var(--teal); border-radius: 10px; padding: 10px; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <strong>🏀 Basketball Match</strong><br/>
+                  <span style="color: var(--text-muted); font-size: 0.75rem;">Indoor Hall | 02:00 PM</span>
+                </div>
+                <span style="background: rgba(19, 183, 166, 0.2); color: var(--teal); padding: 4px 10px; border-radius: 6px; font-weight: bold;">MATCH FOUND ✅</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer-brand">
+        <span>Badya Sports Portal</span>
+        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
+      </div>
+    </div>
+
+    <!-- Slide 7: AI Assistant (Badya AI) -->
+    <div class="slide" id="slide-7">
+      <div class="slide-header">
+        <h2>💬 AI Assistant & Offline Knowledge</h2>
+        <span class="slide-badge">Conversational AI</span>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text-side">
+          <p class="lead-text">
+            Badya AI behaves as an intelligent booking concierge, supporting full natural language interactions.
+          </p>
+          <ul class="check-list">
+            <li><strong>LLM Power</strong>: Powered by Gemini APIs, answering complex questions about reservation rules, points, and warnings.</li>
+            <li><strong>Automated Tool Routing</strong>: Conversational tools allow the bot to query active court listings or redirect users to booking forms.</li>
+            <li><strong>Offline Fallback</strong>: If internet connections are disrupted, the bot switches to a local vector-like offline database of rules and contacts.</li>
+          </ul>
+        </div>
+        <div class="slide-visual-side">
+          <div class="mock-ui-box">
+            <div class="mock-ui-header">
+              <span>BADYA CONCIERGE CHAT</span>
+              <span class="highlight-teal">Gemini LLM</span>
+            </div>
+            <div class="mock-ui-body" style="font-size: 0.82rem; align-items: stretch; text-align: left; justify-content: flex-start; margin-top: 10px; gap: 8px;">
+              <div style="background: rgba(255,255,255,0.03); border-radius: 8px; padding: 10px; border-left: 2px solid var(--blue);">
+                <strong style="color: var(--blue);">User:</strong> "احجزلي ملعب الباسكت بكرة الساعة 9 الصبح"
+              </div>
+              <div style="background: rgba(19, 183, 166, 0.04); border-radius: 8px; padding: 10px; border-left: 2px solid var(--teal);">
+                <strong style="color: var(--teal);">Badya AI:</strong> "بالتأكيد! سأقوم بتوجيهك لصفحة الحجز وملء التفاصيل لملعب كرة السلة غداً الساعة 09:00 صباحاً."
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer-brand">
+        <span>Badya Sports Portal</span>
+        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
+      </div>
+    </div>
+
+    <!-- Slide 8: Technical Stack -->
+    <div class="slide" id="slide-8">
+      <div class="slide-header">
+        <h2>💻 Tech Stack Overview</h2>
+        <span class="slide-badge">Core Technologies</span>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text-side">
+          <p class="lead-text">
+            Built using modern, lightweight, and performant frameworks for solid API scheduling and responsive UI experiences.
+          </p>
+          <table class="custom-table" style="margin-top: 10px;">
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Technology</th>
+                <th>Responsibility</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color: #ffffff; font-weight: 600;">Frontend</td>
+                <td class="highlight-teal">React & Vite</td>
+                <td>Bilingual rendering, state management, Leaflet Maps.</td>
+              </tr>
+              <tr>
+                <td style="color: #ffffff; font-weight: 600;">Backend</td>
+                <td class="highlight-blue">Spring Boot (Java 17)</td>
+                <td>Fairness logic, matchmaking engine, security & authentication.</td>
+              </tr>
+              <tr>
+                <td style="color: #ffffff; font-weight: 600;">Database</td>
+                <td class="highlight-amber">MySQL / H2</td>
+                <td>Stores facilities data, student reservations, and logs.</td>
+              </tr>
+              <tr>
+                <td style="color: #ffffff; font-weight: 600;">AI Engine</td>
+                <td style="color: #fff;">Gemini API</td>
+                <td>Underpins conversational chatbot and local search fallbacks.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="slide-visual-side">
+          <div class="cards-grid">
+            <div class="slide-card">
+              <h3>⚡ Vite + React</h3>
+              <p>Ensures immediate hot-reloading and highly responsive pages.</p>
+            </div>
+            <div class="slide-card">
+              <h3>🍃 Spring Boot</h3>
+              <p>Provides a type-safe rest API architecture with robust JPA layers.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer-brand">
+        <span>Badya Sports Portal</span>
+        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
+      </div>
+    </div>
+
+    <!-- Slide 9: Demo Flow Checklist -->
+    <div class="slide" id="slide-9">
+      <div class="slide-header">
+        <h2>⚡ Live Demo Walkthrough Plan</h2>
+        <span class="slide-badge">Execution Plan</span>
+      </div>
+      <div class="slide-body">
+        <div class="slide-text-side">
+          <p class="lead-text">
+            Recommended sequence for showcasing the live portal tomorrow:
+          </p>
+          <ul class="check-list">
+            <li><strong>Login & Browser Binding</strong>: Show initial login and notice regarding device fairness locks.</li>
+            <li><strong>Language Switcher</strong>: Toggle the floating button (bottom-left) to show immediate RTL shift.</li>
+            <li><strong>Court Availability Grid</strong>: View slots for a court (Basketball/Volleyball) and try to book a conflict slot.</li>
+            <li><strong>Teammate Validation & Promo</strong>: Submit a booking without buddy IDs and trigger the Matchmaking prompt.</li>
+            <li><strong>Geofenced Scanner Check-in</strong>: Check in showing locked/unlocked state depending on coordinates.</li>
+          </ul>
+        </div>
+        <div class="slide-visual-side">
+          <div class="mock-ui-box" style="border-color: rgba(19, 183, 166, 0.25);">
+            <div class="mock-ui-header">
+              <span>DEMO FLOW STATUS</span>
+              <span class="highlight-teal">Ready for Presentation</span>
+            </div>
+            <div class="mock-ui-body" style="justify-content: flex-start; text-align: left; width: 100%; gap: 10px; margin-top: 15px;">
+              <div style="font-size: 0.95rem; color: #ffffff;">🏁 **Goal**: Showcase fairness, translation, and geofencing validation.</div>
+              <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">✔️ Frontend: Built successfully (`dist/` generated)</div>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">✔️ Backend APIs: Active and responsive</div>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">✔️ Chatbot service: Connected and running</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer-brand">
+        <span>Badya Sports Portal</span>
+        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Controls Panel -->
+  <div class="controls-panel">
+    <button class="nav-btn" id="prev-btn" disabled>
+      ← Previous
+    </button>
+    
+    <div class="progress-dots" id="dots-container">
+      <div class="dot active" data-index="1"></div>
+      <div class="dot" data-index="2"></div>
+      <div class="dot" data-index="3"></div>
+      <div class="dot" data-index="4"></div>
+      <div class="dot" data-index="5"></div>
+      <div class="dot" data-index="6"></div>
+      <div class="dot" data-index="7"></div>
+      <div class="dot" data-index="8"></div>
+      <div class="dot" data-index="9"></div>
+    </div>
+    
+    <button class="nav-btn" id="next-btn">
+      Next →
+    </button>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    let currentSlide = 0;
+
+    function updatePresentation() {
+      // Hide all slides
+      slides.forEach(slide => slide.classList.remove('active'));
+      dots.forEach(dot => dot.classList.remove('active'));
+
+      // Show current slide
+      slides[currentSlide].classList.add('active');
+      dots[currentSlide].classList.add('active');
+
+      // Update button states
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.disabled = currentSlide === slides.length - 1;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentSlide > 0) {
+        currentSlide--;
+        updatePresentation();
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+        updatePresentation();
+      }
+    });
+
+    // Dot click navigation
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        currentSlide = index;
+        updatePresentation();
+      });
+    });
+
+    // Keyboard Arrow navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' && currentSlide < slides.length - 1) {
+        currentSlide++;
+        updatePresentation();
+      } else if (e.key === 'ArrowLeft' && currentSlide > 0) {
+        currentSlide--;
+        updatePresentation();
+      }
+    });
+  </script>
+</body>
+</html>
