@@ -157,6 +157,12 @@
   font-size: 0.88rem;
 }
 
+.ac-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .ac-topbar-actions {
   display: flex;
   align-items: center;
@@ -599,21 +605,101 @@
     -webkit-backdrop-filter: blur(12px);
     z-index: 100;
     border-bottom: 1px solid #e2e8f0;
-    padding: 12px 16px;
+    padding: 12px 16px 16px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding-right: 60px !important;
+  }
+
+  .ac-topbar-left {
+    width: 100% !important;
+  }
+
+  .ac-topbar-actions {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .ac-topbar-actions .notification-bell {
+    position: absolute !important;
+    top: 18px !important;
+    right: 16px !important;
+    z-index: 10 !important;
+  }
+
+  .ac-refresh-btn,
+  .ac-live-feed-btn {
+    padding: 6px 12px !important;
+    font-size: 0.8rem !important;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .ac-stats-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    gap: 12px !important;
+    padding: 4px 4px 12px !important;
+    margin-bottom: 8px !important;
+    -webkit-overflow-scrolling: touch;
+    grid-template-columns: none !important;
   }
+
+  .ac-stats-grid::-webkit-scrollbar {
+    height: 5px;
+  }
+  .ac-stats-grid::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 10px;
+  }
+  .ac-stats-grid::-webkit-scrollbar-thumb {
+    background: rgba(28, 178, 191, 0.3);
+    border-radius: 10px;
+  }
+
   .ac-stat-card {
-    padding: 12px 14px;
-    border-radius: 12px;
+    flex: 0 0 150px !important;
+    scroll-snap-align: start;
+    padding: 12px !important;
+    border-radius: 14px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
   }
+
+  .ac-stat-icon {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 1.1rem !important;
+    border-radius: 10px !important;
+  }
+
   .ac-stat-value {
-    font-size: 1.6rem;
+    font-size: 1.5rem !important;
+    margin-top: 2px !important;
+  }
+
+  .ac-stat-label {
+    font-size: 0.76rem !important;
+    color: #5a6a80 !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    width: 100% !important;
+  }
+
+  .ac-stat-sub {
+    font-size: 0.65rem !important;
+    opacity: 0.8 !important;
   }
 }
 

@@ -749,7 +749,7 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
       <div className="ac-main">
         {/* Topbar */}
         <header className="ac-topbar">
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div className="ac-topbar-left">
             <button
               className="ac-menu-toggle"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
