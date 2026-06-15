@@ -66,7 +66,28 @@ export default function BookingPage({ session }) {
 
   useEffect(() => {
     fetch(`${API}/api/facilities?activeOnly=true&active=true`)
-      .then(r => r.json()).then(d => { setFacilities(Array.isArray(d) ? d : []); setLoading(false); })
+      .then(r => r.json()).then(d => {
+        const facs = Array.isArray(d) ? d : [];
+        setFacilities(facs);
+        setLoading(false);
+
+        // Pre-select facility if passed via sessionStorage or query
+        const urlParams = new URLSearchParams(window.location.search);
+        const facilityId = urlParams.get("facilityId") || sessionStorage.getItem("prefilledFacilityId");
+        if (facilityId) {
+          const found = facs.find(f => String(f.id) === String(facilityId));
+          if (found) {
+            setSelectedFacility(found);
+            setForm(p => ({
+              ...p,
+              participants: found.minParticipants || 1,
+              sport: found.sports && !found.sports.includes(",") ? found.sports.trim() : ""
+            }));
+            setStep(2);
+          }
+          sessionStorage.removeItem("prefilledFacilityId");
+        }
+      })
       .catch(() => setLoading(false));
   }, []);
 

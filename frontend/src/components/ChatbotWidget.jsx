@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 import "./ChatbotWidget.css";
 
@@ -28,6 +29,7 @@ const DEFAULT_KNOWLEDGE = `
 `;
 
 export default function ChatbotWidget({ session }) {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
@@ -117,7 +119,15 @@ export default function ChatbotWidget({ session }) {
     
     // Injected user info
     const userInfo = session 
-      ? { userId: session.id, name: session.fullName, role: session.role }
+      ? { 
+          userId: session.id, 
+          name: session.fullName, 
+          role: session.role,
+          studentId: session.studentId,
+          points: session.earnedPoints || session.points || 0,
+          warnings: session.warnings || 0,
+          credits: session.credits != null ? session.credits : 10
+        }
       : null;
 
     const assistantPrompt = `You are Badya Concierge, the official digital assistant for Badya University's premium sports booking platform.
@@ -132,7 +142,14 @@ ${DEFAULT_KNOWLEDGE}
 ${uploadedDocs.length > 0 ? `\n# Context from custom uploaded files:\n${uploadedDocs.map(d => `[File: ${d.title}]\n${d.text}`).join("\n---\n")}` : ""}
 
 # Active User Session:
-${userInfo ? `Logged-in User Details: Name: "${userInfo.name}", ID: ${userInfo.userId}, Role: "${userInfo.role}"` : "User is guest/not logged in."}
+${userInfo ? `Logged-in User Details:
+- Name: "${userInfo.name}"
+- ID (Numeric database ID): ${userInfo.userId}
+- Student ID (String): "${userInfo.studentId}"
+- Role: "${userInfo.role}"
+- Earned Points: ${userInfo.points}
+- Violations/Warnings count: ${userInfo.warnings} (Max 3 before auto-ban)
+- Remaining Credits: ${userInfo.credits}` : "User is guest/not logged in."}
 
 Always trigger the appropriate tool if the user asks about sports facilities, active courts, notifications, or requests to book.
 If the user wants to book a facility:
@@ -290,6 +307,44 @@ If the user wants to book a facility:
     const query = text.toLowerCase();
     const isArabic = /[\u0600-\u06FF]/.test(text);
 
+    // 0. Check if they want user profile statistics (points, warnings, credits)
+    if (
+      query.includes("نقاط") ||
+      query.includes("نقاطي") ||
+      query.includes("تحذير") ||
+      query.includes("تحذيراتي") ||
+      query.includes("رصيد") ||
+      query.includes("رصيدي") ||
+      query.includes("بيانات") ||
+      query.includes("بياناتي") ||
+      query.includes("points") ||
+      query.includes("warnings") ||
+      query.includes("credits") ||
+      query.includes("profile") ||
+      query.includes("my data")
+    ) {
+      if (!session) {
+        return isArabic 
+          ? "يرجى تسجيل الدخول أولاً لعرض بياناتك."
+          : "Please log in first to view your account details.";
+      }
+      if (isArabic) {
+        return `بيانات حسابك الحالي:\n` +
+               `- 👤 الاسم: ${session.fullName}\n` +
+               `- 🆔 الرقم الجامعي: ${session.studentId || "غير محدد"}\n` +
+               `- ⭐ النقاط المكتسبة: ${session.earnedPoints || session.points || 0} نقطة\n` +
+               `- ⚠️ التحذيرات: ${session.warnings || 0} (الحد الأقصى 3 قبل الحظر)\n` +
+               `- 🎫 الرصيد المتاح: ${session.credits != null ? session.credits : 10} رصيد`;
+      } else {
+        return `Your current account details:\n` +
+               `- 👤 Name: ${session.fullName}\n` +
+               `- 🆔 Student ID: ${session.studentId || "N/A"}\n` +
+               `- ⭐ Earned Points: ${session.earnedPoints || session.points || 0} pts\n` +
+               `- ⚠️ Warnings: ${session.warnings || 0} (Max 3 before ban)\n` +
+               `- 🎫 Available Credits: ${session.credits != null ? session.credits : 10}`;
+      }
+    }
+
     // 1. Check if they want facilities
     if (
       query.includes("مرافق") ||
@@ -370,6 +425,71 @@ If the user wants to book a facility:
     setMessages(updatedMessages);
     setInputValue("");
     setIsTyping(true);
+
+    const lowerText = text.toLowerCase();
+    const isArabic = /[\u0600-\u06FF]/.test(text);
+    
+    // Check if user wants to redirect to booking page
+    const wantsBooking = (
+      lowerText.includes("احجز") || 
+      lowerText.includes("حجز") || 
+      lowerText.includes("book") || 
+      lowerText.includes("reserve") || 
+      lowerText.includes("reservation")
+    ) && !(
+      lowerText.includes("قواعد") || 
+      lowerText.includes("شروط") || 
+      lowerText.includes("rules") || 
+      lowerText.includes("policy") || 
+      lowerText.includes("policies") ||
+      lowerText.includes("خطوات") ||
+      lowerText.includes("كيف") ||
+      lowerText.includes("how to")
+    );
+
+    if (wantsBooking) {
+      let prefilledId = null;
+      try {
+        const facilities = await fetchFacilities();
+        if (facilities && Array.isArray(facilities)) {
+          const found = facilities.find(f => 
+            lowerText.includes(f.name.toLowerCase()) || 
+            (f.category && lowerText.includes(f.category.toLowerCase())) ||
+            (isArabic && (
+              (f.name.includes("تنس") && lowerText.includes("تنس")) ||
+              (f.name.includes("سلة") && lowerText.includes("سلة")) ||
+              (f.name.includes("بادل") && lowerText.includes("بادل")) ||
+              (f.name.includes("كرة") && lowerText.includes("كرة")) ||
+              (f.name.includes("سباحة") && lowerText.includes("سباحة")) ||
+              (f.name.includes("gym") && (lowerText.includes("جيم") || lowerText.includes("جيّم")))
+            ))
+          );
+          if (found) {
+            prefilledId = found.id;
+          }
+        }
+      } catch (e) {
+        console.error("Error pre-resolving facility:", e);
+      }
+
+      setTimeout(() => {
+        if (prefilledId) {
+          sessionStorage.setItem("prefilledFacilityId", String(prefilledId));
+        }
+        navigate("/book");
+        setMessages(prev => [
+          ...prev,
+          { 
+            role: "bot", 
+            content: isArabic 
+              ? "أكيد! سأقوم بتوجيهك الآن إلى صفحة الحجز لملء التفاصيل وإتمام الحجز." 
+              : "Sure! I am redirecting you to the booking page now to complete your reservation." 
+          }
+        ]);
+        setIsTyping(false);
+      }, 600);
+      return;
+    }
 
     try {
       if (!GEMINI_API_KEY) {
