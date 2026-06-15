@@ -217,6 +217,81 @@ If the user wants to book a facility:
     return await res.json();
   };
 
+  const handleLocalFallback = async (text) => {
+    const query = text.toLowerCase();
+    const isArabic = /[\u0600-\u06FF]/.test(text);
+
+    // 1. Check if they want facilities
+    if (
+      query.includes("مرافق") ||
+      query.includes("ملاعب") ||
+      query.includes("ملعب") ||
+      query.includes("facilities") ||
+      query.includes("facility") ||
+      query.includes("courts") ||
+      query.includes("court")
+    ) {
+      const facilities = await fetchFacilities();
+      if (facilities && !facilities.error) {
+        if (isArabic) {
+          const list = facilities.map(f => `- [ملعب #${f.id}] ${f.name} (${f.category}): متاح من ${f.openTime} إلى ${f.closeTime}`).join("\n");
+          return `المرافق المتاحة حالياً:\n${list}`;
+        } else {
+          const list = facilities.map(f => `- [#${f.id}] ${f.name} (${f.category}): Open ${f.openTime} to ${f.closeTime}`).join("\n");
+          return `Available facilities:\n${list}`;
+        }
+      }
+    }
+
+    // 2. Check if they want notifications
+    if (query.includes("إشعارات") || query.includes("اشعارات") || query.includes("notification")) {
+      if (!session) {
+        return isArabic 
+          ? "يرجى تسجيل الدخول أولاً لعرض إشعاراتك."
+          : "Please log in first to view your notifications.";
+      }
+      const notifications = await fetchNotifications(session.id);
+      if (notifications && !notifications.error) {
+        if (Array.isArray(notifications) && notifications.length > 0) {
+          const list = notifications.map(n => `- ${n.title}: ${n.message}`).join("\n");
+          return isArabic 
+            ? `إشعاراتك الأخيرة:\n${list}`
+            : `Your recent notifications:\n${list}`;
+        } else {
+          return isArabic 
+            ? "لا توجد إشعارات حالياً."
+            : "You have no notifications at this time.";
+        }
+      }
+    }
+
+    // 3. Fallback to knowledge base matching
+    const sections = DEFAULT_KNOWLEDGE.split("\n");
+    const hits = sections.filter(sec => sec.toLowerCase().includes(query));
+    
+    // Also check uploaded docs
+    const uploadedHits = [];
+    for (const doc of uploadedDocs) {
+      const docSections = doc.text.split("\n");
+      const matched = docSections.filter(sec => sec.toLowerCase().includes(query));
+      if (matched.length > 0) {
+        uploadedHits.push(`[${doc.title}]: ${matched.join("\n")}`);
+      }
+    }
+
+    if (hits.length > 0 || uploadedHits.length > 0) {
+      const context = [...hits, ...uploadedHits].join("\n");
+      return isArabic
+        ? `أكيد. هذا سياق مرتبط بطلبك من التعليمات والقواعد المحلية:\n\n${context}`
+        : `Here is the closest information from our local rules and policies:\n\n${context}`;
+    }
+
+    // 4. Default message
+    return isArabic
+      ? "أكيد. لم أتمكن من العثور على إجابة مطابقة في قاعدة المعرفة المحلية حالياً، ولكن يمكنك استخدام الميزات الأخرى للنظام لحجز الملاعب مباشرة."
+      : "I couldn't find a direct match in our local knowledge base, but you can use the booking portal to reserve facilities directly.";
+  };
+
   const handleSendMessage = async (textToSend) => {
     const text = (textToSend || inputValue).trim();
     if (!text) return;
@@ -287,10 +362,18 @@ If the user wants to book a facility:
       setMessages(prev => [...prev, { role: "bot", content: finalReply }]);
     } catch (error) {
       console.error("Chatbot processing error:", error);
-      setMessages(prev => [
-        ...prev,
-        { role: "bot", content: "عذراً، حدث خطأ أثناء الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت أو المحاولة مرة أخرى." }
-      ]);
+      try {
+        const fallbackReply = await handleLocalFallback(text);
+        setMessages(prev => [
+          ...prev,
+          { role: "bot", content: fallbackReply }
+        ]);
+      } catch (e) {
+        setMessages(prev => [
+          ...prev,
+          { role: "bot", content: "عذراً، حدث خطأ أثناء الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت أو المحاولة مرة أخرى." }
+        ]);
+      }
     } finally {
       setIsTyping(false);
     }

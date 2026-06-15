@@ -109,11 +109,30 @@ async function callOpenAI(messages) {
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_KEY}` },
     body: JSON.stringify(body),
   });
-  const j = await r.json();
-  if (j.error) {
-    throw new Error(j.error.message || JSON.stringify(j.error));
+
+  if (!r.ok) {
+    let errText = '';
+    try {
+      const errJson = await r.json();
+      const errObj = Array.isArray(errJson) ? errJson[0] : errJson;
+      errText = errObj?.error?.message || errObj?.message || JSON.stringify(errJson);
+    } catch (e) {
+      errText = await r.text();
+    }
+    throw new Error(`HTTP ${r.status}: ${errText}`);
   }
-  return j?.choices?.[0]?.message?.content || JSON.stringify(j);
+
+  const j = await r.json();
+  const resObj = Array.isArray(j) ? j[0] : j;
+  if (resObj?.error) {
+    throw new Error(resObj.error.message || JSON.stringify(resObj.error));
+  }
+
+  const content = resObj?.choices?.[0]?.message?.content;
+  if (typeof content !== 'string') {
+    throw new Error(`Invalid response format: ${JSON.stringify(j)}`);
+  }
+  return content;
 }
 
 async function callOllama(messages) {
@@ -129,8 +148,17 @@ async function callOllama(messages) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
+  if (!r.ok) {
+    throw new Error(`Ollama HTTP ${r.status}`);
+  }
   const j = await r.json();
-  return j?.message?.content || JSON.stringify(j);
+  if (j.error) {
+    throw new Error(j.error);
+  }
+  if (typeof j?.message?.content !== 'string') {
+    throw new Error(`Invalid Ollama response: ${JSON.stringify(j)}`);
+  }
+  return j.message.content;
 }
 
 async function backendRequest(endpoint, options = {}) {
@@ -431,12 +459,15 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => console.log(`Chatbot server running at http://localhost:${PORT}`));
-if (OPENAI_KEY) {
-  console.log('LLM key detected — remote LLM calls enabled (model=', OPENAI_MODEL, ')');
-} else {
-  console.log('No LLM key found — local LLM via Ollama (model=', OLLAMA_MODEL, ')');
-}
+server.listen(PORT, async () => {
+  console.log(`Chatbot server running at http://localhost:${PORT}`);
+  const loaded = await loadDocsFromFolder();
+  console.log(`Loaded ${loaded} documents from docs/ folder.`);
+  if (OPENAI_KEY) {
+    const indexed = await indexDocsEmbeddings();
+    console.log(`Indexed ${indexed} documents embeddings.`);
+  }
+});
 
 // --- Rate limiter implementation
 const rateBuckets = new Map();

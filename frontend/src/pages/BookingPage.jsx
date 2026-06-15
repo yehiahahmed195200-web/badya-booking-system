@@ -106,7 +106,7 @@ export default function BookingPage({ session }) {
     setSubmitting(true);
     if (!token) { setError("Session expired. Please log in again."); setSubmitting(false); return; }
     try {
-      const startTime = new Date(`${form.date}T${form.time}`).toISOString();
+      const startTime = `${form.date}T${form.time}`;
       const participantsNum = parseInt(form.participants, 10);
       if (isNaN(participantsNum) || participantsNum < 1) throw new Error("Invalid number of participants");
 
