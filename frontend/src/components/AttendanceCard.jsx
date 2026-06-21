@@ -19,6 +19,13 @@ export default function AttendanceCard({
   const heartbeatIntervalRef = useRef(null);
   const mapContainer = useRef(null);
 
+  // Telemetry Simulator & Verification Details State
+  const [simulatedAccuracy, setSimulatedAccuracy] = useState(5.0); // meters
+  const [simulatedMock, setSimulatedMock] = useState(false);
+  const [verificationMethod, setVerificationMethod] = useState(booking.verificationMethod || "");
+  const [verificationMethodDesc, setVerificationMethodDesc] = useState(booking.verificationMethodDesc || "");
+  const [riskScore, setRiskScore] = useState(booking.riskScore || null);
+
   const isCheckedIn =
     booking.attendanceStatus === "CHECKED_IN" ||
     booking.attendanceStatus === "CHECKED_OUT";
@@ -35,9 +42,11 @@ export default function AttendanceCard({
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation({ latitude, longitude });
-          resolve({ latitude, longitude });
+          const { latitude, longitude, accuracy } = position.coords;
+          // Use simulated accuracy if user interacted, else actual GPS accuracy
+          const finalAccuracy = simulatedAccuracy !== 5.0 ? simulatedAccuracy : (accuracy || 5.0);
+          setLocation({ latitude, longitude, accuracy: finalAccuracy });
+          resolve({ latitude, longitude, accuracy: finalAccuracy });
         },
         (error) => {
           const errorMessages = {
@@ -87,7 +96,7 @@ export default function AttendanceCard({
     const canvas = document.createElement("canvas");
     canvas.width = 300;
     canvas.height = 300;
-    canvas.style.border = "1px solid #ccc";
+    canvas.style.border = "1px solid #e2e8f0";
     canvas.style.borderRadius = "8px";
     canvas.style.marginBottom = "15px";
 
@@ -95,11 +104,11 @@ export default function AttendanceCard({
     if (!ctx) return;
 
     // رسم خلفية
-    ctx.fillStyle = "#e8f4f8";
+    ctx.fillStyle = "#f8fafc";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // رسم شبكة
-    ctx.strokeStyle = "#d0d0d0";
+    // رسم شبكة إحداثيات
+    ctx.strokeStyle = "#cbd5e1";
     ctx.lineWidth = 0.5;
     for (let i = 0; i <= canvas.width; i += 30) {
       ctx.beginPath();
@@ -117,57 +126,99 @@ export default function AttendanceCard({
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
 
-    // رسم نطاق الـ geofencing
-    const radiusKm = Math.min(booking.facility?.geofencingRadius ?? 0.004, 0.004);
-    const radiusPixels = (radiusKm / 0.2) * 50; // تحويل إلى بكسلات
+    // حساب المسافات
+    const radiusKm = booking.facility?.geofencingRadius ?? 0.004;
+    const radiusMeters = radiusKm * 1000;
+    const accuracyBufferMeters = Math.min(simulatedAccuracy * 0.5, 15);
+    const effectiveRadiusMeters = radiusMeters + accuracyBufferMeters;
 
-    ctx.fillStyle = "rgba(76, 175, 80, 0.1)";
+    // حساب المسافة الفعلية للطالب
+    const distMeters = studentLat !== undefined && studentLon !== undefined
+      ? calculateDistance(facilityLat, facilityLon, studentLat, studentLon) * 1000
+      : 0;
+
+    // تحديد مقياس الرسم ديناميكياً ليناسب الشاشة (pixels per meter)
+    const maxDimensionMeters = Math.max(effectiveRadiusMeters, simulatedAccuracy, distMeters, 25);
+    const scale = 110 / maxDimensionMeters; // ترك هامش 40 بكسل
+
+    const radiusPixels = radiusMeters * scale;
+    const effectiveRadiusPixels = effectiveRadiusMeters * scale;
+
+    // 1. رسم نطاق الـ geofencing الأصلي (أخضر خفيف)
+    ctx.fillStyle = "rgba(74, 222, 128, 0.1)";
     ctx.beginPath();
     ctx.arc(centerX, centerY, radiusPixels, 0, 2 * Math.PI);
     ctx.fill();
 
-    ctx.strokeStyle = "#4CAF50";
+    ctx.strokeStyle = "#4ade80";
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(centerX, centerY, radiusPixels, 0, 2 * Math.PI);
     ctx.stroke();
 
-    // رسم موقع المنشأة (المركز)
-    ctx.fillStyle = "#FF6B6B";
+    // 2. رسم القطر الفعال المرن (Fuzzy Geofence) بخط برتقالي منقط لو كان هناك تمدد
+    if (effectiveRadiusPixels > radiusPixels) {
+      ctx.strokeStyle = "#fb923c";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, effectiveRadiusPixels, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // 3. رسم موقع المنشأة (المركز) باللون الأحمر
+    ctx.fillStyle = "#ef4444";
     ctx.beginPath();
     ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
 
-    ctx.fillStyle = "#FFFFFF";
-    ctx.font = "10px Arial";
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 10px Cairo, Arial";
     ctx.textAlign = "center";
-    ctx.fillText(t("attendance.mapLabelFacility"), centerX, centerY - 15);
+    ctx.fillText(t("attendance.mapLabelFacility"), centerX, centerY - 14);
 
-    // رسم موقع الطالب (إن وجد)
+    // 4. رسم موقع الطالب ودائرة الدقة المترية (translucent blue)
     if (studentLat !== undefined && studentLon !== undefined) {
-      const dist = calculateDistance(facilityLat, facilityLon, studentLat, studentLon);
-      setDistance(dist);
+      const diffLatMeters = (studentLat - facilityLat) * 111320;
+      const diffLonMeters = (studentLon - facilityLon) * 111320 * Math.cos(facilityLat * Math.PI / 180);
 
-      // تحويل الإحداثيات إلى بكسلات (تقريب بسيط)
-      const scaleX = (studentLon - facilityLon) * 11132 * 0.7; // تحويل إلى بكسلات
-      const scaleY = (studentLat - facilityLat) * 11132 * 0.7;
+      const studentX = centerX + diffLonMeters * scale;
+      const studentY = centerY - diffLatMeters * scale;
 
-      const studentX = Math.max(20, Math.min(canvas.width - 20, centerX + scaleX));
-      const studentY = Math.max(20, Math.min(canvas.height - 20, centerY + scaleY));
+      // دائرة دقة الـ GPS
+      const accuracyPixels = simulatedAccuracy * scale;
+      ctx.fillStyle = "rgba(56, 189, 248, 0.18)";
+      ctx.beginPath();
+      ctx.arc(studentX, studentY, accuracyPixels, 0, 2 * Math.PI);
+      ctx.fill();
 
-      ctx.fillStyle = "#4169E1";
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(studentX, studentY, accuracyPixels, 0, 2 * Math.PI);
+      ctx.stroke();
+
+      // نقطة موقع الطالب
+      ctx.fillStyle = "#0284c7";
       ctx.beginPath();
       ctx.arc(studentX, studentY, 6, 0, 2 * Math.PI);
       ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
 
-      ctx.fillStyle = "#FFFFFF";
-      ctx.font = "10px Arial";
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 10px Cairo, Arial";
       ctx.textAlign = "center";
       ctx.fillText(t("attendance.mapLabelYou"), studentX, studentY - 12);
 
-      // رسم خط يربط بين الموقعين
-      ctx.strokeStyle = "#FFA500";
-      ctx.setLineDash([5, 5]);
+      // خط التوصيل بين موقع الطالب والملعب
+      ctx.strokeStyle = "#f97316";
+      ctx.setLineDash([3, 3]);
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
@@ -181,7 +232,7 @@ export default function AttendanceCard({
     mapContainer.current.appendChild(canvas);
   };
 
-  // معالج تسجيل الحضور
+  // معالج إرسال النبضات الدورية
   const sendHeartbeat = async (loc) => {
     const response = await fetch(`${API}/api/attendance/heartbeat`, {
       method: "POST",
@@ -193,6 +244,9 @@ export default function AttendanceCard({
         bookingId: booking.id,
         studentLatitude: loc.latitude,
         studentLongitude: loc.longitude,
+        gpsAccuracy: simulatedAccuracy,
+        isMocked: simulatedMock,
+        deviceId: localStorage.getItem("device_uuid") || "",
       }),
     });
 
@@ -203,9 +257,12 @@ export default function AttendanceCard({
     if (typeof data.insideField === "boolean") {
       setInsideField(data.insideField);
     }
+    if (data.verificationMethod) setVerificationMethod(data.verificationMethod);
+    if (data.riskScore !== undefined) setRiskScore(data.riskScore);
     return data;
   };
 
+  // معالج تسجيل الحضور
   const handleCheckIn = async () => {
     setLoading(true);
     setError("");
@@ -229,6 +286,9 @@ export default function AttendanceCard({
           bookingId: booking.id,
           studentLatitude: loc.latitude,
           studentLongitude: loc.longitude,
+          gpsAccuracy: simulatedAccuracy,
+          isMocked: simulatedMock,
+          deviceId: localStorage.getItem("device_uuid") || "",
         }),
       });
 
@@ -236,6 +296,10 @@ export default function AttendanceCard({
 
       if (data.success) {
         setSuccess(t("attendance.checkinSuccess"));
+        if (data.verificationMethod) setVerificationMethod(data.verificationMethod);
+        if (data.verificationMethodDesc) setVerificationMethodDesc(data.verificationMethodDesc);
+        if (data.riskScore !== undefined) setRiskScore(data.riskScore);
+        
         onCheckIn(true, data.message);
         drawMap(
           booking.facility?.latitude || 30.0544,
@@ -291,6 +355,29 @@ export default function AttendanceCard({
   };
 
   useEffect(() => {
+    // جلب تفاصيل الحضور المسجلة مسبقاً (مثل طريقة التحقق ومستوى المخاطر)
+    const fetchAttendanceDetails = async () => {
+      if (booking.attendanceStatus === "CHECKED_IN" || booking.attendanceStatus === "CHECKED_OUT") {
+        try {
+          const response = await fetch(`${API}/api/attendance/booking/${booking.id}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          });
+          const data = await response.json();
+          if (data) {
+            if (data.verificationMethod) setVerificationMethod(data.verificationMethod);
+            if (data.verificationMethodDesc) setVerificationMethodDesc(data.verificationMethodDesc);
+            if (data.riskScore !== undefined) setRiskScore(data.riskScore);
+          }
+        } catch (err) {
+          console.error("Error fetching attendance details:", err);
+        }
+      }
+    };
+    
+    fetchAttendanceDetails();
+
     // رسم الخريطة عند تحميل الـ component
     if (booking.facility?.latitude && booking.facility?.longitude) {
       drawMap(
@@ -393,22 +480,83 @@ export default function AttendanceCard({
         </p>
       )}
 
-      <button
-        onClick={refreshLocationPreview}
-        disabled={loading}
-        style={{
-          marginBottom: "10px",
-          padding: "8px 10px",
-          borderRadius: "6px",
-          border: "1px solid #d9e2ec",
-          background: "#fff",
-          cursor: loading ? "not-allowed" : "pointer",
-          fontSize: "12px",
-          color: "#1f2937"
-        }}
-      >
-        {t("attendance.updateLocationBtn")}
-      </button>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+        <button
+          onClick={refreshLocationPreview}
+          disabled={loading}
+          style={{
+            flex: 1,
+            padding: "8px 10px",
+            borderRadius: "6px",
+            border: "1px solid #d9e2ec",
+            background: "#fff",
+            cursor: loading ? "not-allowed" : "pointer",
+            fontSize: "12px",
+            color: "#1f2937"
+          }}
+        >
+          {t("attendance.updateLocationBtn")}
+        </button>
+      </div>
+
+      {/* Telemetry Simulator Panel */}
+      <div style={{
+        margin: "15px 0",
+        padding: "12px",
+        backgroundColor: "#f0f4f8",
+        border: "1px solid #d9e2ec",
+        borderRadius: "6px",
+        fontSize: "13px"
+      }}>
+        <h5 style={{ margin: "0 0 10px 0", color: "#102a43", fontWeight: "bold" }}>
+          ⚙️ محاكي معلمات الـ GPS (Telemetry Simulator)
+        </h5>
+        
+        <div style={{ marginBottom: "10px" }}>
+          <label style={{ display: "block", marginBottom: "5px", color: "#334e68", fontWeight: "500" }}>
+            📡 دقة الـ GPS المحاكاة: <span style={{ fontWeight: "bold", color: "#0066cc" }}>{simulatedAccuracy} متر</span>
+          </label>
+          <input
+            type="range"
+            min="3"
+            max="100"
+            value={simulatedAccuracy}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              setSimulatedAccuracy(val);
+              if (location) {
+                drawMap(
+                  booking.facility?.latitude || 30.0544,
+                  booking.facility?.longitude || 31.3572,
+                  location.latitude,
+                  location.longitude
+                );
+              }
+            }}
+            style={{ width: "100%", cursor: "pointer" }}
+          />
+          <span style={{ fontSize: "11px", color: "#627d98" }}>
+            (الدقة الضعيفة &gt; 15م تزيد تلقائياً القطر الفعال للملعب لمنع مشاكل التغطية داخل المباني)
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+          <input
+            type="checkbox"
+            id="mock-gps-check"
+            checked={simulatedMock}
+            onChange={(e) => setSimulatedMock(e.target.checked)}
+            style={{ cursor: "pointer" }}
+          />
+          <label htmlFor="mock-gps-check" style={{ color: "#c62828", fontWeight: "bold", cursor: "pointer" }}>
+            ⚠️ محاكاة برنامج Fake GPS (Mock Location)
+          </label>
+        </div>
+
+        <div style={{ padding: "8px", backgroundColor: "#fff", borderLeft: "3px solid #0066cc", borderRadius: "4px", fontSize: "11px", color: "#486581" }}>
+          💡 <strong>معلومة أمنية:</strong> فحص شبكة واي فاي الجامعة (Campus WiFi Fallback) يتم تلقائياً بالكامل من السيرفر بناءً على عنوان الـ IP الفعلي للجهاز (مثل الاتصال بـ Localhost أو شبكة داخلية) ولا يتم إرسال أي بيانات من الـ Frontend لمنع التزوير.
+        </div>
+      </div>
 
       <div ref={mapContainer} style={{ marginBottom: "15px" }} />
 
@@ -416,9 +564,9 @@ export default function AttendanceCard({
         <p style={{
           marginBottom: "10px",
           padding: "10px",
-          backgroundColor: distance * 1000 <= Math.min((booking.facility?.geofencingRadius ?? 0.004) * 1000, 4) ? "#e8f5e9" : "#ffebee",
+          backgroundColor: (distance * 1000) <= ((booking.facility?.geofencingRadius ?? 0.004) * 1000 + Math.min(simulatedAccuracy * 0.5, 15)) ? "#e8f5e9" : "#ffebee",
           borderRadius: "4px",
-          color: distance * 1000 <= Math.min((booking.facility?.geofencingRadius ?? 0.004) * 1000, 4) ? "#2e7d32" : "#c62828",
+          color: (distance * 1000) <= ((booking.facility?.geofencingRadius ?? 0.004) * 1000 + Math.min(simulatedAccuracy * 0.5, 15)) ? "#2e7d32" : "#c62828",
         }}>
           <strong>{t("attendance.distance")}</strong> {Math.round(distance * 1000)} {t("attendance.metersFromFacility")}
         </p>
@@ -439,9 +587,42 @@ export default function AttendanceCard({
       )}
 
       {booking.checkedInAt && (
-        <p style={{ marginBottom: "8px", color: "#666", fontSize: "14px" }}>
-          <strong>{t("attendance.checkedInTime")}</strong> {new Date(booking.checkedInAt).toLocaleTimeString(locale)}
-        </p>
+        <div style={{
+          marginBottom: "12px",
+          padding: "10px",
+          backgroundColor: "#f8fafc",
+          border: "1px solid #e2e8f0",
+          borderRadius: "6px",
+          fontSize: "13px"
+        }}>
+          <p style={{ margin: "0 0 5px 0", color: "#475569" }}>
+            <strong>{t("attendance.checkedInTime")}</strong> {new Date(booking.checkedInAt).toLocaleTimeString(locale)}
+          </p>
+          {verificationMethod && (
+            <p style={{ margin: "0 0 5px 0", color: "#475569" }}>
+              <strong>طريقة التحقق:</strong> <span style={{
+                padding: "2px 6px",
+                borderRadius: "4px",
+                fontSize: "11px",
+                fontWeight: "bold",
+                backgroundColor: verificationMethod === "CAMPUS_WIFI" ? "#e0f2fe" : "#dcfce7",
+                color: verificationMethod === "CAMPUS_WIFI" ? "#0369a1" : "#15803d"
+              }}>{verificationMethodDesc || verificationMethod}</span>
+            </p>
+          )}
+          {riskScore !== null && (
+            <p style={{ margin: "0", color: "#475569" }}>
+              <strong>درجة المخاطر (Risk Score):</strong> <span style={{
+                padding: "2px 6px",
+                borderRadius: "4px",
+                fontSize: "11px",
+                fontWeight: "bold",
+                backgroundColor: riskScore > 70 ? "#fee2e2" : riskScore > 30 ? "#ffedd5" : "#dcfce7",
+                color: riskScore > 70 ? "#b91c1c" : riskScore > 30 ? "#c2410c" : "#15803d"
+              }}>{riskScore}% {riskScore > 70 ? "(مرتفع / تلاعب محتمل)" : riskScore > 30 ? "(متوسط / مريب)" : "(منخفض / موثوق)"}</span>
+            </p>
+          )}
+        </div>
       )}
 
       {error && (
@@ -540,7 +721,7 @@ export default function AttendanceCard({
         <ul style={{ margin: "5px 0", paddingLeft: "20px" }}>
           <li>{t("attendance.note1")}</li>
           <li>
-            {t("attendance.note2", { radius: Math.min(Math.round((booking.facility?.geofencingRadius ?? 0.004) * 1000), 4) })}
+            {t("attendance.note2", { radius: Math.round((booking.facility?.geofencingRadius ?? 0.004) * 1000) })}
           </li>
           <li>{t("attendance.note3")}</li>
         </ul>

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,15 +38,22 @@ public class AttendanceController {
      * Body: {
      *   "bookingId": 123,
      *   "studentLatitude": 30.0544,
-     *   "studentLongitude": 31.3572
+     *   "studentLongitude": 31.3572,
+     *   "gpsAccuracy": 5.0,
+     *   "isMocked": false,
+     *   "deviceId": "dev-xxx"
      * }
      */
     @PostMapping("/check-in")
-    public ResponseEntity<?> checkIn(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> checkIn(@RequestBody Map<String, Object> request, jakarta.servlet.http.HttpServletRequest httpRequest) {
         try {
             Long bookingId = ((Number) request.get("bookingId")).longValue();
             Double studentLat = ((Number) request.get("studentLatitude")).doubleValue();
             Double studentLon = ((Number) request.get("studentLongitude")).doubleValue();
+            
+            Double gpsAccuracy = request.get("gpsAccuracy") != null ? ((Number) request.get("gpsAccuracy")).doubleValue() : 5.0;
+            boolean isMocked = request.get("isMocked") != null && (Boolean) request.get("isMocked");
+            String deviceId = request.get("deviceId") != null ? (String) request.get("deviceId") : "";
 
             Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
             if (!bookingOpt.isPresent()) {
@@ -97,7 +105,43 @@ public class AttendanceController {
                 ));
             }
 
-            // حساب المسافة من المنشأة
+            // 1. استخراج الـ IP الفعلي وفحصه
+            String clientIp = getClientIp(httpRequest);
+
+            // 2. التحقق من سرعة الانتقال لمنع التزييف والـ Teleportation
+            Double velocity = null;
+            Booking lastBooking = bookingRepository.findFirstByUserIdAndAttendanceStatusInAndStudentLatitudeIsNotNullOrderByCheckedInAtDesc(
+                booking.getUser().getId(), List.of(AttendanceStatus.CHECKED_IN, AttendanceStatus.CHECKED_OUT)
+            );
+            if (lastBooking != null && lastBooking.getStudentLatitude() != null && lastBooking.getStudentLongitude() != null && lastBooking.getCheckedInAt() != null) {
+                boolean velocityImpossible = geofencingService.isVelocityImpossible(
+                    lastBooking.getStudentLatitude(), lastBooking.getStudentLongitude(), lastBooking.getCheckedInAt(),
+                    studentLat, studentLon, now
+                );
+                if (velocityImpossible) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "تم رفض حضورك: تم اكتشاف سرعة انتقال غير منطقية بين الحجوزات (Teleportation Check). الرجاء إيقاف برامج تزييف الموقع الجغرافي."
+                    ));
+                }
+                
+                Double distBetween = geofencingService.calculateDistance(
+                    lastBooking.getStudentLatitude(), lastBooking.getStudentLongitude(),
+                    studentLat, studentLon
+                );
+                long seconds = Math.abs(java.time.Duration.between(lastBooking.getCheckedInAt(), now).getSeconds());
+                if (seconds > 0 && distBetween != null) {
+                    velocity = distBetween / (seconds / 3600.0); // كم/ساعة
+                }
+            }
+
+            // 3. حساب المسافة الفعالة باستخدام الـ GPS Accuracy (Fuzzy Geofencing)
+            Double configuredRadius = facility.getGeofencingRadius() != null
+                ? facility.getGeofencingRadius()
+                : DEFAULT_GEOFENCE_RADIUS_KM;
+
+            Double allowedRadius = geofencingService.calculateEffectiveRadius(configuredRadius, gpsAccuracy);
+
             Double distance = geofencingService.calculateDistance(
                 facility.getLatitude(),
                 facility.getLongitude(),
@@ -105,12 +149,6 @@ public class AttendanceController {
                 studentLon
             );
 
-            // تحديد نطاق الـ geofencing (4 متر بشكل افتراضي وبحد أقصى 4 متر)
-            Double allowedRadius = facility.getGeofencingRadius() != null
-                ? Math.min(facility.getGeofencingRadius(), DEFAULT_GEOFENCE_RADIUS_KM)
-                : DEFAULT_GEOFENCE_RADIUS_KM;
-
-            // التحقق من أن الطالب ضمن نطاق المنشأة
             boolean isWithinGeofence = geofencingService.isWithinGeofence(
                 facility.getLatitude(),
                 facility.getLongitude(),
@@ -119,25 +157,62 @@ public class AttendanceController {
                 allowedRadius
             );
 
-            if (!isWithinGeofence) {
+            VerificationMethod verificationMethod = VerificationMethod.GPS;
+            boolean verified = false;
+
+            if (isWithinGeofence) {
+                verified = true;
+                if (allowedRadius > configuredRadius) {
+                    verificationMethod = VerificationMethod.GPS_FUZZY;
+                } else {
+                    verificationMethod = VerificationMethod.GPS;
+                }
+            } else {
+                // 4. التحقق من شبكة واي فاي الجامعة كدعم احتياطي (Secondary Fallback)
+                if (geofencingService.isCampusIp(clientIp)) {
+                    verified = true;
+                    verificationMethod = VerificationMethod.CAMPUS_WIFI;
+                }
+            }
+
+            if (!verified) {
                 int distanceInMeters = geofencingService.convertKmToMeters(distance);
+                int allowedRadiusMeters = geofencingService.convertKmToMeters(allowedRadius);
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", String.format("أنت بعيد جداً عن المنشأة! المسافة: %d متر. يجب أن تكون ضمن %d متر",
                         distanceInMeters,
-                        geofencingService.convertKmToMeters(allowedRadius)),
+                        allowedRadiusMeters),
                     "distance", distance,
-                    "allowedRadius", allowedRadius
+                    "allowedRadius", allowedRadius,
+                    "ip", clientIp
                 ));
             }
 
-            // تحديث حالة الحضور
+            // 5. التحقق من تطابق بصمة الجهاز (Device Binding Check)
+            boolean isDeviceChanged = false;
+            UserAccount user = booking.getUser();
+            if (user != null && user.getDeviceId() != null && !user.getDeviceId().trim().isEmpty()) {
+                if (!user.getDeviceId().equals(deviceId)) {
+                    isDeviceChanged = true;
+                }
+            }
+
+            // 6. حساب درجة المخاطر للحضور (Risk Score Engine)
+            int riskScore = geofencingService.calculateRiskScore(
+                distance, configuredRadius, gpsAccuracy, velocity,
+                isMocked, VerificationMethod.CAMPUS_WIFI.equals(verificationMethod), isDeviceChanged
+            );
+
+            // تحديث حالة الحضور في قاعدة البيانات
             booking.setAttendanceStatus(AttendanceStatus.CHECKED_IN);
             booking.setCheckedInAt(now);
             booking.setStudentLatitude(studentLat);
             booking.setStudentLongitude(studentLon);
             booking.setDistanceFromFacility(distance);
-            booking.setVerifiedBy("STUDENT");
+            booking.setVerifiedBy(verificationMethod.name());
+            booking.setVerificationMethod(verificationMethod);
+            booking.setRiskScore(riskScore);
             bookingRepository.save(booking);
 
             return ResponseEntity.ok(Map.of(
@@ -146,13 +221,17 @@ public class AttendanceController {
                 "attendanceStatus", AttendanceStatus.CHECKED_IN.getDescription(),
                 "distance", distance,
                 "distanceMeters", geofencingService.convertKmToMeters(distance),
-                "checkedInAt", now
+                "checkedInAt", now,
+                "verificationMethod", verificationMethod.name(),
+                "verificationMethodDesc", verificationMethod.getDescription(),
+                "riskScore", riskScore
             ));
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError().body(Map.of(
                 "success", false,
-                "message", "خطأ: " + e.getMessage()
+                "message", "خطأ في تسجيل الحضور: " + e.getMessage()
             ));
         }
     }
@@ -233,15 +312,22 @@ public class AttendanceController {
      * Body: {
      *   "bookingId": 123,
      *   "studentLatitude": 30.0544,
-     *   "studentLongitude": 31.3572
+     *   "studentLongitude": 31.3572,
+     *   "gpsAccuracy": 5.0,
+     *   "isMocked": false,
+     *   "deviceId": "dev-xxx"
      * }
      */
     @PostMapping("/heartbeat")
-    public ResponseEntity<?> heartbeat(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> heartbeat(@RequestBody Map<String, Object> request, jakarta.servlet.http.HttpServletRequest httpRequest) {
         try {
             Long bookingId = ((Number) request.get("bookingId")).longValue();
             Double studentLat = ((Number) request.get("studentLatitude")).doubleValue();
             Double studentLon = ((Number) request.get("studentLongitude")).doubleValue();
+            
+            Double gpsAccuracy = request.get("gpsAccuracy") != null ? ((Number) request.get("gpsAccuracy")).doubleValue() : 5.0;
+            boolean isMocked = request.get("isMocked") != null && (Boolean) request.get("isMocked");
+            String deviceId = request.get("deviceId") != null ? (String) request.get("deviceId") : "";
 
             Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
             if (!bookingOpt.isPresent()) {
@@ -267,24 +353,82 @@ public class AttendanceController {
                 ));
             }
 
+            String clientIp = getClientIp(httpRequest);
+
+            // حساب المسافة والقطر الفعال
+            Double configuredRadius = facility.getGeofencingRadius() != null
+                ? facility.getGeofencingRadius()
+                : DEFAULT_GEOFENCE_RADIUS_KM;
+            
+            Double allowedRadius = geofencingService.calculateEffectiveRadius(configuredRadius, gpsAccuracy);
+
             Double distance = geofencingService.calculateDistance(
                 facility.getLatitude(),
                 facility.getLongitude(),
                 studentLat,
                 studentLon
             );
-            Double allowedRadius = facility.getGeofencingRadius() != null
-                ? Math.min(facility.getGeofencingRadius(), DEFAULT_GEOFENCE_RADIUS_KM)
-                : DEFAULT_GEOFENCE_RADIUS_KM;
-            boolean insideField = distance <= allowedRadius;
+
+            boolean isWithinGeofence = geofencingService.isWithinGeofence(
+                facility.getLatitude(),
+                facility.getLongitude(),
+                studentLat,
+                studentLon,
+                allowedRadius
+            );
+
+            VerificationMethod verificationMethod = VerificationMethod.GPS;
+            boolean insideField = false;
+
+            if (isWithinGeofence) {
+                insideField = true;
+                if (allowedRadius > configuredRadius) {
+                    verificationMethod = VerificationMethod.GPS_FUZZY;
+                }
+            } else {
+                // WiFi Fallback
+                if (geofencingService.isCampusIp(clientIp)) {
+                    insideField = true;
+                    verificationMethod = VerificationMethod.CAMPUS_WIFI;
+                }
+            }
+
+            // فحص سرعة الانتقال أثناء التحديث
+            Double velocity = null;
+            LocalDateTime now = LocalDateTime.now();
+            if (booking.getCheckedInAt() != null && booking.getStudentLatitude() != null && booking.getStudentLongitude() != null) {
+                Double distBetween = geofencingService.calculateDistance(
+                    booking.getStudentLatitude(), booking.getStudentLongitude(),
+                    studentLat, studentLon
+                );
+                long seconds = Math.abs(java.time.Duration.between(booking.getCheckedInAt(), now).getSeconds());
+                if (seconds > 0 && distBetween != null) {
+                    velocity = distBetween / (seconds / 3600.0);
+                }
+            }
+
+            // فحص تغيير بصمة الجهاز
+            boolean isDeviceChanged = false;
+            UserAccount user = booking.getUser();
+            if (user != null && user.getDeviceId() != null && !user.getDeviceId().trim().isEmpty()) {
+                if (!user.getDeviceId().equals(deviceId)) {
+                    isDeviceChanged = true;
+                }
+            }
+
+            // حساب مستوى المخاطر
+            int riskScore = geofencingService.calculateRiskScore(
+                distance, configuredRadius, gpsAccuracy, velocity,
+                isMocked, VerificationMethod.CAMPUS_WIFI.equals(verificationMethod), isDeviceChanged
+            );
 
             booking.setStudentLatitude(studentLat);
             booking.setStudentLongitude(studentLon);
             booking.setDistanceFromFacility(distance);
-            booking.setVerifiedBy("HEARTBEAT");
+            booking.setRiskScore(riskScore);
+            booking.setVerifiedBy("HEARTBEAT_" + verificationMethod.name());
             bookingRepository.save(booking);
 
-            LocalDateTime updatedAt = LocalDateTime.now();
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", insideField ? "الطالب داخل نطاق الملعب" : "الطالب خارج نطاق الملعب",
@@ -292,7 +436,9 @@ public class AttendanceController {
                 "distance", distance,
                 "distanceMeters", geofencingService.convertKmToMeters(distance),
                 "allowedRadiusMeters", geofencingService.convertKmToMeters(allowedRadius),
-                "updatedAt", updatedAt
+                "updatedAt", now,
+                "riskScore", riskScore,
+                "verificationMethod", verificationMethod.name()
             ));
 
         } catch (Exception e) {
@@ -332,13 +478,16 @@ public class AttendanceController {
                 "latitude", facility.getLatitude(),
                 "longitude", facility.getLongitude(),
                 "radius", facility.getGeofencingRadius() != null ?
-                    Math.min(geofencingService.convertKmToMeters(facility.getGeofencingRadius()), 4) : 4
+                    geofencingService.convertKmToMeters(facility.getGeofencingRadius()) : 4
             ));
             response.put("studentLocation", booking.getStudentLatitude() != null ? Map.of(
                 "latitude", booking.getStudentLatitude(),
                 "longitude", booking.getStudentLongitude()
             ) : null);
             response.put("verifiedBy", booking.getVerifiedBy());
+            response.put("verificationMethod", booking.getVerificationMethod() != null ? booking.getVerificationMethod().name() : null);
+            response.put("verificationMethodDesc", booking.getVerificationMethod() != null ? booking.getVerificationMethod().getDescription() : null);
+            response.put("riskScore", booking.getRiskScore() != null ? booking.getRiskScore() : 0);
 
             return ResponseEntity.ok(response);
 
@@ -348,6 +497,17 @@ public class AttendanceController {
                 "message", "خطأ: " + e.getMessage()
             ));
         }
+    }
+
+    /**
+     * استخراج الـ IP الفعلي للعميل مع دعم البروكسي
+     */
+    private String getClientIp(jakarta.servlet.http.HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader == null || xfHeader.isEmpty()) {
+            return request.getRemoteAddr();
+        }
+        return xfHeader.split(",")[0].trim();
     }
 
     /**

@@ -2,6 +2,7 @@ package com.badya.booking.repository;
 
 import com.badya.booking.model.Booking;
 import com.badya.booking.model.BookingStatus;
+import com.badya.booking.model.AttendanceStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,10 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
+    Booking findFirstByUserIdAndAttendanceStatusInAndStudentLatitudeIsNotNullOrderByCheckedInAtDesc(
+            Long userId,
+            List<AttendanceStatus> statuses);
+
     List<Booking> findByFacilityIdAndStatusAndStartTimeLessThanAndEndTimeGreaterThan(
             Long facilityId,
             BookingStatus status,

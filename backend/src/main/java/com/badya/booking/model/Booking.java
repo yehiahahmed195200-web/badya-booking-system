@@ -60,6 +60,13 @@ public class Booking {
     @Column(name = "verified_by", nullable = true)
     private String verifiedBy; // من تحقق من الحضور (STUDENT, COACH, SYSTEM)
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_method", nullable = true)
+    private VerificationMethod verificationMethod;
+
+    @Column(name = "risk_score", nullable = true)
+    private Integer riskScore;
+
     @Column(name = "scanned_id_data", nullable = true)
     private String scannedIdData;
 
@@ -189,6 +196,23 @@ public class Booking {
     public void setVerifiedBy(String verifiedBy) {
         this.verifiedBy = verifiedBy;
     }
+
+    public VerificationMethod getVerificationMethod() {
+        return verificationMethod;
+    }
+
+    public void setVerificationMethod(VerificationMethod verificationMethod) {
+        this.verificationMethod = verificationMethod;
+    }
+
+    public Integer getRiskScore() {
+        return riskScore;
+    }
+
+    public void setRiskScore(Integer riskScore) {
+        this.riskScore = riskScore;
+    }
+
 
     public String getScannedIdData() {
         return scannedIdData;
