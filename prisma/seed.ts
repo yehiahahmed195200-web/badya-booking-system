@@ -8,13 +8,16 @@ const prisma = new PrismaClient();
 async function main() {
   await prisma.facility.upsert({
     where: { name: "Tennis Court" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "tennis-court",
       name: "Tennis Court",
       category: "Sport",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 2,
       maxParticipants: 4,
     },
@@ -22,13 +25,16 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "Football Court" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "football-court",
       name: "Football Court",
       category: "Sport",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 10,
       maxParticipants: 22,
     },
@@ -36,13 +42,16 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "Padel 1" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "padel-1",
       name: "Padel 1",
       category: "Sport",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 2,
       maxParticipants: 4,
     },
@@ -50,13 +59,16 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "Padel 2" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "padel-2",
       name: "Padel 2",
       category: "Sport",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 2,
       maxParticipants: 4,
     },
@@ -64,13 +76,16 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "UFC Gym" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "ufc-gym",
       name: "UFC Gym",
       category: "Fitness",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 1,
       maxParticipants: 30,
     },
@@ -78,13 +93,16 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "Table Tennis 1" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "table-tennis-1",
       name: "Table Tennis 1",
       category: "Activity Center",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 2,
       maxParticipants: 4,
     },
@@ -92,13 +110,16 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "Table Tennis 2" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "table-tennis-2",
       name: "Table Tennis 2",
       category: "Activity Center",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 2,
       maxParticipants: 4,
     },
@@ -106,13 +127,16 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "Billiards" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "billiards",
       name: "Billiards",
       category: "Activity Center",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 2,
       maxParticipants: 4,
     },
@@ -120,13 +144,16 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "Air Hockey 1" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "air-hockey-1",
       name: "Air Hockey 1",
       category: "Activity Center",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 2,
       maxParticipants: 4,
     },
@@ -134,13 +161,16 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "Air Hockey 2" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       id: "air-hockey-2",
       name: "Air Hockey 2",
       category: "Activity Center",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 2,
       maxParticipants: 4,
     },

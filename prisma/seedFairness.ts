@@ -39,12 +39,15 @@ async function main() {
   // allowing both sports to be booked on it.
   const multipurposeCourt = await prisma.facility.upsert({
     where: { name: "Multipurpose Court" },
-    update: {},
+    update: {
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       name: "Multipurpose Court",
       category: "Main Sports",
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 6,
       maxParticipants: 20,
       defaultSlotMins: 60,
@@ -57,13 +60,17 @@ async function main() {
   // Also update existing "Basketball Court" and "Volleyball Court" just in case
   await prisma.facility.upsert({
     where: { name: "Basketball Court" },
-    update: { sportId: basketball.id },
+    update: {
+      sportId: basketball.id,
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       name: "Basketball Court",
       category: "Main Sports",
       sportId: basketball.id,
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 6,
       maxParticipants: 10,
       defaultSlotMins: 60,
@@ -74,13 +81,17 @@ async function main() {
 
   await prisma.facility.upsert({
     where: { name: "Volleyball Court" },
-    update: { sportId: volleyball.id },
+    update: {
+      sportId: volleyball.id,
+      openTime: "09:00",
+      closeTime: "14:00",
+    },
     create: {
       name: "Volleyball Court",
       category: "Main Sports",
       sportId: volleyball.id,
-      openTime: "08:00",
-      closeTime: "15:00",
+      openTime: "09:00",
+      closeTime: "14:00",
       minParticipants: 10,
       maxParticipants: 15,
       defaultSlotMins: 60,
