@@ -71,9 +71,11 @@ public class UserController {
      */
     @GetMapping("/barcode/{barcode}")
     public ResponseEntity<?> getByBarcode(@PathVariable String barcode) {
-        UserAccount user = userRepository.findByBarcode(barcode)
-                .orElseThrow(() -> new IllegalArgumentException("User not found by barcode: " + barcode));
-        return ResponseEntity.ok(user);
+        java.util.Optional<UserAccount> userOpt = userRepository.findByBarcode(barcode);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "User not found by barcode: " + barcode));
+        }
+        return ResponseEntity.ok(userOpt.get());
     }
 
     /**
@@ -82,9 +84,11 @@ public class UserController {
      */
     @GetMapping("/student-id/{studentId}")
     public ResponseEntity<?> getByStudentId(@PathVariable String studentId) {
-        UserAccount user = userRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found by Student ID: " + studentId));
-        return ResponseEntity.ok(user);
+        java.util.Optional<UserAccount> userOpt = userRepository.findByStudentId(studentId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "User not found by Student ID: " + studentId));
+        }
+        return ResponseEntity.ok(userOpt.get());
     }
 
     @PostMapping
