@@ -18,6 +18,7 @@ import com.badya.booking.repository.FairnessConfigRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.badya.booking.service.FacilityService;
 import java.time.LocalDateTime;
 
 @Configuration
@@ -30,7 +31,8 @@ public class DataSeeder {
             NotificationRepository notificationRepository,
             BookingRepository bookingRepository,
             MedicalRecordRepository medicalRecordRepository,
-            FairnessConfigRepository fairnessConfigRepository) {
+            FairnessConfigRepository fairnessConfigRepository,
+            FacilityService facilityService) {
         return args -> {
             if (fairnessConfigRepository.count() == 0) {
                 FairnessConfig config = new FairnessConfig();
@@ -184,8 +186,7 @@ public class DataSeeder {
             java.util.List<Facility> allFacilities = facilityRepository.findAll();
             for (Facility f : allFacilities) {
                 if (!allowedNames.contains(f.getName())) {
-                    bookingRepository.deleteByFacilityId(f.getId());
-                    facilityRepository.delete(f);
+                    facilityService.delete(f.getId());
                 }
             }
 

@@ -3,11 +3,11 @@ package com.badya.booking.service;
 import com.badya.booking.model.Booking;
 import com.badya.booking.model.BookingStatus;
 import com.badya.booking.model.Facility;
-import com.badya.booking.repository.BookingRepository;
-import com.badya.booking.repository.FacilityRepository;
+import com.badya.booking.repository.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,10 +15,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class FacilityService {
     private final FacilityRepository facilityRepository;
     private final BookingRepository bookingRepository;
+    private final BookingParticipantRepository bookingParticipantRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final MatchmakingQueueRepository matchmakingQueueRepository;
+    private final WaitlistRepository waitlistRepository;
 
-    public FacilityService(FacilityRepository facilityRepository, BookingRepository bookingRepository) {
+    @Autowired
+    public FacilityService(FacilityRepository facilityRepository,
+                           BookingRepository bookingRepository,
+                           BookingParticipantRepository bookingParticipantRepository,
+                           FeedbackRepository feedbackRepository,
+                           MatchmakingQueueRepository matchmakingQueueRepository,
+                           WaitlistRepository waitlistRepository) {
         this.facilityRepository = facilityRepository;
         this.bookingRepository = bookingRepository;
+        this.bookingParticipantRepository = bookingParticipantRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.matchmakingQueueRepository = matchmakingQueueRepository;
+        this.waitlistRepository = waitlistRepository;
     }
 
     public List<Facility> all(boolean activeOnly) {
@@ -168,6 +182,10 @@ public class FacilityService {
         Long facilityId = java.util.Objects.requireNonNull(id, "facility id is required");
         Facility facility = facilityRepository.findById(facilityId)
                 .orElseThrow(() -> new IllegalArgumentException("Facility not found"));
+        bookingParticipantRepository.deleteByFacilityId(facilityId);
+        feedbackRepository.deleteByFacilityId(facilityId);
+        matchmakingQueueRepository.deleteByFacilityId(facilityId);
+        waitlistRepository.deleteByFacilityId(facilityId);
         bookingRepository.deleteByFacilityId(facilityId);
         facilityRepository.delete(facility);
     }
