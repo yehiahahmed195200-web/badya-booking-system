@@ -18,7 +18,6 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("/api/attendance")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173", "http://127.0.0.1:3000"})
 public class AttendanceController {
     private static final double DEFAULT_GEOFENCE_RADIUS_KM = 0.004;
 
