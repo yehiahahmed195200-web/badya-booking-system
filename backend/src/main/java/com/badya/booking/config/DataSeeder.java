@@ -165,10 +165,29 @@ public class DataSeeder {
             }
 
             // Seed or update facilities
-            upsertFacility(facilityRepository, "Tennis Court A", "Sport", "08:00", "15:00", 60, 2, 4, "Tennis", 30.0544, 31.3572, 0.004);
-            upsertFacility(facilityRepository, "Basketball Court", "Sport", "08:00", "15:00", 60, 6, 12, "Basketball", 30.0550, 31.3580, 0.004);
-            upsertFacility(facilityRepository, "Gym Main Hall", "Fitness", "08:00", "15:00", 60, 1, 30, "Fitness", 30.0540, 31.3560, 0.004);
-            upsertFacility(facilityRepository, "Multipurpose Court", "Sport", "08:00", "15:00", 60, 6, 12, "Basketball,Volleyball", 30.0550, 31.3580, 0.004);
+            upsertFacility(facilityRepository, "Tennis Court", "Sport", "08:00", "15:00", 60, 2, 4, "Tennis", 30.0544, 31.3572, 0.004);
+            upsertFacility(facilityRepository, "Football Court", "Sport", "08:00", "15:00", 60, 10, 22, "Football", 30.0545, 31.3573, 0.004);
+            upsertFacility(facilityRepository, "Padel 1", "Sport", "08:00", "15:00", 60, 2, 4, "Padel", 30.0546, 31.3574, 0.004);
+            upsertFacility(facilityRepository, "Padel 2", "Sport", "08:00", "15:00", 60, 2, 4, "Padel", 30.0547, 31.3575, 0.004);
+            upsertFacility(facilityRepository, "UFC Gym", "Fitness", "08:00", "15:00", 60, 1, 30, "Fitness", 30.0540, 31.3560, 0.004);
+            upsertFacility(facilityRepository, "Table Tennis 1", "Activity Center", "08:00", "15:00", 60, 2, 4, "Table Tennis", 30.0548, 31.3576, 0.004);
+            upsertFacility(facilityRepository, "Table Tennis 2", "Activity Center", "08:00", "15:00", 60, 2, 4, "Table Tennis", 30.0549, 31.3577, 0.004);
+            upsertFacility(facilityRepository, "Billiards", "Activity Center", "08:00", "15:00", 60, 2, 4, "Billiards", 30.0550, 31.3578, 0.004);
+            upsertFacility(facilityRepository, "Air Hockey 1", "Activity Center", "08:00", "15:00", 60, 2, 4, "Air Hockey", 30.0551, 31.3579, 0.004);
+            upsertFacility(facilityRepository, "Air Hockey 2", "Activity Center", "08:00", "15:00", 60, 2, 4, "Air Hockey", 30.0552, 31.3580, 0.004);
+
+            // Clean up any old facilities not matching the seed list
+            java.util.List<String> allowedNames = java.util.List.of(
+                "Tennis Court", "Football Court", "Padel 1", "Padel 2", "UFC Gym",
+                "Table Tennis 1", "Table Tennis 2", "Billiards", "Air Hockey 1", "Air Hockey 2"
+            );
+            java.util.List<Facility> allFacilities = facilityRepository.findAll();
+            for (Facility f : allFacilities) {
+                if (!allowedNames.contains(f.getName())) {
+                    bookingRepository.deleteByFacilityId(f.getId());
+                    facilityRepository.delete(f);
+                }
+            }
 
             if (bookingRepository.count() == 0) {
                 UserAccount admin = userRepository.findAll().stream()

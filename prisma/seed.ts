@@ -7,11 +7,11 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.facility.upsert({
-    where: { name: "Tennis Court A" },
+    where: { name: "Tennis Court" },
     update: {},
     create: {
-      id: "tennis-court-a",
-      name: "Tennis Court A",
+      id: "tennis-court",
+      name: "Tennis Court",
       category: "Sport",
       openTime: "08:00",
       closeTime: "15:00",
@@ -21,25 +21,53 @@ async function main() {
   });
 
   await prisma.facility.upsert({
-    where: { name: "Basketball Court" },
+    where: { name: "Football Court" },
     update: {},
     create: {
-      id: "basketball-court",
-      name: "Basketball Court",
+      id: "football-court",
+      name: "Football Court",
       category: "Sport",
       openTime: "08:00",
       closeTime: "15:00",
-      minParticipants: 6,
-      maxParticipants: 12,
+      minParticipants: 10,
+      maxParticipants: 22,
     },
   });
 
   await prisma.facility.upsert({
-    where: { name: "Gym Main Hall" },
+    where: { name: "Padel 1" },
     update: {},
     create: {
-      id: "gym-main-hall",
-      name: "Gym Main Hall",
+      id: "padel-1",
+      name: "Padel 1",
+      category: "Sport",
+      openTime: "08:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  await prisma.facility.upsert({
+    where: { name: "Padel 2" },
+    update: {},
+    create: {
+      id: "padel-2",
+      name: "Padel 2",
+      category: "Sport",
+      openTime: "08:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  await prisma.facility.upsert({
+    where: { name: "UFC Gym" },
+    update: {},
+    create: {
+      id: "ufc-gym",
+      name: "UFC Gym",
       category: "Fitness",
       openTime: "08:00",
       closeTime: "15:00",
@@ -48,7 +76,90 @@ async function main() {
     },
   });
 
-  const tennisFacility = await prisma.facility.findUnique({ where: { name: "Tennis Court A" } });
+  await prisma.facility.upsert({
+    where: { name: "Table Tennis 1" },
+    update: {},
+    create: {
+      id: "table-tennis-1",
+      name: "Table Tennis 1",
+      category: "Activity Center",
+      openTime: "08:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  await prisma.facility.upsert({
+    where: { name: "Table Tennis 2" },
+    update: {},
+    create: {
+      id: "table-tennis-2",
+      name: "Table Tennis 2",
+      category: "Activity Center",
+      openTime: "08:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  await prisma.facility.upsert({
+    where: { name: "Billiards" },
+    update: {},
+    create: {
+      id: "billiards",
+      name: "Billiards",
+      category: "Activity Center",
+      openTime: "08:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  await prisma.facility.upsert({
+    where: { name: "Air Hockey 1" },
+    update: {},
+    create: {
+      id: "air-hockey-1",
+      name: "Air Hockey 1",
+      category: "Activity Center",
+      openTime: "08:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  await prisma.facility.upsert({
+    where: { name: "Air Hockey 2" },
+    update: {},
+    create: {
+      id: "air-hockey-2",
+      name: "Air Hockey 2",
+      category: "Activity Center",
+      openTime: "08:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  // Clean up any facilities not in the list
+  const allowedNames = [
+    "Tennis Court", "Football Court", "Padel 1", "Padel 2", "UFC Gym",
+    "Table Tennis 1", "Table Tennis 2", "Billiards", "Air Hockey 1", "Air Hockey 2"
+  ];
+  const allFacs = await prisma.facility.findMany();
+  for (const f of allFacs) {
+    if (!allowedNames.includes(f.name)) {
+      await prisma.booking.deleteMany({ where: { facilityId: f.id } });
+      await prisma.facility.delete({ where: { id: f.id } });
+    }
+  }
+
+  const tennisFacility = await prisma.facility.findUnique({ where: { name: "Tennis Court" } });
   const adminHash = await bcrypt.hash("Admin@123", 10);
   const coachHash = await bcrypt.hash("Coach@123", 10);
   const studentHash = await bcrypt.hash("Student@123", 10);
