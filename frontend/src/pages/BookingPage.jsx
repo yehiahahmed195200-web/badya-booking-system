@@ -245,6 +245,7 @@ export default function BookingPage({ session }) {
   };
 
   const handleSubmit = async (forceOverlap = false) => {
+    const isOverlapForce = forceOverlap === true;
     setError(null);
     setSubmitting(true);
     if (!token) { setError("Session expired. Please log in again."); setSubmitting(false); return; }
@@ -264,7 +265,7 @@ export default function BookingPage({ session }) {
           termsAccepted,
           buddyIds,
           sport: form.sport || undefined,
-          forceCancelOverlap: forceOverlap
+          forceCancelOverlap: isOverlapForce
         }),
       });
       const data = await res.json();
