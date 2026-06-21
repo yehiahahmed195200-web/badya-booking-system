@@ -232,9 +232,33 @@ public class BookingService {
             throw new IllegalArgumentException("Daily booking limit reached (" + rules.getMaxBookingsPerUserPerDay() + ")");
         }
 
+
         LocalDateTime endTime = startTime.plusMinutes(duration);
 
-        // Operating hours check
+        // Check if the user already has an active booking overlapping with this time slot
+        List<Booking> sameDayUserBookings = bookingRepository.findByUserIdAndStatusInAndStartTimeBetween(
+                userId,
+                List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
+                dayStart,
+                dayEnd);
+        List<Booking> userOverlaps = sameDayUserBookings.stream()
+                .filter(existing -> existing.getStartTime().isBefore(endTime) && existing.getEndTime().isAfter(startTime))
+                .toList();
+
+        if (!userOverlaps.isEmpty()) {
+            if (Boolean.TRUE.equals(request.forceCancelOverlap())) {
+                for (Booking overlap : userOverlaps) {
+                    overlap.setStatus(BookingStatus.CANCELLED);
+                    overlap.setConflictId(null);
+                    bookingRepository.save(overlap);
+                    user.setCredits(user.getCredits() + 1);
+                }
+                userRepository.save(user);
+            } else {
+                throw new IllegalArgumentException("OVERLAP_DETECTED: You already have another active booking at this time. If you proceed with this booking, your other booking will be cancelled.");
+            }
+        }
+
         if (facility.getOpenTime() != null && facility.getCloseTime() != null) {
             LocalTime openTime = LocalTime.parse(facility.getOpenTime());
             LocalTime closeTime = LocalTime.parse(facility.getCloseTime());
@@ -247,12 +271,7 @@ public class BookingService {
         }
 
         if (!Boolean.TRUE.equals(rules.getAllowBackToBackBookings())) {
-            List<Booking> sameDayBookings = bookingRepository.findByUserIdAndStatusInAndStartTimeBetween(
-                    userId,
-                    List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
-                    dayStart,
-                    dayEnd);
-            boolean hasBackToBack = sameDayBookings.stream().anyMatch(existing ->
+            boolean hasBackToBack = sameDayUserBookings.stream().anyMatch(existing ->
                     existing.getEndTime().equals(startTime) || existing.getStartTime().equals(endTime));
             if (hasBackToBack) {
                 throw new IllegalArgumentException("Back-to-back bookings are disabled by current system rules");
@@ -301,29 +320,57 @@ public class BookingService {
     public List<Booking> all() {
         return bookingRepository.findAll();
     }
-
-    @Transactional
+    @Transactional(noRollbackFor = IllegalArgumentException.class)
     public Booking cancel(Long id) {
         Long bookingId = Objects.requireNonNull(id, "booking id is required");
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
-        if (booking.getStatus() != BookingStatus.CANCELLED) {
-            booking.setStatus(BookingStatus.CANCELLED);
+        
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            return booking;
+        }
+
+        // Late cancellation check (less than 2 hours before start time)
+        if (LocalDateTime.now().isAfter(booking.getStartTime().minusHours(2))) {
             UserAccount user = booking.getUser();
             if (user != null) {
-                user.setCredits(user.getCredits() + 1);
+                user.setWarnings((user.getWarnings() != null ? user.getWarnings() : 0) + 1);
                 userRepository.save(user);
+                
+                // Send notification about the warning
+                try {
+                    Notification warningNotif = new Notification();
+                    warningNotif.setUser(user);
+                    warningNotif.setTitle("Late Cancellation Warning / إنذار إلغاء متأخر");
+                    warningNotif.setMessage("Cancellation is blocked less than 2 hours before start time. A warning has been recorded.");
+                    warningNotif.setType(com.badya.booking.model.NotificationType.BOOKING_CANCELLED);
+                    notificationRepository.save(warningNotif);
+                } catch (Exception ex) {
+                    System.err.println("Late cancellation warning notification failed: " + ex.getMessage());
+                }
             }
-            try {
-                notificationService.sendBookingCancelled(booking, true);
-            } catch (Exception ex) {
-                System.err.println("Cancellation notification failed: " + ex.getMessage());
-            }
+            throw new IllegalArgumentException("Cancellation rejected: You cannot cancel a booking less than 2 hours before its start time. A warning has been recorded against your account.");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        UserAccount user = booking.getUser();
+        if (user != null) {
+            user.setCredits(user.getCredits() + 1);
+            userRepository.save(user);
+        }
+        try {
+            notificationService.sendBookingCancelled(booking, true);
+        } catch (Exception ex) {
+            System.err.println("Cancellation notification failed: " + ex.getMessage());
         }
         booking.setConflictId(null);
         Booking saved = bookingRepository.save(booking);
+        promoteWaitlist(booking);
+        return saved;
+    }
 
-        // After cancellation, try to promote earliest valid waitlist entry for same facility/time
+    // After cancellation, try to promote earliest valid waitlist entry for same facility/time
+    private void promoteWaitlist(Booking booking) {
         try {
             List<WaitlistEntry> waitlist = waitlistRepository.findByFacility_IdAndDesiredStartTimeOrderByCreatedAtAsc(
                     booking.getFacility().getId(), booking.getStartTime());
@@ -431,8 +478,6 @@ public class BookingService {
         } catch (Exception ex) {
             System.err.println("Waitlist promotion error: " + ex.getMessage());
         }
-
-        return saved;
     }
 
     private List<String> getAvailableSlotsForDate(Facility facility, LocalDate date) {

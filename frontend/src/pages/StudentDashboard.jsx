@@ -382,8 +382,12 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
     if (!window.confirm(t("studentDashboard.cancelConfirmQuestion"))) return;
     setCancellingId(id);
     try {
-      await fetch(`${API}/api/bookings/${id}/cancel`, { method: "PATCH", headers });
+      const res = await fetch(`${API}/api/bookings/${id}/cancel`, { method: "PATCH", headers });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Cancellation failed");
       await fetchData();
+    } catch (err) {
+      alert(err.message);
     } finally { setCancellingId(null); }
   };
 

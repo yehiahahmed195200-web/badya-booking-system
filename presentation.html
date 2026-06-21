@@ -1,27 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="theme-dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Badya Sports Portal Presentation</title>
-  <!-- Google Fonts: Space Grotesk & Outfit -->
+  <title>Badya Sports Portal - Graduation Presentation</title>
+  
+  <!-- Google Fonts: Cairo (Arabic) & Space Grotesk / Outfit (English) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <style>
+    /* Premium Theme CSS Custom Properties */
     :root {
-      --bg-color: #060a13;
-      --card-bg: rgba(255, 255, 255, 0.03);
+      --bg-gradient: linear-gradient(135deg, #070b19 0%, #03050c 100%);
+      --card-bg: rgba(255, 255, 255, 0.025);
       --card-border: rgba(255, 255, 255, 0.08);
-      --teal: #13b7a6;
-      --blue: #5b8cff;
+      --card-border-glow: rgba(14, 165, 233, 0.2);
+      
+      /* Theme Accents */
+      --teal: #0ea5e9;
+      --teal-rgb: 14, 165, 233;
+      --indigo: #6366f1;
+      --indigo-rgb: 99, 102, 241;
       --amber: #f59e0b;
-      --red: #ef4444;
-      --text: #eaf0f7;
-      --text-muted: rgba(234, 240, 247, 0.65);
-      --font-display: 'Outfit', sans-serif;
-      --font-body: 'Space Grotesk', sans-serif;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      
+      /* Text Colors */
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-subtle: #475569;
+      
+      /* Fonts */
+      --font-eng-display: 'Outfit', sans-serif;
+      --font-eng-body: 'Space Grotesk', sans-serif;
+      --font-ar-display: 'Cairo', sans-serif;
+      --font-ar-body: 'Cairo', sans-serif;
+      
+      /* Transitons */
+      --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-bounce: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     * {
@@ -31,45 +53,160 @@
     }
 
     body {
-      background-color: var(--bg-color);
-      color: var(--text);
-      font-family: var(--font-body);
-      overflow: hidden;
+      background: #040714;
+      background-image: var(--bg-gradient);
+      color: var(--text-main);
+      font-family: var(--font-eng-body);
+      min-height: 100vh;
       height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(19, 183, 166, 0.08) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(91, 140, 255, 0.08) 0%, transparent 40%);
+      position: relative;
     }
 
-    /* Presentation Wrapper */
+    /* Ambient background glowing orbs */
+    .glowing-orb {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(99, 102, 241, 0.03) 50%, transparent 100%);
+      filter: blur(80px);
+      z-index: 0;
+      pointer-events: none;
+      transition: var(--transition-smooth);
+    }
+
+    #orb-1 { top: -100px; left: -100px; }
+    #orb-2 { bottom: -100px; right: -100px; }
+
+    /* RTL adaptations */
+    html[lang="ar"] body {
+      font-family: var(--font-ar-body);
+      direction: rtl;
+    }
+
+    html[lang="ar"] .en-only { display: none !important; }
+    html[lang="en"] .ar-only { display: none !important; }
+
+    /* Header Styling */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      z-index: 10;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(3, 5, 12, 0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .brand-logo {
+      width: 45px;
+      height: 45px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--teal), var(--indigo));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+      font-weight: 800;
+      box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);
+    }
+
+    .brand-text h1 {
+      font-family: var(--font-eng-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    
+    html[lang="ar"] .brand-text h1 {
+      font-family: var(--font-ar-display);
+    }
+
+    .brand-text span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 1px;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .btn-action {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-action:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--teal);
+      color: var(--teal);
+      transform: translateY(-2px);
+    }
+
+    .btn-lang-toggle {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      color: var(--text-main);
+    }
+
+    .btn-lang-toggle:hover {
+      border-color: var(--indigo);
+      color: #fff;
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+    }
+
+    /* Presentation Workspace Container */
     .presentation-container {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 40px;
+      padding: 30px 40px;
+      z-index: 5;
       position: relative;
     }
 
     .slide {
       display: none;
       width: 100%;
-      max-width: 1100px;
       height: 100%;
-      max-height: 620px;
-      background: rgba(12, 20, 38, 0.45);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      min-height: 580px;
+      max-height: 660px;
+      background: rgba(8, 12, 26, 0.55);
+      backdrop-filter: blur(25px);
       border: 1px solid var(--card-border);
-      border-radius: 32px;
-      padding: 40px 50px;
-      box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+      border-radius: 24px;
+      padding: 35px 45px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
       opacity: 0;
-      transform: translateX(40px) scale(0.98);
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(20px) scale(0.99);
+      transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
       flex-direction: column;
       justify-content: space-between;
     }
@@ -77,7 +214,7 @@
     .slide.active {
       display: flex;
       opacity: 1;
-      transform: translateX(0) scale(1);
+      transform: translateY(0) scale(1);
     }
 
     /* Slide Header */
@@ -85,759 +222,2447 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
       border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
-      padding-bottom: 14px;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
     }
 
     .slide-header h2 {
-      font-family: var(--font-display);
-      font-size: 2.1rem;
+      font-size: 1.8rem;
       font-weight: 800;
-      background: linear-gradient(135deg, #ffffff 0%, var(--text-muted) 100%);
+      background: linear-gradient(135deg, #ffffff 30%, var(--text-muted) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       display: flex;
       align-items: center;
       gap: 12px;
     }
+    
+    html[lang="ar"] .slide-header h2 {
+      font-family: var(--font-ar-display);
+    }
 
-    .slide-header .slide-badge {
-      background: rgba(19, 183, 166, 0.12);
-      border: 1px solid rgba(19, 183, 166, 0.25);
+    .slide-badge {
+      background: rgba(14, 165, 233, 0.1);
+      border: 1px solid rgba(14, 165, 233, 0.25);
       color: var(--teal);
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 1px;
       padding: 6px 14px;
       border-radius: 99px;
     }
 
-    /* Slide Body Content */
+    /* Slide Body Layout */
     .slide-body {
       flex: 1;
       display: flex;
-      align-items: center;
       gap: 40px;
       min-height: 0;
+      align-items: center;
     }
 
-    .slide-text-side {
-      flex: 1.1;
+    .slide-info-pane {
+      flex: 1.2;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 15px;
     }
 
-    .slide-visual-side {
-      flex: 1.1;
+    .slide-visual-pane {
+      flex: 1;
       height: 100%;
+      min-height: 340px;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
     }
 
-    /* Embedded Mockup Styling */
-    .screenshot-img {
-      max-width: 100%;
-      max-height: 330px;
-      border-radius: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
-      object-fit: cover;
-      transition: transform 0.3s ease;
-    }
-
-    .screenshot-img:hover {
-      transform: scale(1.03);
-      border-color: var(--teal);
-    }
-
-    /* Slide Footer branding */
-    .slide-footer-brand {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.82rem;
-      color: rgba(234, 240, 247, 0.35);
-      padding-top: 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-      margin-top: 15px;
-    }
-
-    .slide-footer-brand a {
-      color: var(--teal);
-      text-decoration: none;
-    }
-
-    /* Typography & Utilities */
-    .highlight-teal { color: var(--teal); }
-    .highlight-blue { color: var(--blue); }
-    .highlight-amber { color: var(--amber); }
-    
-    p.lead-text {
-      font-size: 1.1rem;
+    /* Typography & Lists */
+    p.lead-desc {
+      font-size: 1.05rem;
       line-height: 1.6;
       color: var(--text-muted);
     }
 
-    ul.check-list {
+    ul.bullet-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
-    ul.check-list li {
+    ul.bullet-list li {
       position: relative;
       padding-left: 28px;
-      font-size: 0.98rem;
+      font-size: 0.95rem;
       line-height: 1.5;
-      color: var(--text);
+      color: var(--text-main);
     }
 
-    ul.check-list li::before {
-      content: "✓";
+    html[lang="ar"] ul.bullet-list li {
+      padding-left: 0;
+      padding-right: 28px;
+    }
+
+    ul.bullet-list li::before {
+      content: "\f058";
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
       position: absolute;
       left: 0;
       color: var(--teal);
-      font-weight: 900;
-      font-size: 1.1rem;
     }
 
-    /* Cover Slide Specific Styles */
-    .cover-slide-body {
+    html[lang="ar"] ul.bullet-list li::before {
+      left: auto;
+      right: 0;
+    }
+
+    ul.bullet-list li strong {
+      color: #fff;
+    }
+
+    /* Cover Page Layout */
+    .cover-layout {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
       height: 100%;
-      gap: 25px;
+      gap: 20px;
     }
 
-    .project-eyebrow {
-      font-size: 0.95rem;
+    .grad-project-badge {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      font-size: 0.85rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.25em;
-      color: var(--teal);
-      text-shadow: 0 0 20px rgba(19, 183, 166, 0.45);
+      letter-spacing: 4px;
+      padding: 8px 20px;
+      border-radius: 99px;
+      text-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
     }
 
-    .project-title h1 {
-      font-family: var(--font-display);
-      font-size: 3.8rem;
+    .cover-title h1 {
+      font-family: var(--font-eng-display);
+      font-size: 3.4rem;
       font-weight: 800;
-      line-height: 1.1;
-      background: linear-gradient(135deg, #ffffff 10%, #8caaff 100%);
+      line-height: 1.15;
+      background: linear-gradient(135deg, #ffffff 10%, #818cf8 50%, #0ea5e9 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
     }
 
-    .project-subtitle {
-      font-size: 1.4rem;
+    html[lang="ar"] .cover-title h1 {
+      font-family: var(--font-ar-display);
+      font-size: 3rem;
+      font-weight: 900;
+    }
+
+    .cover-subtitle {
+      font-size: 1.25rem;
       color: var(--text-muted);
-      max-width: 800px;
+      max-width: 850px;
+      line-height: 1.5;
       font-weight: 300;
     }
 
-    .divider-glow {
-      width: 150px;
-      height: 3px;
-      background: linear-gradient(90deg, transparent, var(--teal), var(--blue), transparent);
+    .glowing-bar {
+      width: 180px;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--teal), var(--indigo), transparent);
       border-radius: 99px;
-      margin: 10px 0;
+      margin: 15px 0;
+      box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
     }
 
-    .credits-grid {
+    .presenters-grid {
       display: flex;
-      gap: 60px;
-      margin-top: 30px;
+      gap: 50px;
+      margin-top: 25px;
     }
 
-    .credit-box {
+    .presenter-item {
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
 
-    .credit-box span.role {
-      font-size: 0.78rem;
+    .presenter-item span.role {
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: rgba(234, 240, 247, 0.4);
+      letter-spacing: 2px;
+      color: var(--text-subtle);
       font-weight: 700;
     }
 
-    .credit-box strong.name {
-      font-size: 1.25rem;
+    .presenter-item strong.name {
+      font-size: 1.15rem;
       color: #ffffff;
-      font-family: var(--font-display);
-      font-weight: 600;
+      font-family: var(--font-eng-display);
     }
 
-    /* Grid layout for cards */
-    .cards-grid {
+    html[lang="ar"] .presenter-item strong.name {
+      font-family: var(--font-ar-display);
+    }
+
+    /* Core Problem Cards Grid */
+    .problems-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+      gap: 15px;
       width: 100%;
     }
 
-    .slide-card {
-      background: rgba(255, 255, 255, 0.02);
+    .problem-card {
+      background: rgba(255, 255, 255, 0.015);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 20px;
-      transition: all 0.3s ease;
+      transition: var(--transition-smooth);
     }
 
-    .slide-card:hover {
-      background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(91, 140, 255, 0.25);
-      transform: translateY(-3px);
+    .problem-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(14, 165, 233, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
     }
 
-    .slide-card h3 {
-      font-family: var(--font-display);
-      font-size: 1.15rem;
-      color: #ffffff;
+    .problem-card h3 {
+      font-family: var(--font-eng-display);
+      font-size: 1.05rem;
+      color: white;
       margin-bottom: 8px;
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .slide-card p {
-      font-size: 0.88rem;
+    html[lang="ar"] .problem-card h3 {
+      font-family: var(--font-ar-display);
+    }
+
+    .problem-card p {
+      font-size: 0.85rem;
       line-height: 1.5;
       color: var(--text-muted);
     }
 
-    /* Controls Panel */
-    .controls-panel {
-      background: rgba(7, 12, 24, 0.85);
+    .problem-card i {
+      font-size: 1.1rem;
+    }
+
+    /* Footer Branding & Controls */
+    footer {
+      background: rgba(4, 7, 18, 0.9);
       border-top: 1px solid var(--card-border);
-      padding: 16px 40px;
+      padding: 18px 40px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      z-index: 100;
+      z-index: 10;
     }
 
-    .nav-btn {
-      background: rgba(255, 255, 255, 0.03);
+    .footer-brand {
+      font-size: 0.8rem;
+      color: var(--text-subtle);
+      font-weight: 500;
+    }
+
+    .footer-nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-arrow-btn {
+      background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--card-border);
-      color: #ffffff;
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-size: 0.9rem;
-      font-weight: 600;
+      color: var(--text-main);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      font-family: var(--font-body);
+      justify-content: center;
+      transition: var(--transition-smooth);
     }
 
-    .nav-btn:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.08);
+    .nav-arrow-btn:hover:not(:disabled) {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: white;
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+      transform: scale(1.05);
+    }
+
+    .nav-arrow-btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .nav-progress-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: var(--transition-bounce);
+    }
+
+    .nav-dot.active {
+      background: var(--teal);
+      width: 20px;
+      border-radius: 99px;
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+    }
+
+    /* Comparison Table Styles */
+    .slide-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .slide-table th {
+      text-align: left;
+      padding: 10px;
+      color: white;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+      font-weight: 600;
+      font-family: var(--font-eng-display);
+    }
+
+    html[lang="ar"] .slide-table th {
+      text-align: right;
+      font-family: var(--font-ar-display);
+    }
+
+    .slide-table td {
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .slide-table tr:hover td {
+      color: white;
+      background: rgba(255, 255, 255, 0.015);
+    }
+
+    /* Mockups & Visual Wrappers */
+    .mockup-wrapper {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: var(--transition-smooth);
+    }
+
+    .mockup-wrapper img {
+      max-width: 100%;
+      max-height: 290px;
+      border-radius: 8px;
+      object-fit: contain;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* ---------------------------------------------------- */
+    /* INTERACTIVE WIDGET 1: Slot Grid Booking Simulator */
+    /* ---------------------------------------------------- */
+    .grid-simulator {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      background: rgba(4, 7, 18, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .sim-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+    }
+
+    .sim-court-title {
+      color: white;
+      font-weight: 700;
+    }
+
+    .sim-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .sim-slot {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 12px 6px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: var(--transition-smooth);
+    }
+
+    .sim-slot.free {
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--emerald);
+    }
+
+    .sim-slot.free:hover {
+      background: rgba(16, 185, 129, 0.1);
+      transform: scale(1.03);
+    }
+
+    .sim-slot.booked {
+      background: rgba(244, 63, 94, 0.08);
+      border-color: rgba(244, 63, 94, 0.3);
+      color: var(--rose);
+      cursor: not-allowed;
+    }
+
+    .sim-slot.selected {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: white;
+      box-shadow: 0 0 12px rgba(14, 165, 233, 0.4);
+    }
+
+    .sim-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sim-input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .sim-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      outline: none;
+    }
+
+    .sim-input:focus {
+      border-color: var(--teal);
+    }
+
+    .sim-btn {
+      background: var(--indigo);
+      color: white;
+      border: none;
+      padding: 9px 15px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+
+    .sim-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    }
+
+    .sim-btn.secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+    }
+
+    .sim-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .sim-alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.4;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .sim-alert.success {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: var(--emerald);
+    }
+
+    .sim-alert.error {
+      background: rgba(244, 63, 94, 0.08);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+      color: var(--rose);
+    }
+
+    .sim-alert.warning {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      color: var(--amber);
+    }
+
+    /* ---------------------------------------------------- */
+    /* INTERACTIVE WIDGET 2: Geofencing Simulator           */
+    /* ---------------------------------------------------- */
+    .geofence-simulator {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      background: rgba(4, 7, 18, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .map-preview {
+      height: 160px;
+      background: #0f172a;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Grid layout inside map */
+    .map-grid {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        radial-gradient(rgba(255,255,255,0.03) 1px, transparent 0),
+        radial-gradient(rgba(255,255,255,0.03) 1px, transparent 0);
+      background-size: 16px 16px;
+    }
+
+    .map-facility {
+      width: 24px;
+      height: 24px;
+      background: var(--indigo);
+      border: 2px solid white;
+      border-radius: 50%;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.65rem;
+      position: relative;
+      box-shadow: 0 0 15px var(--indigo);
+    }
+
+    .geofence-circle {
+      position: absolute;
+      border: 1.5px dashed var(--teal);
+      background: rgba(14, 165, 233, 0.04);
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      z-index: 1;
+      transition: var(--transition-smooth);
+      animation: pulseGeofence 4s infinite linear;
+    }
+
+    .map-student {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: var(--rose);
+      border: 2px solid white;
+      border-radius: 50%;
+      z-index: 3;
+      box-shadow: 0 0 10px var(--rose);
+      transition: all 0.2s ease;
+    }
+
+    .map-student.within {
+      background: var(--emerald);
+      box-shadow: 0 0 12px var(--emerald);
+    }
+
+    @keyframes pulseGeofence {
+      0% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.05); opacity: 0.9; }
+      100% { transform: scale(1); opacity: 0.7; }
+    }
+
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .distance-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      outline: none;
+    }
+
+    .distance-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--teal);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.8);
+      transition: var(--transition-smooth);
+    }
+
+    .distance-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    /* ---------------------------------------------------- */
+    /* INTERACTIVE WIDGET 3: Chatbot Simulator             */
+    /* ---------------------------------------------------- */
+    .chatbot-simulator {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 290px;
+      background: rgba(4, 7, 18, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 10px 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+    }
+
+    .chat-header-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      animation: blink 2s infinite ease-in-out;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 0.78rem;
+    }
+
+    .chat-msg {
+      max-width: 80%;
+      padding: 8px 12px;
+      border-radius: 12px;
+      line-height: 1.4;
+      animation: msgPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    }
+
+    .chat-msg.bot {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      align-self: flex-start;
+      border-top-left-radius: 2px;
+    }
+
+    .chat-msg.user {
+      background: var(--indigo);
+      color: white;
+      align-self: flex-end;
+      border-top-right-radius: 2px;
+    }
+
+    .chat-prompts {
+      display: flex;
+      gap: 6px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      overflow-x: auto;
+      border-top: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .chat-prompt-btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition-smooth);
+    }
+
+    .chat-prompt-btn:hover {
+      background: rgba(14, 165, 233, 0.08);
       border-color: var(--teal);
       color: var(--teal);
     }
 
-    .nav-btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
+    @keyframes blink {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
     }
 
-    .progress-dots {
+    @keyframes msgPop {
+      0% { transform: translateY(10px) scale(0.95); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    /* ---------------------------------------------------- */
+    /* INTERACTIVE WIDGET 4: Matchmaking Simulator         */
+    /* ---------------------------------------------------- */
+    .lfg-simulator {
       display: flex;
-      gap: 8px;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.15);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .dot.active {
-      background: var(--teal);
-      box-shadow: 0 0 10px rgba(19, 183, 166, 0.6);
-      width: 24px;
-      border-radius: 99px;
-    }
-
-    /* Comparison Table Styling */
-    .custom-table {
+      flex-direction: column;
+      gap: 15px;
       width: 100%;
-      border-collapse: collapse;
-      font-size: 0.88rem;
+      background: rgba(4, 7, 18, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .lfg-lobby-box {
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      background: rgba(0,0,0,0.2);
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .lfg-slots-row {
+      display: flex;
+      justify-content: space-around;
+      gap: 10px;
+    }
+
+    .lfg-avatar-slot {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: var(--text-subtle);
+      position: relative;
+      transition: var(--transition-bounce);
+    }
+
+    .lfg-avatar-slot.active {
+      border-color: var(--teal);
+      background: rgba(14, 165, 233, 0.1);
+      color: white;
+      border-style: solid;
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+    }
+
+    .lfg-avatar-slot.active::after {
+      content: "\f00c";
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      font-size: 0.6rem;
+      background: var(--emerald);
+      color: white;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lfg-status-label {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .teams-split-view {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .team-box {
+      flex: 1;
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 0.75rem;
+    }
+
+    .team-box.team-a {
+      background: rgba(14, 165, 233, 0.04);
+      border-color: rgba(14, 165, 233, 0.1);
+    }
+
+    .team-box.team-b {
+      background: rgba(99, 102, 241, 0.04);
+      border-color: rgba(99, 102, 241, 0.1);
+    }
+
+    .team-box-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+      font-size: 0.78rem;
+    }
+
+    .team-box.team-a .team-box-title { color: var(--teal); }
+    .team-box.team-b .team-box-title { color: var(--indigo); }
+
+    .team-player-li {
+      margin-bottom: 4px;
       color: var(--text-muted);
     }
 
-    .custom-table th {
-      text-align: left;
-      padding: 8px;
-      color: #ffffff;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    /* ---------------------------------------------------- */
+    /* INTERACTIVE WIDGET 5: Architecture Visualizer        */
+    /* ---------------------------------------------------- */
+    .arch-explorer {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .arch-layer-card {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition-smooth);
+    }
+
+    .arch-layer-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--teal);
+      transform: translateX(4px);
+    }
+
+    html[lang="ar"] .arch-layer-card:hover {
+      transform: translateX(-4px);
+    }
+
+    .arch-layer-card.active {
+      background: rgba(14, 165, 233, 0.05);
+      border-color: var(--teal);
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.15);
+    }
+
+    .arch-layer-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .arch-layer-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      transition: var(--transition-smooth);
+    }
+
+    .arch-layer-card:hover .arch-layer-icon,
+    .arch-layer-card.active .arch-layer-icon {
+      background: var(--teal);
+      color: white;
+    }
+
+    .arch-layer-meta h4 {
+      font-size: 0.88rem;
+      color: white;
       font-weight: 600;
-      font-family: var(--font-display);
     }
 
-    .custom-table td {
-      padding: 10px 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    .arch-layer-meta span {
+      font-size: 0.7rem;
+      color: var(--text-muted);
     }
 
-    .custom-table tr:hover td {
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.01);
+    .arch-details-box {
+      border: 1px solid rgba(255,255,255,0.05);
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.78rem;
+      min-height: 110px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .arch-details-box h5 {
+      color: var(--teal);
+      font-size: 0.82rem;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .arch-details-box p {
+      color: var(--text-muted);
+      line-height: 1.45;
+      margin-bottom: 8px;
+    }
+
+    .arch-tech-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .arch-tech-tag {
+      background: rgba(255,255,255,0.04);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      color: var(--text-main);
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+
+    /* ---------------------------------------------------- */
+    /* INTERACTIVE WIDGET 6: Live Demo Checklist            */
+    /* ---------------------------------------------------- */
+    .checklist-widget {
+      width: 100%;
+      background: rgba(4, 7, 18, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .checklist-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      transition: var(--transition-smooth);
+    }
+
+    .checklist-row:hover {
+      padding-left: 5px;
+    }
+
+    html[lang="ar"] .checklist-row:hover {
+      padding-left: 0;
+      padding-right: 5px;
+    }
+
+    .checklist-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid var(--text-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: transparent;
+      transition: var(--transition-bounce);
+    }
+
+    .checklist-row.checked .checklist-checkbox {
+      border-color: var(--emerald);
+      background: var(--emerald);
+      color: white;
+    }
+
+    .checklist-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      transition: var(--transition-smooth);
+    }
+
+    .checklist-row.checked .checklist-text {
+      text-decoration: line-through;
+      color: var(--text-subtle);
+    }
+
+    .gauge-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px dashed rgba(255,255,255,0.08);
+      padding-top: 15px;
+      font-size: 0.8rem;
+    }
+
+    .gauge-bar-bg {
+      flex: 1;
+      height: 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 99px;
+      margin: 0 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gauge-bar-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--indigo), var(--teal));
+      width: 0%;
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    html[lang="ar"] .gauge-bar-fill {
+      left: auto;
+      right: 0;
+    }
+
+    /* ---------------------------------------------------- */
+    /* INTERACTIVE WIDGET 7: Priority Score Calculator       */
+    /* ---------------------------------------------------- */
+    .priority-widget {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      background: rgba(4, 7, 18, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .pr-team-card {
+      border: 1px solid rgba(255,255,255,0.04);
+      background: rgba(0,0,0,0.15);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pr-team-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .pr-control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      gap: 8px;
+    }
+
+    .pr-control-row input[type="range"] {
+      flex: 1;
+      height: 4px;
+    }
+
+    .pr-score-badge {
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: white;
+      font-family: monospace;
+      font-size: 0.72rem;
+    }
+
+    .pr-result-box {
+      background: rgba(14, 165, 233, 0.05);
+      border: 1px solid rgba(14, 165, 233, 0.15);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: white;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* ---------------------------------------------------- */
+    /* INTERACTIVE WIDGET 8: Exception Mapper               */
+    /* ---------------------------------------------------- */
+    .exception-widget {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      background: rgba(4, 7, 18, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .exc-select {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--card-border);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      outline: none;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .exc-select option {
+      background: #0f172a;
+    }
+
+    .exc-display-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 5px;
+    }
+
+    .exc-lang-card {
+      border: 1px solid rgba(255,255,255,0.03);
+      background: rgba(255,255,255,0.01);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.75rem;
+    }
+
+    .exc-lang-header {
+      font-weight: 700;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Keyframes */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Fullscreen Mode override */
+    body:-webkit-full-screen {
+      width: 100%;
+      height: 100%;
+    }
+
+    .btn-fullscreen {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
     }
   </style>
 </head>
 <body>
 
-  <!-- Slide Wrapper -->
+  <!-- Background Ambient Glowing Orbs -->
+  <div class="glowing-orb" id="orb-1"></div>
+  <div class="glowing-orb" id="orb-2"></div>
+
+  <!-- Header Section -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-logo"><i class="fa-solid fa-person-running"></i></div>
+      <div class="brand-text">
+        <h1 class="en-only">Badya Sports Portal</h1>
+        <h1 class="ar-only">بوابة بادية الرياضية</h1>
+        <span class="en-only">Graduation Project Presentation</span>
+        <span class="ar-only">عرض مشروع التخرج</span>
+      </div>
+    </div>
+    <div class="header-controls">
+      <button class="btn-action btn-fullscreen" id="fs-toggle-btn">
+        <i class="fa-solid fa-expand"></i>
+        <span class="en-only">Full Screen</span>
+        <span class="ar-only">ملء الشاشة</span>
+      </button>
+      <button class="btn-action btn-lang-toggle" id="lang-toggle-btn">
+        <i class="fa-solid fa-globe"></i>
+        <span class="en-only">العربية</span>
+        <span class="lang-text en-only" style="display:none">العربية</span>
+        <span class="ar-only">English</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Slide Arena -->
   <div class="presentation-container">
 
-    <!-- Slide 1: Cover Page -->
+    <!-- SLIDE 1: Cover Page -->
     <div class="slide active" id="slide-1">
-      <div class="cover-slide-body">
-        <div class="project-eyebrow">Graduation Project</div>
-        <div class="project-title">
-          <h1>Badya Sports Booking Portal</h1>
+      <div class="cover-layout">
+        <div class="grad-project-badge">
+          <span class="en-only">Graduation Project</span>
+          <span class="ar-only">مشروع التخرج</span>
         </div>
-        <div class="project-subtitle">
-          An Intelligent scheduling, algorithmic fairness-rotation, geofenced verification, and bilingual sports facility management portal.
+        <div class="cover-title">
+          <h1 class="en-only">Badya University Sports Portal</h1>
+          <h1 class="ar-only">بوابة جامعة بادية لحجز الملاعب</h1>
         </div>
-        <div class="divider-glow"></div>
-        
-        <div class="credits-grid">
-          <div class="credit-box">
-            <span class="role">Prepared By</span>
+        <div class="cover-subtitle">
+          <span class="en-only">An intelligent scheduling, algorithmic fairness-rotation, geofenced verification, and bilingual sports facility management portal.</span>
+          <span class="ar-only">نظام حجز ذكي، يعتمد على خوارزميات التدوير العادل، والتحقق الجغرافي بالحدود الرقمية، وإدارة المنشآت ثنائية اللغة بالكامل.</span>
+        </div>
+        <div class="glowing-bar"></div>
+        <div class="presenters-grid">
+          <div class="presenter-item">
+            <span class="role"><span class="en-only">Prepared By</span><span class="ar-only">إعداد الطالب</span></span>
             <strong class="name">Yehia Ahmed</strong>
           </div>
-          <div class="credit-box">
-            <span class="role">Prepared By</span>
+          <div class="presenter-item">
+            <span class="role"><span class="en-only">Prepared By</span><span class="ar-only">إعداد الطالب</span></span>
             <strong class="name">Omar Abdelaziz</strong>
           </div>
-          <div class="credit-box">
-            <span class="role">Supervised By</span>
+          <div class="presenter-item">
+            <span class="role"><span class="en-only">Supervised By</span><span class="ar-only">تحت إشراف</span></span>
             <strong class="name">Dr. Amira</strong>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 2: Core Pain Points -->
+    <!-- SLIDE 2: Core Pain Points -->
     <div class="slide" id="slide-2">
       <div class="slide-header">
-        <h2>❌ The Campus Scheduling Challenge</h2>
-        <span class="slide-badge">The Problem</span>
+        <h2>
+          <i class="fa-solid fa-circle-exclamation highlight-teal" style="color:var(--rose);"></i>
+          <span class="en-only">The Campus Scheduling Challenge</span>
+          <span class="ar-only">تحديات الحجز وجدولة الملاعب التقليدية</span>
+        </h2>
+        <div class="slide-badge">
+          <span class="en-only">The Problem</span>
+          <span class="ar-only">المشكلة</span>
+        </div>
       </div>
       <div class="slide-body">
-        <div class="slide-text-side">
-          <p class="lead-text">
-            Traditional sports booking portals fail to control booking abuse, leaving physical courts empty or monopolized by specific groups.
+        <div class="slide-info-pane">
+          <p class="lead-desc">
+            <span class="en-only">Traditional sports booking portals fail to manage court abuse, leaving physical facilities empty or monopolized.</span>
+            <span class="ar-only">تفشل أنظمة حجز الملاعب التقليدية في التحكم بسلوك الاستخدام، مما يترك الملاعب فارغة أو محتكرة من فئة معينة.</span>
           </p>
-          <ul class="check-list">
-            <li><strong>Monopoly & Court Hogging</strong>: Groups blocking prime-time slots back-to-back.</li>
-            <li><strong>No-Show Waste</strong>: Facilities booked but never checked into, locking out other active students.</li>
-            <li><strong>Attendance Fraud</strong>: Remote logins checking in from outside the venue boundaries.</li>
-            <li><strong>Teammate Matching Friction</strong>: Solo players unable to organize teams or match Student IDs.</li>
+          <ul class="bullet-list">
+            <li>
+              <span class="en-only"><strong>Monopoly & Court Hogging:</strong> Specific groups booking courts back-to-back, locking others out.</span>
+              <span class="ar-only"><strong>الاحتكار وحجز الملاعب المتكرر:</strong> قيام مجموعات معينة بحجز الفترات المميزة متتالية دون إتاحة الفرصة للآخرين.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>No-Show Waste:</strong> Slots reserved but remaining empty when students fail to show up.</span>
+              <span class="ar-only"><strong>هدر فترات الحجز (عدم الحضور):</strong> بقاء الملاعب فارغة رغم حجزها بسبب عدم حضور الطلاب، وحرمان الآخرين.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Check-In Fraud:</strong> Students checking in remotely (from dorms) instead of being at the facility.</span>
+              <span class="ar-only"><strong>التسجيل الوهمي للحضور:</strong> تسجيل الحضور عن بُعد من الغرف السكنية دون الذهاب الفعلي للملعب.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Teammate Discovery Friction:</strong> Solo players struggling to find teammates or match student IDs.</span>
+              <span class="ar-only"><strong>صعوبة إيجاد الفرق:</strong> عجز اللاعب الفردي عن تشكيل فريق أو جمع هويات الطلاب اللازمة لإتمام الحجز.</span>
+            </li>
           </ul>
         </div>
-        <div class="slide-visual-side">
-          <div class="cards-grid">
-            <div class="slide-card">
-              <h3 style="color: var(--red);">🔒 Monopolies</h3>
-              <p>Same group booking slots consecutively, preventing student rotation.</p>
+        <div class="slide-visual-pane">
+          <div class="problems-grid">
+            <div class="problem-card">
+              <h3 style="color: var(--rose);"><i class="fa-solid fa-lock"></i> <span class="en-only">Monopolies</span><span class="ar-only">الاحتكار</span></h3>
+              <p>
+                <span class="en-only">Same groups booking prime slots consecutively.</span>
+                <span class="ar-only">تكرار نفس الطلاب لحجز الساعات الذهبية باستمرار.</span>
+              </p>
             </div>
-            <div class="slide-card">
-              <h3 style="color: var(--amber);">📍 Attendance Fraud</h3>
-              <p>Remote check-ins checking in without being physically on court.</p>
+            <div class="problem-card">
+              <h3 style="color: var(--amber);"><i class="fa-solid fa-map-location-dot"></i> <span class="en-only">Remote Fraud</span><span class="ar-only">الحضور الوهمي</span></h3>
+              <p>
+                <span class="en-only">Checking in on maps without walking to the court.</span>
+                <span class="ar-only">تسجيل الحضور كذباً دون التواجد الجسدي بالملعب.</span>
+              </p>
             </div>
-            <div class="slide-card">
-              <h3 style="color: var(--blue);">🎯 Team Friction</h3>
-              <p>Solo players cannot easily coordinate or find missing teammates.</p>
+            <div class="problem-card">
+              <h3 style="color: var(--teal);"><i class="fa-solid fa-users-slash"></i> <span class="en-only">LFG Friction</span><span class="ar-only">عقبات تشكيل الفرق</span></h3>
+              <p>
+                <span class="en-only">Solo players locked out by player quota validation requirements.</span>
+                <span class="ar-only">صعوبة حجز الملاعب لعدم وجود زملاء كافيين لتسجيلهم.</span>
+              </p>
             </div>
-            <div class="slide-card" style="border-color: rgba(19, 183, 166, 0.25);">
-              <h3 style="color: var(--teal);">🌐 Language</h3>
-              <p>Lack of localized interfaces and error messages in Arabic.</p>
+            <div class="problem-card">
+              <h3 style="color: var(--indigo);"><i class="fa-solid fa-language"></i> <span class="en-only">Language Barriers</span><span class="ar-only">حواجز اللغة</span></h3>
+              <p>
+                <span class="en-only">Lack of native Arabic exception messages and interfaces.</span>
+                <span class="ar-only">غياب الواجهات ورسائل الخطأ المترجمة للغة العربية.</span>
+              </p>
             </div>
           </div>
         </div>
       </div>
-      <div class="slide-footer-brand">
-        <span>Badya Sports Portal</span>
-        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
-      </div>
     </div>
 
-    <!-- Slide 3: Student Dashboard Portal -->
+    <!-- SLIDE 3: System Architecture & Tech Stack -->
     <div class="slide" id="slide-3">
       <div class="slide-header">
-        <h2>📊 Student Portal Dashboard</h2>
-        <span class="slide-badge">User Interface</span>
+        <h2>
+          <i class="fa-solid fa-layer-group highlight-teal"></i>
+          <span class="en-only">Technical Architecture & Stack</span>
+          <span class="ar-only">المعمارية البرمجية ومكونات التقنية</span>
+        </h2>
+        <div class="slide-badge">
+          <span class="en-only">Technical Layer</span>
+          <span class="ar-only">المكون البرمجي</span>
+        </div>
       </div>
       <div class="slide-body">
-        <div class="slide-text-side">
-          <p class="lead-text">
-            The core landing hub for student athletes, featuring a unified, responsive overview of stats and active schedules.
+        <div class="slide-info-pane">
+          <p class="lead-desc">
+            <span class="en-only">The system utilizes React for a fast SPA client, Java Spring Boot for scalable enterprise business logic, and MySQL.</span>
+            <span class="ar-only">يعتمد النظام على React لبناء واجهة سريعة أحادية الصفحة، و Spring Boot لإدارة منطق الأعمال وقواعد البيانات MySQL.</span>
           </p>
-          <ul class="check-list">
-            <li><strong>Points & Rewards Tracker</strong>: Earn +25 points for peak checkout and complete bookings.</li>
-            <li><strong>Weekly Credit Balance</strong>: Remaining reservation balance displayed clearly, resetting weekly.</li>
-            <li><strong>Integrity Violation Alerts</strong>: Displays active warning counts to encourage check-in compliance.</li>
-            <li><strong>Timeline Schedule</strong>: Integrated dashboard detailing upcoming matches, conflicts, and past bookings.</li>
+          <ul class="bullet-list">
+            <li>
+              <span class="en-only"><strong>Frontend Layer:</strong> Vite, React, custom LTR/RTL CSS variables, and Leaflet Maps API.</span>
+              <span class="ar-only"><strong>واجهة المستخدم:</strong> React مع Vite، وتنسيق ثنائي الاتجاه (LTR/RTL)، وخرائط Leaflet.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Backend Engine:</strong> Spring Boot REST APIs, JPA Hibernate ORM, and database scheduling logic.</span>
+              <span class="ar-only"><strong>محرك الواجهة الخلفية:</strong> Spring Boot REST APIs، وجدولة قواعد البيانات عبر JPA.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Intelligent AI:</strong> Embedded Gemini API LLM concierge for conversational scheduling.</span>
+              <span class="ar-only"><strong>الذكاء الاصطناعي:</strong> ربط مباشر بواجهة Gemini API للمساعد الذكي وجدولة الملاعب محادثياً.</span>
+            </li>
           </ul>
         </div>
-        <div class="slide-visual-side">
-          <img class="screenshot-img" src="dashboard_mockup.png" alt="Student Dashboard Screenshot">
+        <div class="slide-visual-pane">
+          <!-- Interactive Widget 5: Arch Explorer -->
+          <div class="arch-explorer">
+            <div class="arch-layer-card active" onclick="exploreArch('frontend', this)">
+              <div class="arch-layer-left">
+                <div class="arch-layer-icon"><i class="fa-brands fa-react"></i></div>
+                <div class="arch-layer-meta">
+                  <h4 class="en-only">Frontend SPA Client</h4>
+                  <h4 class="ar-only">واجهة العميل (React)</h4>
+                  <span class="en-only">React 18 + Vite Dev Environment</span>
+                  <span class="ar-only">React 18 + بيئة عمل Vite</span>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right layer-chevron"></i>
+            </div>
+            
+            <div class="arch-layer-card" onclick="exploreArch('backend', this)">
+              <div class="arch-layer-left">
+                <div class="arch-layer-icon"><i class="fa-solid fa-server"></i></div>
+                <div class="arch-layer-meta">
+                  <h4 class="en-only">Spring Boot Core Backend</h4>
+                  <h4 class="ar-only">الواجهة الخلفية (Spring Boot)</h4>
+                  <span class="en-only">Java 17 + JPA Hibernate ORM</span>
+                  <span class="ar-only">Java 17 + ربط الجداول JPA</span>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right layer-chevron"></i>
+            </div>
+
+            <div class="arch-layer-card" onclick="exploreArch('database', this)">
+              <div class="arch-layer-left">
+                <div class="arch-layer-icon"><i class="fa-solid fa-database"></i></div>
+                <div class="arch-layer-meta">
+                  <h4 class="en-only">Database & AI engine</h4>
+                  <h4 class="ar-only">قواعد البيانات والذكاء الاصطناعي</h4>
+                  <span class="en-only">MySQL + H2 & Gemini LLM API</span>
+                  <span class="ar-only">MySQL + H2 وواجهة Gemini API</span>
+                </div>
+              </div>
+              <i class="fa-solid fa-chevron-right layer-chevron"></i>
+            </div>
+
+            <div class="arch-details-box" id="arch-details-content">
+              <h5 id="arch-detail-title">Frontend SPA Client</h5>
+              <p id="arch-detail-desc">Vite acts as the builder, bundling React core files. Leaflet is embedded for geofence tracking, alongside a dynamic RTL/LTR stylesheet toggle.</p>
+              <div class="arch-tech-tags" id="arch-detail-tags">
+                <span class="arch-tech-tag">React</span>
+                <span class="arch-tech-tag">Vite</span>
+                <span class="arch-tech-tag">CSS Grid</span>
+                <span class="arch-tech-tag">Leaflet JS</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="slide-footer-brand">
-        <span>Badya Sports Portal</span>
-        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
       </div>
     </div>
 
-    <!-- Slide 4: Global Bilingual Engine -->
+    <!-- SLIDE 4: Interactive Facility Booking & Grid -->
     <div class="slide" id="slide-4">
       <div class="slide-header">
-        <h2>🌐 Dual-Language Layout Engine</h2>
-        <span class="slide-badge">Bilingual Integration</span>
+        <h2>
+          <i class="fa-solid fa-calendar-days highlight-teal"></i>
+          <span class="en-only">Facility Grid Booking & Validation</span>
+          <span class="ar-only">حجز الملاعب والتحقق من الزملاء</span>
+        </h2>
+        <div class="slide-badge">
+          <span class="en-only">Live Grid Simulator</span>
+          <span class="ar-only">محاكاة شبكة الحجز</span>
+        </div>
       </div>
       <div class="slide-body">
-        <div class="slide-text-side">
-          <p class="lead-text">
-            To accommodate both international and national students, the portal features a floating toggle switch that flips the entire website context.
+        <div class="slide-info-pane">
+          <p class="lead-desc">
+            <span class="en-only">Students choose from a live, color-coded availability grid. Clicking a slot auto-populates the booking forms.</span>
+            <span class="ar-only">يختار الطلاب الأوقات المتاحة من شبكة تفاعلية ملونة. النقر على الفترة يملأ نموذج الحجز تلقائياً.</span>
           </p>
-          <ul class="check-list">
-            <li><strong>Dynamic Layout Shifts</strong>: Instantly flips layout direction (LTR ↔ RTL) and dynamically applies `.rtl-mode` styles.</li>
-            <li><strong>Contextual Translations</strong>: Every tab, attendance map, chatbot bubble, and form updates instantly.</li>
-            <li><strong>Smart Exception Mapping</strong>: Intercepts raw Spring Boot database constraints and localizes them instantly in the UI (e.g., already booked slots show suggestions in Arabic).</li>
+          <ul class="bullet-list">
+            <li>
+              <span class="en-only"><strong>Interactive Slot Selection:</strong> Green indicates available slots; red represents booked ones.</span>
+              <span class="ar-only"><strong>تحديد الساعات تفاعلياً:</strong> اللون الأخضر يعني الساعات المتاحة، والأحمر يمثل المحجوزة.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Buddy Verification:</strong> Requires teammate student IDs and validates them in real-time.</span>
+              <span class="ar-only"><strong>التحقق من هوية الزملاء:</strong> التحقق المباشر من صحة أرقام الطلاب المضافة للحجز.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Automatic Slot Suggestions:</strong> Conflict detection suggests alternatives instantly.</span>
+              <span class="ar-only"><strong>اقتراح البدائل تلقائياً:</strong> في حال وجود تعارض، يقترح النظام أوقاتاً بديلة فوراً.</span>
+            </li>
           </ul>
         </div>
-        <div class="slide-visual-side" style="flex-direction: column; gap: 10px;">
-          <div style="background: rgba(19, 183, 166, 0.06); border: 1px solid var(--teal); padding: 15px; border-radius: 12px; font-size: 0.85rem; width: 100%; direction: rtl; text-align: right;">
-            <strong style="color: var(--teal); display: block; margin-bottom: 4px;">الترجمة للغة العربية:</strong>
-            <span style="color: #eaf0f7;">تم رفض الحجز: هذا الملعب محجوز بالفعل خلال الفترة المطلوبة. الأوقات المتاحة اليوم: 08:00, 10:00, 11:00</span>
-          </div>
-          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); padding: 15px; border-radius: 12px; font-size: 0.85rem; width: 100%;">
-            <strong style="color: var(--blue); display: block; margin-bottom: 4px;">English Standard:</strong>
-            <span style="color: var(--text-muted);">Booking rejected: This court is already booked during the requested time slot. Available times today: 08:00, 10:00, 11:00</span>
+        <div class="slide-visual-pane">
+          <!-- Interactive Widget 1: Booking Grid -->
+          <div class="grid-simulator">
+            <div class="sim-header">
+              <span class="sim-court-title"><span class="en-only">Football Pitch (Main)</span><span class="ar-only">ملعب كرة القدم (الرئيسي)</span></span>
+              <span><span class="en-only">Date: Today</span><span class="ar-only">التاريخ: اليوم</span></span>
+            </div>
+            <div class="sim-grid">
+              <div class="sim-slot free" data-time="08:00 AM" onclick="selectSlot(this)">08:00</div>
+              <div class="sim-slot booked" data-time="09:00 AM">09:00</div>
+              <div class="sim-slot free" data-time="10:00 AM" onclick="selectSlot(this)">10:00</div>
+              <div class="sim-slot free" data-time="11:00 AM" onclick="selectSlot(this)">11:00</div>
+              <div class="sim-slot booked" data-time="12:00 PM">12:00</div>
+              <div class="sim-slot free" data-time="01:00 PM" onclick="selectSlot(this)">13:00</div>
+              <div class="sim-slot booked" data-time="02:00 PM">14:00</div>
+              <div class="sim-slot free" data-time="03:00 PM" onclick="selectSlot(this)">15:00</div>
+            </div>
+            
+            <div class="sim-form">
+              <div class="sim-input-row">
+                <input type="text" class="sim-input" id="buddy-id-input" placeholder="Teammate Student ID (e.g. 2026010)" />
+                <button class="sim-btn" onclick="validateBuddy()"><span class="en-only">Validate</span><span class="ar-only">تحقق</span></button>
+              </div>
+              <div class="sim-input-row">
+                <input type="text" class="sim-input" id="selected-time-input" readonly placeholder="Click a slot above..." />
+                <button class="sim-btn secondary" onclick="bookSelectedSlot()"><span class="en-only">Book Slot</span><span class="ar-only">حجز الساحة</span></button>
+              </div>
+              
+              <div class="sim-alert success" id="booking-alert-success">
+                <i class="fa-solid fa-circle-check"></i>
+                <div>
+                  <span class="en-only">Booking Confirmed! Notification email sent.</span>
+                  <span class="ar-only">تم تأكيد الحجز بنجاح! تم إرسال بريد التأكيد.</span>
+                </div>
+              </div>
+
+              <div class="sim-alert error" id="booking-alert-error">
+                <i class="fa-solid fa-circle-xmark"></i>
+                <div>
+                  <span class="en-only">Booking Rejected: Teammate ID invalid! Join the Matchmaking queue instead.</span>
+                  <span class="ar-only">تم رفض الحجز: رقم الطالب المضاف غير صحيح! انضم لطابور البحث عن لاعبين.</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="slide-footer-brand">
-        <span>Badya Sports Portal</span>
-        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
       </div>
     </div>
 
-    <!-- Slide 5: Facility Booking & Slot Availability -->
+    <!-- SLIDE 5: Algorithmic Fairness Engine -->
     <div class="slide" id="slide-5">
       <div class="slide-header">
-        <h2>📅 Facility Booking & Slot Availability Grid</h2>
-        <span class="slide-badge">Reservation Flow</span>
+        <h2>
+          <i class="fa-solid fa-scale-balanced highlight-teal" style="color: var(--amber);"></i>
+          <span class="en-only">Algorithmic Fairness Engine</span>
+          <span class="ar-only">محرك العدالة الخوارزمي وتدوير الملاعب</span>
+        </h2>
+        <div class="slide-badge">
+          <span class="en-only">Fairness Weights</span>
+          <span class="ar-only">أوزان العدالة</span>
+        </div>
       </div>
       <div class="slide-body">
-        <div class="slide-text-side">
-          <p class="lead-text">
-            Features an interactive schedule builder that queries available/booked times in real-time.
+        <div class="slide-info-pane">
+          <p class="lead-desc">
+            <span class="en-only">Resolves slot overlap conflicts algorithmically. Prevents court monopolization by calculating player weights.</span>
+            <span class="ar-only">يحل تعارضات الحجز المتداخلة خوارزمياً. يمنع احتكار الملاعب بحساب الأوزان النسبية لحاجة الطلاب.</span>
           </p>
-          <ul class="check-list">
-            <li><strong>Interactive Time Grid</strong>: Dynamic visual indicator showing free time slots (Green) and occupied time slots (Red).</li>
-            <li><strong>One-Click Slot Picker</strong>: Users click directly on the grid to auto-fill booking forms.</li>
-            <li><strong>Teammate Buddy Verification</strong>: Input teammate Student IDs; backend double-checks registry records before confirmation.</li>
-          </ul>
+          <table class="slide-table">
+            <thead>
+              <tr>
+                <th><span class="en-only">Policy Name</span><span class="ar-only">السياسة / القاعدة</span></th>
+                <th><span class="en-only">Threshold</span><span class="ar-only">الحد الأقصى</span></th>
+                <th><span class="en-only">Action</span><span class="ar-only">الإجراء</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong><span class="en-only">Weekly Quota</span><span class="ar-only">الحصة الأسبوعية</span></strong></td>
+                <td style="color:var(--teal);">3 Bookings / Week</td>
+                <td><span class="en-only">Blocks new bookings after quota depletion</span><span class="ar-only">حظر الحجوزات الإضافية بعد نفاد الرصيد</span></td>
+              </tr>
+              <tr>
+                <td><strong><span class="en-only">Cooldown Buffer</span><span class="ar-only">فترة التبريد</span></strong></td>
+                <td style="color:var(--indigo);">24-Hour Buffer</td>
+                <td><span class="en-only">Enforces gap between reservation creations</span><span class="ar-only">منع حجز فترات متقاربة متكررة</span></td>
+              </tr>
+              <tr>
+                <td><strong><span class="en-only">Overlap Guard</span><span class="ar-only">منع التداخل</span></strong></td>
+                <td style="color:var(--amber);">Max 2 Consecutive Hours</td>
+                <td><span class="en-only">Blocks bookings sharing 50%+ teammates</span><span class="ar-only">حظر الحجوزات التي تشهد تشابه بالزملاء بنسبة 50%+</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="slide-visual-side">
-          <img class="screenshot-img" src="booking_mockup.png" alt="Facility Booking Grid Screenshot">
+        <div class="slide-visual-pane">
+          <!-- Interactive Widget 7: Priority Score Calculator -->
+          <div class="priority-widget">
+            <div style="font-size: 0.8rem; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px;">
+              <span class="en-only">Priority-Score Conflict Resolver</span>
+              <span class="ar-only">حل التعارض بحساب نقاط الأولوية</span>
+            </div>
+            
+            <!-- Team A controls -->
+            <div class="pr-team-card">
+              <div class="pr-team-header" style="color: var(--teal);">
+                <span>Team A</span>
+                <span id="score-a-badge" class="pr-score-badge">P: 10</span>
+              </div>
+              <div class="pr-control-row">
+                <span><span class="en-only">Bookings this week:</span><span class="ar-only">الحجوزات هذا الأسبوع:</span></span>
+                <input type="range" id="bookings-a" min="0" max="3" value="1" oninput="calculatePriority()" />
+                <span id="bookings-a-val" style="width: 10px;">1</span>
+              </div>
+              <div class="pr-control-row">
+                <span><span class="en-only">Player density:</span><span class="ar-only">كثافة اللاعبين:</span></span>
+                <input type="range" id="players-a" min="1" max="10" value="5" oninput="calculatePriority()" />
+                <span id="players-a-val" style="width: 10px;">5</span>
+              </div>
+            </div>
+
+            <!-- Team B controls -->
+            <div class="pr-team-card">
+              <div class="pr-team-header" style="color: var(--indigo);">
+                <span>Team B</span>
+                <span id="score-b-badge" class="pr-score-badge">P: 10</span>
+              </div>
+              <div class="pr-control-row">
+                <span><span class="en-only">Bookings this week:</span><span class="ar-only">الحجوزات هذا الأسبوع:</span></span>
+                <input type="range" id="bookings-b" min="0" max="3" value="2" oninput="calculatePriority()" />
+                <span id="bookings-b-val" style="width: 10px;">2</span>
+              </div>
+              <div class="pr-control-row">
+                <span><span class="en-only">Player density:</span><span class="ar-only">كثافة اللاعبين:</span></span>
+                <input type="range" id="players-b" min="1" max="10" value="4" oninput="calculatePriority()" />
+                <span id="players-b-val" style="width: 10px;">4</span>
+              </div>
+            </div>
+
+            <div class="pr-result-box" id="priority-result">
+              Team A wins slot! (Lower weekly bookings & higher density)
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="slide-footer-brand">
-        <span>Badya Sports Portal</span>
-        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
       </div>
     </div>
 
-    <!-- Slide 6: Algorithmic Fairness Engine -->
+    <!-- SLIDE 6: Geofenced Verification -->
     <div class="slide" id="slide-6">
       <div class="slide-header">
-        <h2>⚖️ Fairness Rules & Weekly Quotas</h2>
-        <span class="slide-badge">Rotation Policy</span>
+        <h2>
+          <i class="fa-solid fa-location-crosshairs highlight-teal"></i>
+          <span class="en-only">Geofenced Attendance Verification</span>
+          <span class="ar-only">التحقق الجغرافي من حضور الطلاب</span>
+        </h2>
+        <div class="slide-badge">
+          <span class="en-only">Anti-Fraud Map</span>
+          <span class="ar-only">منع التحايل الجغرافي</span>
+        </div>
       </div>
       <div class="slide-body">
-        <div class="slide-text-side">
-          <p class="lead-text">
-            An automated balancing engine enforces rules to prevent monopolization and optimize court utility.
+        <div class="slide-info-pane">
+          <p class="lead-desc">
+            <span class="en-only">Ensures integrity by restricting check-ins to students physically inside the court geofence radius.</span>
+            <span class="ar-only">يضمن مصداقية حضور الطلاب بقصر تسجيل الوصول على المتواجدين فعلياً ضمن النطاق الجغرافي للملعب.</span>
           </p>
-          <table class="custom-table">
-            <thead>
-              <tr>
-                <th>Rule / Policy</th>
-                <th>Threshold Limit</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="color: #ffffff; font-weight: 600;">Weekly Booking Limit</td>
-                <td class="highlight-teal">Max 3 Bookings / Week</td>
-                <td>Resets every Monday morning at 08:00 AM automatically.</td>
-              </tr>
-              <tr>
-                <td style="color: #ffffff; font-weight: 600;">Booking Cooldown</td>
-                <td class="highlight-blue">24-Hour Buffer</td>
-                <td>Prevents users from spamming court reservations.</td>
-              </tr>
-              <tr>
-                <td style="color: #ffffff; font-weight: 600;">Consecutive Slot Guard</td>
-                <td class="highlight-amber">Max 2 Hours / Group</td>
-                <td>Blocks bookings sharing 50%+ teammate overlap consecutively.</td>
-              </tr>
-              <tr>
-                <td style="color: #ffffff; font-weight: 600;">Priority Score</td>
-                <td style="color: #fff;">Dynamic Weight</td>
-                <td>Overlapping slots resolved automatically based on weekly quota debt.</td>
-              </tr>
-            </tbody>
-          </table>
+          <ul class="bullet-list">
+            <li>
+              <span class="en-only"><strong>50-Meter Boundary:</strong> Check-in button locks unless GPS matches within 50m of facility center.</span>
+              <span class="ar-only"><strong>نطاق الـ 50 متراً:</strong> زر تسجيل الحضور معطل تلقائياً إلا إذا تطابق موقع الهاتف مع حدود الملعب.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Auto No-Show Script:</strong> Runs 15 mins after booking starts, cancelling absent reservations.</span>
+              <span class="ar-only"><strong>إلغاء حجز المتغيبين تلقائياً:</strong> يفحص النظام الحضور بعد 15 دقيقة، ويلغي حجز المتغيب مع إنذاره.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Suspension Rules:</strong> Accumulating 3 warnings results in a 1-week account suspension.</span>
+              <span class="ar-only"><strong>عقوبات الغياب:</strong> عند تراكم 3 إنذارات عدم حضور، يتم تجميد حساب الطالب لمدة أسبوع.</span>
+            </li>
+          </ul>
         </div>
-        <div class="slide-visual-side" style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
-          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); padding: 18px; border-radius: 12px; width: 100%;">
-            <strong style="color: #fff; font-size: 0.95rem; display: block; margin-bottom: 6px;">💡 Fairness Objective</strong>
-            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
-              Prevents monopolization on the basketball/volleyball courts. If there is a slot overlap dispute, the team with the higher Priority Score wins the reservation.
-            </p>
+        <div class="slide-visual-pane">
+          <!-- Interactive Widget 2: Geofence Simulator -->
+          <div class="geofence-simulator">
+            <div class="map-preview">
+              <div class="map-grid"></div>
+              <div class="geofence-circle" id="sim-geofence"></div>
+              <div class="map-facility"><i class="fa-solid fa-basketball"></i></div>
+              <div class="map-student" id="sim-student"></div>
+            </div>
+            
+            <div class="slider-container">
+              <div class="slider-labels">
+                <span><span class="en-only">Student Distance:</span><span class="ar-only">المسافة الحالية للطالب:</span></span>
+                <strong id="distance-value">80m</strong>
+              </div>
+              <input type="range" class="distance-slider" id="geofence-range-slider" min="10" max="180" value="80" oninput="updateGeofenceSim(this.value)" />
+            </div>
+
+            <button class="sim-btn" id="checkin-btn" disabled style="background: var(--text-subtle);">
+              <i class="fa-solid fa-lock"></i> <span class="en-only">Blocked (Too Far)</span><span class="ar-only">معطل (أنت بعيد عن الملعب)</span>
+            </button>
+            
+            <div class="sim-alert success" id="checkin-success-alert">
+              <i class="fa-solid fa-circle-check"></i>
+              <span><span class="en-only">Check-in verified! Enjoy your session. (+25 pts)</span><span class="ar-only">تم التحقق من الحضور بنجاح! تم منحك 25 نقطة.</span></span>
+            </div>
           </div>
         </div>
       </div>
-      <div class="slide-footer-brand">
-        <span>Badya Sports Portal</span>
-        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
-      </div>
     </div>
 
-    <!-- Slide 7: Geofencing & Chatbot Widget -->
+    <!-- SLIDE 7: Anonymous Matchmaking Queue (LFG) -->
     <div class="slide" id="slide-7">
       <div class="slide-header">
-        <h2>📍 Geolocation Map & AI Assistant</h2>
-        <span class="slide-badge">Advanced Features</span>
+        <h2>
+          <i class="fa-solid fa-people-group highlight-teal"></i>
+          <span class="en-only">LFG Matchmaking Queue</span>
+          <span class="ar-only">طابور البحث عن لاعبين وتشكيل الفرق</span>
+        </h2>
+        <div class="slide-badge">
+          <span class="en-only">Matchmaker</span>
+          <span class="ar-only">تشكيل المجموعات</span>
+        </div>
       </div>
       <div class="slide-body">
-        <div class="slide-text-side">
-          <p class="lead-text">
-            Combines Leaflet mapping boundaries with an online/offline chatbot companion.
+        <div class="slide-info-pane">
+          <p class="lead-desc">
+            <span class="en-only">Bridges social gaps for solo players. Matches players anonymously, creates slots, and balanced rosters.</span>
+            <span class="ar-only">يسهل الحجز للطلاب المنفردين دون حرج، بحشرهم في طابور بحث مجهول الهوية، وتوزيعهم لفرق متكافئة تلقائياً.</span>
           </p>
-          <ul class="check-list">
-            <li><strong>Geofence Verification</strong>: Calculates distance in real-time. Unlocks checkout/check-in scanner only when within 50m of coordinates.</li>
-            <li><strong>No-Show Cancellation</strong>: Automated script checks attendance 15 minutes into the slot. Cancels and warns players if absent.</li>
-            <li><strong>AI Concierge (Gemini)</strong>: Conversational scheduling, check-in checks, rules explanations, and automated page redirects.</li>
+          <ul class="bullet-list">
+            <li>
+              <span class="en-only"><strong>Privacy-First Queue:</strong> Student profiles masked until match confirmation to prevent social anxiety.</span>
+              <span class="ar-only"><strong>طابور يحفظ الخصوصية:</strong> إخفاء هويات الطلاب حتى اكتمال الحجز لتشجيع الجميع على المشاركة.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Roster Generation:</strong> Splits matching queues into even Team A & Team B rosters.</span>
+              <span class="ar-only"><strong>إنشاء قوائم الفرق:</strong> تقسيم اللاعبين بالتساوي لفرقتين متنافستين بشكل عادل.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Smart Match Prompt:</strong> Urges solo bookers to match rather than failing ID quota validation.</span>
+              <span class="ar-only"><strong>التوجيه للطابور الذكي:</strong> يقترح النظام إحالة المستخدمين غير المكتملين لطابور البحث.</span>
+            </li>
           </ul>
         </div>
-        <div class="slide-visual-side">
-          <img class="screenshot-img" src="chatbot_map_mockup.png" alt="Geofencing Map and Chatbot Screenshot">
+        <div class="slide-visual-pane">
+          <!-- Interactive Widget 4: Matchmaking Lobby -->
+          <div class="lfg-simulator">
+            <div style="font-size: 0.8rem; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center;">
+              <span><span class="en-only">Matchmaking Lobby (Futsal)</span><span class="ar-only">طابور التنسيق (خماسيات القدم)</span></span>
+              <span style="font-size: 0.65rem; color: var(--teal);"><span class="en-only">Needs 4 Players</span><span class="ar-only">يتطلب 4 لاعبين</span></span>
+            </div>
+            
+            <div class="lfg-lobby-box">
+              <div class="lfg-slots-row">
+                <div class="lfg-avatar-slot" id="lfg-avatar-1"><i class="fa-solid fa-user"></i></div>
+                <div class="lfg-avatar-slot" id="lfg-avatar-2"><i class="fa-solid fa-user"></i></div>
+                <div class="lfg-avatar-slot" id="lfg-avatar-3"><i class="fa-solid fa-user"></i></div>
+                <div class="lfg-avatar-slot" id="lfg-avatar-4"><i class="fa-solid fa-user"></i></div>
+              </div>
+              <div class="lfg-status-label" id="lfg-status-txt">
+                <span class="en-only">Lobby Empty. Click below to start simulation.</span>
+                <span class="ar-only">الطابور فارغ. اضغط على الزر أدناه لبدء المحاكاة.</span>
+              </div>
+            </div>
+
+            <div class="teams-split-view" id="lfg-teams-result">
+              <div class="team-box team-a">
+                <div class="team-box-title">Team A</div>
+                <div class="team-player-li"><i class="fa-solid fa-circle-user"></i> Student_839</div>
+                <div class="team-player-li"><i class="fa-solid fa-circle-user"></i> Student_103</div>
+              </div>
+              <div class="team-box team-b">
+                <div class="team-box-title">Team B</div>
+                <div class="team-player-li"><i class="fa-solid fa-circle-user"></i> Student_554</div>
+                <div class="team-player-li"><i class="fa-solid fa-circle-user"></i> Student_772</div>
+              </div>
+            </div>
+
+            <button class="sim-btn" id="lfg-start-btn" onclick="startLfgSim()">
+              <span class="en-only">Start Matchmaking Queue</span>
+              <span class="ar-only">بدء محاكاة طابور البحث</span>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="slide-footer-brand">
-        <span>Badya Sports Portal</span>
-        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
       </div>
     </div>
 
-    <!-- Slide 8: Technical Stack -->
+    <!-- SLIDE 8: AI Concierge chatbot -->
     <div class="slide" id="slide-8">
       <div class="slide-header">
-        <h2>💻 Tech Stack Overview</h2>
-        <span class="slide-badge">Core Technologies</span>
-      </div>
-      <div class="slide-body">
-        <div class="slide-text-side">
-          <p class="lead-text">
-            Built using modern, lightweight, and performant frameworks for solid API scheduling and responsive UI experiences.
-          </p>
-          <table class="custom-table" style="margin-top: 10px;">
-            <thead>
-              <tr>
-                <th>Layer</th>
-                <th>Technology</th>
-                <th>Responsibility</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style="color: #ffffff; font-weight: 600;">Frontend</td>
-                <td class="highlight-teal">React & Vite</td>
-                <td>Bilingual rendering, state management, Leaflet Maps.</td>
-              </tr>
-              <tr>
-                <td style="color: #ffffff; font-weight: 600;">Backend</td>
-                <td class="highlight-blue">Spring Boot (Java 17)</td>
-                <td>Fairness logic, matchmaking engine, security & authentication.</td>
-              </tr>
-              <tr>
-                <td style="color: #ffffff; font-weight: 600;">Database</td>
-                <td class="highlight-amber">MySQL / H2</td>
-                <td>Stores facilities data, student reservations, and logs.</td>
-              </tr>
-              <tr>
-                <td style="color: #ffffff; font-weight: 600;">AI Engine</td>
-                <td style="color: #fff;">Gemini API</td>
-                <td>Underpins conversational chatbot and local search fallbacks.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="slide-visual-side">
-          <div class="cards-grid">
-            <div class="slide-card">
-              <h3>⚡ Vite + React</h3>
-              <p>Ensures immediate hot-reloading and highly responsive pages.</p>
-            </div>
-            <div class="slide-card">
-              <h3>🍃 Spring Boot</h3>
-              <p>Provides a type-safe rest API architecture with robust JPA layers.</p>
-            </div>
-          </div>
+        <h2>
+          <i class="fa-solid fa-robot highlight-teal"></i>
+          <span class="en-only">AI Concierge (Badya AI)</span>
+          <span class="ar-only">مساعد الذكاء الاصطناعي (بادية AI)</span>
+        </h2>
+        <div class="slide-badge">
+          <span class="en-only">Gemini LLM</span>
+          <span class="ar-only">ذكاء توليدي</span>
         </div>
       </div>
-      <div class="slide-footer-brand">
-        <span>Badya Sports Portal</span>
-        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
-      </div>
-    </div>
-
-    <!-- Slide 9: Demo Flow Checklist -->
-    <div class="slide" id="slide-9">
-      <div class="slide-header">
-        <h2>⚡ Live Demo Walkthrough Plan</h2>
-        <span class="slide-badge">Execution Plan</span>
-      </div>
       <div class="slide-body">
-        <div class="slide-text-side">
-          <p class="lead-text">
-            Recommended sequence for showcasing the live portal tomorrow:
+        <div class="slide-info-pane">
+          <p class="lead-desc">
+            <span class="en-only">Seamless Gemini LLM integration allowing natural language bookings, rule queries, and account redirection.</span>
+            <span class="ar-only">تكامل كامل مع نموذج Gemini للمحادثة، يتيح حجز الملاعب باللغة الدارجة، والاستفسار عن القوانين.</span>
           </p>
-          <ul class="check-list">
-            <li><strong>Login & Browser Binding</strong>: Show initial login and notice regarding device fairness locks.</li>
-            <li><strong>Language Switcher</strong>: Toggle the floating button (bottom-left) to show immediate RTL shift.</li>
-            <li><strong>Court Availability Grid</strong>: View slots for a court (Basketball/Volleyball) and try to book a conflict slot.</li>
-            <li><strong>Teammate Validation & Promo</strong>: Submit a booking without buddy IDs and trigger the Matchmaking prompt.</li>
-            <li><strong>Geofenced Scanner Check-in</strong>: Check in showing locked/unlocked state depending on coordinates.</li>
+          <ul class="bullet-list">
+            <li>
+              <span class="en-only"><strong>Gemini API integration:</strong> Processes complex queries and responds instantly in Arabic & English.</span>
+              <span class="ar-only"><strong>ربط واجهة Gemini:</strong> معالجة الأسئلة المعقدة والاستجابة بطلاقة باللغتين العربية والإنجليزية.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Auto Page Redirect:</strong> Smart routing opens booking forms or warning tabs directly upon request.</span>
+              <span class="ar-only"><strong>التحويل التلقائي للصفحات:</strong> يقوم الروبوت بفتح النماذج والصفحات للمستخدم فور طلبه ذلك نصياً.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Offline Backup Database:</strong> Serves cached office contacts & facility rules if API key goes offline.</span>
+              <span class="ar-only"><strong>قاعدة بيانات محلية احتياطية:</strong> لتوفير أرقام التواصل وقوانين الملاعب حال انقطاع الإنترنت أو تعطل مفتاح الـ API.</span>
+            </li>
           </ul>
         </div>
-        <div class="slide-visual-side">
-          <div class="mock-ui-box" style="border-color: rgba(19, 183, 166, 0.25);">
-            <div class="mock-ui-header">
-              <span>DEMO FLOW STATUS</span>
-              <span class="highlight-teal">Ready for Presentation</span>
+        <div class="slide-visual-pane">
+          <!-- Interactive Widget 3: Chatbot Simulator -->
+          <div class="chatbot-simulator">
+            <div class="chat-header">
+              <div class="chat-header-dot"></div>
+              <strong>Badya AI Concierge</strong>
             </div>
-            <div class="mock-ui-body" style="justify-content: flex-start; text-align: left; width: 100%; gap: 10px; margin-top: 15px;">
-              <div style="font-size: 0.95rem; color: #ffffff;">🏁 **Goal**: Showcase fairness, translation, and geofencing validation.</div>
-              <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px;">✔️ Frontend: Built successfully (`dist/` generated)</div>
-              <div style="font-size: 0.85rem; color: var(--text-muted);">✔️ Backend APIs: Active and responsive</div>
-              <div style="font-size: 0.85rem; color: var(--text-muted);">✔️ Chatbot service: Connected and running</div>
+            <div class="chat-messages" id="chatbot-msg-area">
+              <div class="chat-msg bot">
+                <span class="en-only">Hello! I can help you book sports facilities, query rules, or check warnings. What would you like to do?</span>
+                <span class="ar-only">أهلاً بك! يمكنني مساعدتك في حجز الملاعب، الاستفسار عن القوانين، أو مراجعة مخالفاتك. كيف يمكنني خدمتك اليوم؟</span>
+              </div>
+            </div>
+            <div class="chat-prompts">
+              <button class="chat-prompt-btn" onclick="triggerChatbotPrompt(1)">
+                <span class="en-only">Book Volleyball Court</span>
+                <span class="ar-only">حجز ملعب كرة طائرة</span>
+              </button>
+              <button class="chat-prompt-btn" onclick="triggerChatbotPrompt(2)">
+                <span class="en-only">How are points earned?</span>
+                <span class="ar-only">كيف أحصل على نقاط؟</span>
+              </button>
+              <button class="chat-prompt-btn" onclick="triggerChatbotPrompt(3)">
+                <span class="en-only">Is my account banned?</span>
+                <span class="ar-only">هل حسابي موقوف؟</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
-      <div class="slide-footer-brand">
-        <span>Badya Sports Portal</span>
-        <span>Yehia Ahmed & Omar Abdelaziz | Supervisor: Dr. Amira</span>
+    </div>
+
+    <!-- SLIDE 9: Dual-Language Engine & Exception Mapper -->
+    <div class="slide" id="slide-9">
+      <div class="slide-header">
+        <h2>
+          <i class="fa-solid fa-language highlight-teal"></i>
+          <span class="en-only">Localization & Backend Exception Mapping</span>
+          <span class="ar-only">محرك الترجمة وهندسة الأخطاء بالخلفية</span>
+        </h2>
+        <div class="slide-badge">
+          <span class="en-only">Localization</span>
+          <span class="ar-only">ترجمة الواجهات</span>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-info-pane">
+          <p class="lead-desc">
+            <span class="en-only">Bilingual layout toggles direction dynamically (LTR/RTL). Spring Boot exceptions are mapped to clean localizations.</span>
+            <span class="ar-only">يقوم المحرك بقلب اتجاه الصفحة بالكامل (RTL/LTR)، مع ترجمة استثناءات Spring Boot الخام إلى إشعارات عربية مفهومة.</span>
+          </p>
+          <ul class="bullet-list">
+            <li>
+              <span class="en-only"><strong>Dynamic Theme Switch:</strong> Instant CSS layout adjustments using `.rtl-mode` styles and body `dir`.</span>
+              <span class="ar-only"><strong>تغيير التنسيق الفوري:</strong> استجابة عناصر الواجهة لاتجاهات القراءة والخطوط المناسبة لكل لغة.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Exception Translation:</strong> Intercepts backend database failures and delivers user-friendly alerts.</span>
+              <span class="ar-only"><strong>ترجمة استثناءات النظام:</strong> التقاط أخطاء قاعدة البيانات وتحويلها لتنبيهات واضحة للمستخدم.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Full Context translation:</strong> Translations encompass geofence values, chatbot prompts, and forms.</span>
+              <span class="ar-only"><strong>شولية الترجمة:</strong> تشمل الترجمة إحداثيات الخرائط، والذكاء الاصطناعي، وجداول المواعيد.</span>
+            </li>
+          </ul>
+        </div>
+        <div class="slide-visual-pane">
+          <!-- Interactive Widget 8: Exception Mapper -->
+          <div class="exception-widget">
+            <div style="font-size: 0.8rem; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px;">
+              <span class="en-only">Spring Boot Exception Localization Map</span>
+              <span class="ar-only">قاموس الاستثناءات وترجمتها الفورية</span>
+            </div>
+            
+            <select class="exc-select" id="exception-selector" onchange="mapException(this.value)">
+              <option value="booked">AlreadyBookedException (Database Overlap)</option>
+              <option value="quota">QuotaExceededException (Weekly Limit Breach)</option>
+              <option value="geofence">GeofenceFailureException (Distance Check Failed)</option>
+            </select>
+
+            <div class="exc-display-grid">
+              <div class="exc-lang-card" style="border-color: rgba(99, 102, 241, 0.25);">
+                <div class="exc-lang-header" style="color: var(--indigo);">
+                  <i class="fa-solid fa-server"></i> Spring Boot Raw Error (English)
+                </div>
+                <div id="exc-err-en" style="color: var(--text-muted);">
+                  Error: Court already reserved. Conflicting booking IDs [18]. Available slots: [10:00, 11:00]
+                </div>
+              </div>
+
+              <div class="exc-lang-card" style="border-color: rgba(14, 165, 233, 0.25); direction: rtl; text-align: right;">
+                <div class="exc-lang-header" style="color: var(--teal); flex-direction: row-reverse;">
+                  <i class="fa-solid fa-globe"></i> واجهة المستخدم المعربة (Arabic Localized)
+                </div>
+                <div id="exc-err-ar" style="color: var(--text-main);">
+                  عذراً، هذا الملعب محجوز بالفعل في الفترة المحددة. نقترح عليك حجز إحدى الفترات المتاحة اليوم: [10:00, 11:00]
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 10: Live Demo sequence Checklist -->
+    <div class="slide" id="slide-10">
+      <div class="slide-header">
+        <h2>
+          <i class="fa-solid fa-circle-play highlight-teal"></i>
+          <span class="en-only">Live Demo walkthrough sequence</span>
+          <span class="ar-only">تسلسل خطوات العرض الحي للمشروع</span>
+        </h2>
+        <div class="slide-badge">
+          <span class="en-only">Sequence</span>
+          <span class="ar-only">الخطوات</span>
+        </div>
+      </div>
+      <div class="slide-body">
+        <div class="slide-info-pane">
+          <p class="lead-desc">
+            <span class="en-only">The presentation sequence designed to highlight fairness rotation, geofencing coordinates, and localization layers.</span>
+            <span class="ar-only">خطة منظمة للتنقل بين خصائص الموقع وإبراز خوارزمية التدوير، والتحقق الجغرافي، وثنائية اللغة.</span>
+          </p>
+          <ul class="bullet-list">
+            <li>
+              <span class="en-only"><strong>Flow validation:</strong> Ticking items off this checklist updates our live readiness indicator.</span>
+              <span class="ar-only"><strong>متابعة الجاهزية:</strong> وضع علامة صح على خطوات العرض يقوم بتحديث مؤشر جاهزيتنا تلقائياً.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Integrity checks:</strong> Shows device binding locks and quota bans in real-time.</span>
+              <span class="ar-only"><strong>مراقبة الحظر:</strong> عرض حظر الطلاب المتغيبين، وربط الجلسة بمتصفح وحيد.</span>
+            </li>
+            <li>
+              <span class="en-only"><strong>Audit Logs:</strong> Visualizes admin audit panel logging database resolutions instantly.</span>
+              <span class="ar-only"><strong>سجلات المراجعة:</strong> استعراض لوحة الإشراف وكيفية أرشفة قرارات حل التعارضات لحفظ الشفافية.</span>
+            </li>
+          </ul>
+        </div>
+        <div class="slide-visual-pane">
+          <!-- Interactive Widget 6: Demo Checklist -->
+          <div class="checklist-widget">
+            <div class="checklist-row" onclick="toggleChecklistItem(this)">
+              <div class="checklist-checkbox"></div>
+              <div class="checklist-text">
+                <span class="en-only">1. Show login & device-binding limits</span>
+                <span class="ar-only">1. إظهار تسجيل الدخول وربط المتصفح</span>
+              </div>
+            </div>
+
+            <div class="checklist-row" onclick="toggleChecklistItem(this)">
+              <div class="checklist-checkbox"></div>
+              <div class="checklist-text">
+                <span class="en-only">2. Toggle bilingual engine to shift layout (RTL)</span>
+                <span class="ar-only">2. تغيير اللغة لقلب اتجاه الصفحة (RTL)</span>
+              </div>
+            </div>
+
+            <div class="checklist-row" onclick="toggleChecklistItem(this)">
+              <div class="checklist-checkbox"></div>
+              <div class="checklist-text">
+                <span class="en-only">3. Fail buddy ID field to trigger matchmaking recommendation</span>
+                <span class="ar-only">3. فشل التحقق من الزملاء والتحويل لطابور البحث</span>
+              </div>
+            </div>
+
+            <div class="checklist-row" onclick="toggleChecklistItem(this)">
+              <div class="checklist-checkbox"></div>
+              <div class="checklist-text">
+                <span class="en-only">4. Simulate GPS lock blocking/unlocking scanner</span>
+                <span class="ar-only">4. محاكاة فحص الموقع GPS لقفل وفتح تسجيل الحضور</span>
+              </div>
+            </div>
+
+            <div class="gauge-container">
+              <span><span class="en-only">Readiness:</span><span class="ar-only">درجة الجاهزية:</span></span>
+              <div class="gauge-bar-bg">
+                <div class="gauge-bar-fill" id="checklist-gauge"></div>
+              </div>
+              <strong id="gauge-percent">0%</strong>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
   </div>
 
-  <!-- Controls Panel -->
-  <div class="controls-panel">
-    <button class="nav-btn" id="prev-btn" disabled>
-      ← Previous
-    </button>
-    
-    <div class="progress-dots" id="dots-container">
-      <div class="dot active" data-index="1"></div>
-      <div class="dot" data-index="2"></div>
-      <div class="dot" data-index="3"></div>
-      <div class="dot" data-index="4"></div>
-      <div class="dot" data-index="5"></div>
-      <div class="dot" data-index="6"></div>
-      <div class="dot" data-index="7"></div>
-      <div class="dot" data-index="8"></div>
-      <div class="dot" data-index="9"></div>
+  <!-- Footer Branding and Navigation -->
+  <footer>
+    <div class="footer-brand">
+      <span class="en-only">Badya Sports Portal &copy; 2026</span>
+      <span class="ar-only">بوابة بادية الرياضية &copy; 2026</span>
     </div>
     
-    <button class="nav-btn" id="next-btn">
-      Next →
-    </button>
-  </div>
+    <div class="footer-nav">
+      <button class="nav-arrow-btn" id="slide-prev-btn" disabled onclick="navigateSlide(-1)">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      
+      <div class="nav-progress-dots" id="progress-dots-container">
+        <!-- Rendered dynamically in JS -->
+      </div>
+      
+      <button class="nav-arrow-btn" id="slide-next-btn" onclick="navigateSlide(1)">
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+  </footer>
 
   <script>
+    // State Variables
+    let currentSlideIndex = 0;
     const slides = document.querySelectorAll('.slide');
-    const dots = document.querySelectorAll('.dot');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    let currentSlide = 0;
+    const totalSlides = slides.length;
+    const isRtl = () => document.documentElement.lang === 'ar';
 
-    function updatePresentation() {
-      // Hide all slides
-      slides.forEach(slide => slide.classList.remove('active'));
-      dots.forEach(dot => dot.classList.remove('active'));
+    // Initialize Dot Navigation
+    const dotsContainer = document.getElementById('progress-dots-container');
+    for (let i = 0; i < totalSlides; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+      dot.addEventListener('click', () => jumpToSlide(i));
+      dotsContainer.appendChild(dot);
+    }
+    const dots = document.querySelectorAll('.nav-dot');
 
-      // Show current slide
-      slides[currentSlide].classList.add('active');
-      dots[currentSlide].classList.add('active');
+    // Navigation logic
+    function updateSlideDisplay() {
+      slides.forEach((slide, idx) => {
+        slide.classList.remove('active');
+        dots[idx].classList.remove('active');
+      });
+      slides[currentSlideIndex].classList.add('active');
+      dots[currentSlideIndex].classList.add('active');
 
-      // Update button states
-      prevBtn.disabled = currentSlide === 0;
-      nextBtn.disabled = currentSlide === slides.length - 1;
+      // Update button state
+      document.getElementById('slide-prev-btn').disabled = (currentSlideIndex === 0);
+      document.getElementById('slide-next-btn').disabled = (currentSlideIndex === totalSlides - 1);
     }
 
-    prevBtn.addEventListener('click', () => {
-      if (currentSlide > 0) {
-        currentSlide--;
-        updatePresentation();
+    // Fixed navigation: in RTL mode, we still advance slides from left to right (0 to N-1) logically
+    function navigateSlide(direction) {
+      const targetIndex = currentSlideIndex + direction;
+      if (targetIndex >= 0 && targetIndex < totalSlides) {
+        currentSlideIndex = targetIndex;
+        updateSlideDisplay();
       }
-    });
+    }
 
-    nextBtn.addEventListener('click', () => {
-      if (currentSlide < slides.length - 1) {
-        currentSlide++;
-        updatePresentation();
+    function jumpToSlide(index) {
+      if (index >= 0 && index < totalSlides) {
+        currentSlideIndex = index;
+        updateSlideDisplay();
       }
-    });
+    }
 
-    // Dot click navigation
-    dots.forEach((dot, index) => {
-      dot.addEventListener('click', () => {
-        currentSlide = index;
-        updatePresentation();
-      });
-    });
-
-    // Keyboard Arrow navigation
+    // Keyboard Arrow Controls
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' && currentSlide < slides.length - 1) {
-        currentSlide++;
-        updatePresentation();
-      } else if (e.key === 'ArrowLeft' && currentSlide > 0) {
-        currentSlide--;
-        updatePresentation();
+      if (e.key === 'ArrowRight') {
+        if (isRtl()) navigateSlide(-1); // Reverse visually for RTL
+        else navigateSlide(1);
+      } else if (e.key === 'ArrowLeft') {
+        if (isRtl()) navigateSlide(1);
+        else navigateSlide(-1);
+      } else if (e.key === 'Space') {
+        e.preventDefault();
+        navigateSlide(1);
       }
     });
+
+    // Language Toggle
+    const langToggleBtn = document.getElementById('lang-toggle-btn');
+    langToggleBtn.addEventListener('click', () => {
+      const htmlDoc = document.documentElement;
+      if (htmlDoc.lang === 'en') {
+        htmlDoc.lang = 'ar';
+        htmlDoc.dir = 'rtl';
+      } else {
+        htmlDoc.lang = 'en';
+        htmlDoc.dir = 'ltr';
+      }
+      // Re-trigger RTL/LTR visuals on specific items if needed
+      calculatePriority();
+      updateGeofenceSim(document.getElementById('geofence-range-slider').value);
+    });
+
+    // Full Screen Toggle
+    const fsToggleBtn = document.getElementById('fs-toggle-btn');
+    fsToggleBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // ----------------------------------------------------
+    // SIMULATOR 1: Interactive Slot Booking
+    // ----------------------------------------------------
+    let selectedSlotEl = null;
+
+    function selectSlot(element) {
+      if (selectedSlotEl) {
+        selectedSlotEl.classList.remove('selected');
+      }
+      selectedSlotEl = element;
+      element.classList.add('selected');
+      
+      const timeVal = element.getAttribute('data-time');
+      const timeInput = document.getElementById('selected-time-input');
+      
+      if (isRtl()) {
+        timeInput.value = `الفترة المحددة: ${timeVal}`;
+      } else {
+        timeInput.value = `Selected: ${timeVal}`;
+      }
+      
+      // Reset alerts
+      document.getElementById('booking-alert-success').style.display = 'none';
+      document.getElementById('booking-alert-error').style.display = 'none';
+    }
+
+    function validateBuddy() {
+      const input = document.getElementById('buddy-id-input');
+      const val = input.value.trim();
+      const isCorrect = val === '2026010' || val === '2026011' || val === '2026012';
+      
+      if (val === '') {
+        alert(isRtl() ? 'يرجى إدخال رقم هوية الطالب أولاً' : 'Please input a Student ID first');
+        return;
+      }
+      
+      if (isCorrect) {
+        alert(isRtl() ? 'تم التحقق من رقم الطالب بنجاح! السجل نشط.' : 'Student ID validated successfully! Record active.');
+        input.style.borderColor = 'var(--emerald)';
+      } else {
+        alert(isRtl() ? 'رقم الطالب غير مسجل! نقترح استخدام طابور البحث.' : 'Student ID not registered! Recommend using Matchmaking.');
+        input.style.borderColor = 'var(--rose)';
+      }
+    }
+
+    function bookSelectedSlot() {
+      if (!selectedSlotEl) {
+        alert(isRtl() ? 'يرجى اختيار فترة من المربعات المتاحة بالأعلى أولاً' : 'Please select a slot from the grid first');
+        return;
+      }
+
+      const buddyInput = document.getElementById('buddy-id-input').value.trim();
+      const successAlert = document.getElementById('booking-alert-success');
+      const errorAlert = document.getElementById('booking-alert-error');
+
+      // If teammate is valid (e.g. 2026010), confirm. Otherwise fail to promote matchmaking.
+      if (buddyInput === '2026010' || buddyInput === '2026011' || buddyInput === '2026012') {
+        successAlert.style.display = 'flex';
+        errorAlert.style.display = 'none';
+        
+        // Turn slot into booked
+        selectedSlotEl.classList.remove('selected', 'free');
+        selectedSlotEl.classList.add('booked');
+        selectedSlotEl.onclick = null;
+        selectedSlotEl = null;
+        document.getElementById('selected-time-input').value = '';
+      } else {
+        errorAlert.style.display = 'flex';
+        successAlert.style.display = 'none';
+      }
+    }
+
+    // ----------------------------------------------------
+    // SIMULATOR 2: Geofencing Radius Check
+    // ----------------------------------------------------
+    function updateGeofenceSim(val) {
+      document.getElementById('distance-value').innerText = `${val}m`;
+      
+      const studentDot = document.getElementById('sim-student');
+      const checkinBtn = document.getElementById('checkin-btn');
+      const successAlert = document.getElementById('checkin-success-alert');
+      
+      // Mathematically map slider distance to dot offset
+      // Center of map is at ~50%
+      const offsetPercent = 50 + (val / 180) * 40; // scales dot outward
+      studentDot.style.left = `${offsetPercent}%`;
+      studentDot.style.top = '40%';
+
+      if (val <= 50) {
+        studentDot.classList.add('within');
+        checkinBtn.disabled = false;
+        checkinBtn.style.background = 'var(--emerald)';
+        checkinBtn.style.color = 'white';
+        checkinBtn.innerHTML = `<i class="fa-solid fa-unlock-keyhole"></i> ${isRtl() ? 'تسجيل الحضور (متاح)' : 'Verify Attendance (Unlocked)'}`;
+        checkinBtn.onclick = () => {
+          successAlert.style.display = 'flex';
+          checkinBtn.style.display = 'none';
+        };
+      } else {
+        studentDot.classList.remove('within');
+        checkinBtn.disabled = true;
+        checkinBtn.style.background = 'var(--text-subtle)';
+        checkinBtn.style.display = 'block';
+        checkinBtn.innerHTML = `<i class="fa-solid fa-lock"></i> ${isRtl() ? 'مغلق (أنت خارج النطاق)' : 'Blocked (Too Far)'}`;
+        successAlert.style.display = 'none';
+      }
+    }
+
+    // ----------------------------------------------------
+    // SIMULATOR 3: Chatbot Auto-Response
+    // ----------------------------------------------------
+    const chatbotReplies = {
+      1: {
+        en: "Processing query... Redirecting user to facility reservations. Select Volleyball court: available slots: [04:00 PM, 06:00 PM]. Direct link: [Schedule Page](file:///c:/projectes/Badya%20Sport%20Booking%20System/frontend/index.html)",
+        ar: "جاري معالجة الطلب... تحويلك الآن إلى صفحة حجز الملاعب. حجز ملعب كرة الطائرة: الفترات المتاحة اليوم: [04:00 عصراً، 06:00 مساءً]. رابط مباشر: [صفحة الجدولة](file:///c:/projectes/Badya%20Sport%20Booking%20System/frontend/index.html)"
+      },
+      2: {
+        en: "Points reward: +25 pts on successful attendance verification within court bounds, and +10 pts for completing slots during low-occupancy times (e.g. early mornings).",
+        ar: "آلية النقاط: يتم منحك +25 نقطة عند تسجيل حضورك الفعلي داخل الملعب بالوقت المناسب، و +10 نقاط إضافية عند الحجز واللعب في ساعات الإشغال المنخفضة (مثل الصباح الباكر)."
+      },
+      3: {
+        en: "Account lookup for student_id: [Active]. Warnings: 1/3. Warning details: No-show on Court A (June 12). Keep in mind: 3 warnings lead to a 1-week suspension.",
+        ar: "البحث عن الحساب: حالة الحساب [نشط]. الإنذارات المسجلة: 1/3. تفاصيل المخالفة: عدم حضور حجز يوم 12 يونيو. تذكير: الحصول على 3 إنذارات يوقف حسابك لمدة أسبوع."
+      }
+    };
+
+    function triggerChatbotPrompt(id) {
+      const msgArea = document.getElementById('chatbot-msg-area');
+      const prompts = chatbotReplies[id];
+      const currentLang = isRtl() ? 'ar' : 'en';
+
+      // Append User Message
+      const userText = event.currentTarget.innerText;
+      const userDiv = document.createElement('div');
+      userDiv.className = 'chat-msg user';
+      userDiv.innerText = userText;
+      msgArea.appendChild(userDiv);
+      msgArea.scrollTop = msgArea.scrollHeight;
+
+      // Simulate Bot typing and reply
+      setTimeout(() => {
+        const botDiv = document.createElement('div');
+        botDiv.className = 'chat-msg bot';
+        botDiv.innerText = isRtl() ? "جاري الكتابة..." : "Typing response...";
+        msgArea.appendChild(botDiv);
+        msgArea.scrollTop = msgArea.scrollHeight;
+
+        setTimeout(() => {
+          botDiv.innerHTML = prompts[currentLang];
+          msgArea.scrollTop = msgArea.scrollHeight;
+        }, 1000);
+      }, 500);
+    }
+
+    // ----------------------------------------------------
+    // SIMULATOR 4: Matchmaking Lobby Queue
+    // ----------------------------------------------------
+    let lfgTimer = null;
+    let lfgStep = 1;
+
+    function startLfgSim() {
+      const btn = document.getElementById('lfg-start-btn');
+      const statusTxt = document.getElementById('lfg-status-txt');
+      const teamsBox = document.getElementById('lfg-teams-result');
+      
+      btn.disabled = true;
+      teamsBox.style.display = 'none';
+      lfgStep = 1;
+      
+      // Clear avatars
+      document.querySelectorAll('.lfg-avatar-slot').forEach(avatar => avatar.classList.remove('active'));
+
+      lfgTimer = setInterval(() => {
+        if (lfgStep <= 4) {
+          const avatar = document.getElementById(`lfg-avatar-${lfgStep}`);
+          avatar.classList.add('active');
+          statusTxt.innerText = isRtl() 
+            ? `طالب انضم للبحث... (${lfgStep}/4) لاعبين`
+            : `Player joined queue... (${lfgStep}/4) players`;
+          lfgStep++;
+        } else {
+          clearInterval(lfgTimer);
+          statusTxt.innerText = isRtl()
+            ? "اكتمل الطابور! جاري تقسيم الفرق وجدولة اللقاء..."
+            : "Lobby full! Generating teams and creating booking...";
+          
+          setTimeout(() => {
+            teamsBox.style.display = 'flex';
+            statusTxt.innerHTML = isRtl()
+              ? "✅ تم تأكيد الحجز! الفريق أ ضد الفريق ب"
+              : "✅ Booking confirmed! Team A vs Team B";
+            btn.disabled = false;
+          }, 1200);
+        }
+      }, 900);
+    }
+
+    // ----------------------------------------------------
+    // SIMULATOR 5: Architecture Layers Info
+    // ----------------------------------------------------
+    const archDetails = {
+      frontend: {
+        titleEn: "Frontend Single Page Application",
+        titleAr: "واجهة المستخدم أحادية الصفحة (SPA)",
+        descEn: "Built with React and Vite for immediate hot reloading. Employs CSS variables to switch directions dynamically for Arabic layout shifting.",
+        descAr: "مبنية باستخدام React و Vite لتوفير تحميل فوري فائق السرعة. تستخدم متغيرات CSS لعكس المحاذاة والاتجاهات فوراً عند تفعيل العربية.",
+        tags: ["React 18", "Vite", "Leaflet Maps API", "Bilingual CSS Engine"]
+      },
+      backend: {
+        titleEn: "Spring Boot RESTful Engine",
+        titleAr: "خادم الخدمات الخلفي (Spring Boot)",
+        descEn: "Java backend implementing business constraints, conflict resolution, weekly resets, and geofence coordinates validation.",
+        descAr: "خادم Java يدير قيود الأعمال، وفحص تداخل الحجوزات، والتصفير الأسبوعي للحصص، والتحقق الجغرافي لمعادلة المسافات.",
+        tags: ["Spring Boot", "Spring Data JPA", "Hibernate ORM", "Scheduler Service"]
+      },
+      database: {
+        titleEn: "Database & Intelligent APIs",
+        titleAr: "قواعد البيانات والذكاء الاصطناعي",
+        descEn: "Handles relations between student limits, warnings, and coordinates. Connects to Gemini API to process conversational queries.",
+        descAr: "تربط جداول المنشآت والحجوزات والمخالفات. توفر اتصالاً آمناً مع Gemini API لمعالجة الحجوزات عبر الدردشة.",
+        tags: ["MySQL Database", "H2 (Development DB)", "Gemini Chat API", "Audit Log Service"]
+      }
+    };
+
+    function exploreArch(layerKey, element) {
+      document.querySelectorAll('.arch-layer-card').forEach(card => card.classList.remove('active'));
+      element.classList.add('active');
+
+      const data = archDetails[layerKey];
+      const titleEl = document.getElementById('arch-detail-title');
+      const descEl = document.getElementById('arch-detail-desc');
+      const tagsContainer = document.getElementById('arch-detail-tags');
+
+      if (isRtl()) {
+        titleEl.innerText = data.titleAr;
+        descEl.innerText = data.descAr;
+      } else {
+        titleEl.innerText = data.titleEn;
+        descEl.innerText = data.descEn;
+      }
+
+      tagsContainer.innerHTML = '';
+      data.tags.forEach(tag => {
+        const span = document.createElement('span');
+        span.className = 'arch-tech-tag';
+        span.innerText = tag;
+        tagsContainer.appendChild(span);
+      });
+    }
+
+    // ----------------------------------------------------
+    // SIMULATOR 6: Live Demo Checklist
+    // ----------------------------------------------------
+    function toggleChecklistItem(row) {
+      row.classList.toggle('checked');
+      
+      const totalItems = document.querySelectorAll('.checklist-row').length;
+      const checkedItems = document.querySelectorAll('.checklist-row.checked').length;
+      
+      const percent = Math.round((checkedItems / totalItems) * 100);
+      document.getElementById('checklist-gauge').style.width = `${percent}%`;
+      document.getElementById('gauge-percent').innerText = `${percent}%`;
+    }
+
+    // ----------------------------------------------------
+    // SIMULATOR 7: Priority Score Equation
+    // ----------------------------------------------------
+    function calculatePriority() {
+      // Equation: Priority Score = (Player Density * 2) - (Weekly Bookings * 3)
+      const bookingsA = parseInt(document.getElementById('bookings-a').value);
+      const playersA = parseInt(document.getElementById('players-a').value);
+      
+      const bookingsB = parseInt(document.getElementById('bookings-b').value);
+      const playersB = parseInt(document.getElementById('players-b').value);
+
+      document.getElementById('bookings-a-val').innerText = bookingsA;
+      document.getElementById('players-a-val').innerText = playersA;
+      
+      document.getElementById('bookings-b-val').innerText = bookingsB;
+      document.getElementById('players-b-val').innerText = playersB;
+
+      const scoreA = (playersA * 2) - (bookingsA * 3);
+      const scoreB = (playersB * 2) - (bookingsB * 3);
+
+      document.getElementById('score-a-badge').innerText = `P: ${scoreA}`;
+      document.getElementById('score-b-badge').innerText = `P: ${scoreB}`;
+
+      const resultBox = document.getElementById('priority-result');
+
+      if (scoreA > scoreB) {
+        resultBox.innerText = isRtl()
+          ? `✓ يفوز الفريق أ بالملعب! (نقاط الأولوية: ${scoreA} مقابل ${scoreB})`
+          : `✓ Team A wins the court! (Priority score: ${scoreA} vs ${scoreB})`;
+        resultBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        resultBox.style.background = 'rgba(16, 185, 129, 0.05)';
+      } else if (scoreB > scoreA) {
+        resultBox.innerText = isRtl()
+          ? `✓ يفوز الفريق ب بالملعب! (نقاط الأولوية: ${scoreB} مقابل ${scoreA})`
+          : `✓ Team B wins the court! (Priority score: ${scoreB} vs ${scoreA})`;
+        resultBox.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+        resultBox.style.background = 'rgba(99, 102, 241, 0.05)';
+      } else {
+        resultBox.innerText = isRtl()
+          ? `تعادل النقاط! تعطى الأولوية للأسبق حجوزاً بالملقم.`
+          : `Equal score! Resolution defaults to first-come, first-served database order.`;
+        resultBox.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+        resultBox.style.background = 'rgba(245, 158, 11, 0.05)';
+      }
+    }
+
+    // ----------------------------------------------------
+    // SIMULATOR 8: Exception Mapper
+    // ----------------------------------------------------
+    const exceptionDatabase = {
+      booked: {
+        en: "Error: Court already reserved. Conflicting booking IDs [18]. Available slots: [10:00, 11:00]",
+        ar: "عذراً، هذا الملعب محجوز بالفعل في الفترة المحددة. نقترح عليك حجز إحدى الفترات المتاحة اليوم: [10:00, 11:00]"
+      },
+      quota: {
+        en: "Error: Weekly quota limit exceeded for student 2026010. Max allowed: 3 bookings per week. Next reset: Monday 08:00 AM.",
+        ar: "عذراً، لقد تجاوزت الحصة الأسبوعية المسموح بها للحجز (3 حجوزات أسبوعياً). سيتم إعادة شحن رصيدك يوم الإثنين القادم في تمام الساعة 08:00 صباحاً."
+      },
+      geofence: {
+        en: "Error: GPS coordinates validation failed. Student is located 120m away from Facility center. Geofence radius limit: 50m.",
+        ar: "فشل التحقق الجغرافي: يظهر موقعك على بعد 120 متراً من مركز الملعب. يرجى التواجد داخل نطاق 50 متراً لتسجيل حضورك بنجاح."
+      }
+    };
+
+    function mapException(val) {
+      const entry = exceptionDatabase[val];
+      document.getElementById('exc-err-en').innerText = entry.en;
+      document.getElementById('exc-err-ar').innerText = entry.ar;
+    }
+
+    // Run Initial calculations
+    calculatePriority();
+    updateGeofenceSim(80);
+    mapException('booked');
   </script>
 </body>
 </html>

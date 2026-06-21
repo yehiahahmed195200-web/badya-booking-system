@@ -44,6 +44,11 @@ export default function BookingPage({ session }) {
 
   const translateBackendError = useCallback((msg) => {
     if (!msg) return msg;
+    if (msg.includes("OVERLAP_DETECTED")) {
+      return language === "en"
+        ? "You already have another active booking at this time."
+        : "أنت حاجز حاجة تانية في نفس الميعاد ده.";
+    }
     if (msg.includes("Sport selection is required")) return t("bookingPage.errSportRequired");
     if (msg.includes("Invalid sport selection")) return t("bookingPage.errInvalidSport");
     if (msg.includes("Basketball has exceeded its weekly quota")) return t("bookingPage.errQuotaBasketball");
@@ -239,7 +244,7 @@ export default function BookingPage({ session }) {
     setStep(3);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (forceOverlap = false) => {
     setError(null);
     setSubmitting(true);
     if (!token) { setError("Session expired. Please log in again."); setSubmitting(false); return; }
@@ -259,10 +264,25 @@ export default function BookingPage({ session }) {
           termsAccepted,
           buddyIds,
           sport: form.sport || undefined,
+          forceCancelOverlap: forceOverlap
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || `Server error ${res.status}`);
+      if (!res.ok) {
+        if (data.message && data.message.includes("OVERLAP_DETECTED")) {
+          const confirmQuestion = language === "en"
+            ? "You already have another active booking at this time. If you proceed with this booking, your other booking will be cancelled. Do you want to continue?"
+            : "أنت حاجز حاجة تانية في الميعاد ده. لو كملت، الحجز القديم هيتلغي تلقائي. وخلي بالك، لازم تلغيه قبلها بوقت محدد وإلا مش هينفع تلغيه وهينزل عليك إنذار! هل عاوز تكمل؟";
+          if (window.confirm(confirmQuestion)) {
+            setSubmitting(false);
+            await handleSubmit(true);
+            return;
+          } else {
+            throw new Error(data.message);
+          }
+        }
+        throw new Error(data.message || `Server error ${res.status}`);
+      }
       setSuccess(data);
       setTimeout(() => navigate("/dashboard"), 3000);
     } catch (err) {

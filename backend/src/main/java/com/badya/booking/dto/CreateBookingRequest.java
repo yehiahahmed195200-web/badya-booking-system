@@ -11,4 +11,5 @@ public record CreateBookingRequest(
         @Min(1) Integer participants,
         Integer durationMins,
         String scannedIdData,
-        String sport) {}
+        String sport,
+        Boolean forceCancelOverlap) {}
