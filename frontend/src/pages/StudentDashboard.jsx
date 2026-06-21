@@ -686,7 +686,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                             required
                             style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: '0.9rem', color: '#334155' }}
                           >
-                            {["09:00", "10:00", "11:00", "12:00", "13:00"].map(t => (
+                            {["09:00", "10:00", "11:00", "12:00", "13:00", "14:00"].map(t => (
                               <option key={t} value={t}>{t}</option>
                             ))}
                           </select>

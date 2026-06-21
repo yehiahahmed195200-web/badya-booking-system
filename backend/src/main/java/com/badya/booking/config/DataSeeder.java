@@ -167,16 +167,16 @@ public class DataSeeder {
             }
 
             // Seed or update facilities
-            upsertFacility(facilityRepository, "Tennis Court", "Sport", "09:00", "14:00", 60, 2, 4, "Tennis", 30.0544, 31.3572, 0.004);
-            upsertFacility(facilityRepository, "Football Court", "Sport", "09:00", "14:00", 60, 10, 22, "Football", 30.0545, 31.3573, 0.004);
-            upsertFacility(facilityRepository, "Padel 1", "Sport", "09:00", "14:00", 60, 2, 4, "Padel", 30.0546, 31.3574, 0.004);
-            upsertFacility(facilityRepository, "Padel 2", "Sport", "09:00", "14:00", 60, 2, 4, "Padel", 30.0547, 31.3575, 0.004);
-            upsertFacility(facilityRepository, "UFC Gym", "Fitness", "09:00", "14:00", 60, 1, 30, "Fitness", 30.0540, 31.3560, 0.004);
-            upsertFacility(facilityRepository, "Table Tennis 1", "Activity Center", "09:00", "14:00", 60, 2, 4, "Table Tennis", 30.0548, 31.3576, 0.004);
-            upsertFacility(facilityRepository, "Table Tennis 2", "Activity Center", "09:00", "14:00", 60, 2, 4, "Table Tennis", 30.0549, 31.3577, 0.004);
-            upsertFacility(facilityRepository, "Billiards", "Activity Center", "09:00", "14:00", 60, 2, 4, "Billiards", 30.0550, 31.3578, 0.004);
-            upsertFacility(facilityRepository, "Air Hockey 1", "Activity Center", "09:00", "14:00", 60, 2, 4, "Air Hockey", 30.0551, 31.3579, 0.004);
-            upsertFacility(facilityRepository, "Air Hockey 2", "Activity Center", "09:00", "14:00", 60, 2, 4, "Air Hockey", 30.0552, 31.3580, 0.004);
+            upsertFacility(facilityRepository, "Tennis Court", "Sport", "09:00", "15:00", 60, 2, 4, "Tennis", 30.0544, 31.3572, 0.004);
+            upsertFacility(facilityRepository, "Football Court", "Sport", "09:00", "15:00", 60, 10, 22, "Football", 30.0545, 31.3573, 0.004);
+            upsertFacility(facilityRepository, "Padel 1", "Sport", "09:00", "15:00", 60, 2, 4, "Padel", 30.0546, 31.3574, 0.004);
+            upsertFacility(facilityRepository, "Padel 2", "Sport", "09:00", "15:00", 60, 2, 4, "Padel", 30.0547, 31.3575, 0.004);
+            upsertFacility(facilityRepository, "UFC Gym", "Fitness", "09:00", "15:00", 60, 1, 30, "Fitness", 30.0540, 31.3560, 0.004);
+            upsertFacility(facilityRepository, "Table Tennis 1", "Activity Center", "09:00", "15:00", 60, 2, 4, "Table Tennis", 30.0548, 31.3576, 0.004);
+            upsertFacility(facilityRepository, "Table Tennis 2", "Activity Center", "09:00", "15:00", 60, 2, 4, "Table Tennis", 30.0549, 31.3577, 0.004);
+            upsertFacility(facilityRepository, "Billiards", "Activity Center", "09:00", "15:00", 60, 2, 4, "Billiards", 30.0550, 31.3578, 0.004);
+            upsertFacility(facilityRepository, "Air Hockey 1", "Activity Center", "09:00", "15:00", 60, 2, 4, "Air Hockey", 30.0551, 31.3579, 0.004);
+            upsertFacility(facilityRepository, "Air Hockey 2", "Activity Center", "09:00", "15:00", 60, 2, 4, "Air Hockey", 30.0552, 31.3580, 0.004);
 
             // Clean up any old facilities not matching the seed list
             java.util.List<String> allowedNames = java.util.List.of(

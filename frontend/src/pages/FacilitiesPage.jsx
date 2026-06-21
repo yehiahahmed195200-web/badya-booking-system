@@ -89,7 +89,7 @@ export default function FacilitiesPage({ session }) {
 
   // Add new facility form state
   const [newFacility, setNewFacility] = useState({
-    name: "", category: "Sport", openTime: "09:00", closeTime: "14:00",
+    name: "", category: "Sport", openTime: "09:00", closeTime: "15:00",
     minParticipants: 1, maxParticipants: 10, defaultSlotMins: 60,
   });
 
