@@ -169,6 +169,24 @@ public class FacilityController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
+        if (admin == null) {
+            throw new IllegalArgumentException("Unauthorized: Admin privilege required.");
+        }
+        facilityService.delete(id);
+
+        // Log the action
+        auditLogService.log(admin, "FACILITY_DELETED", Map.of(
+                "facilityId", id
+        ));
+
+        return ResponseEntity.ok(Map.of("message", "Facility deleted successfully"));
+    }
+
     private UserAccount getCurrentAdmin(String authHeader) {
         try {
             UserAccount current = getAuthenticatedUser(authHeader);

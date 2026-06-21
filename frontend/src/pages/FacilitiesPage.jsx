@@ -3,12 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config/api";
 
 const API = API_BASE;
-const AVAILABILITY_OPTIONS = [
-  { value: true, label: "Available", icon: "✅", color: "#2ecc71" },
-  { value: false, label: "Unavailable", icon: "🔒", color: "#e74c3c" },
+const STATUS_OPTIONS = [
+  { value: "OPEN", label: "Open / Available", icon: "🟢", color: "#10b981" },
+  { value: "MAINTENANCE", label: "Under Maintenance", icon: "🔧", color: "#f59e0b" },
+  { value: "TOURNAMENT", label: "Tournament Use", icon: "🏆", color: "#8b5cf6" },
+  { value: "CLOSED", label: "Closed / Unavailable", icon: "🔴", color: "#ef4444" },
 ];
 
-const getAvailabilityConfig = (active) => AVAILABILITY_OPTIONS.find(option => option.value === active) || AVAILABILITY_OPTIONS[1];
+const getStatusConfig = (status, active) => {
+  const currentStatus = status || (active === false ? "CLOSED" : "OPEN");
+  return STATUS_OPTIONS.find(option => option.value === currentStatus) || STATUS_OPTIONS[3];
+};
 
 export default function FacilitiesPage({ session }) {
   const [facilities, setFacilities] = useState([]);
@@ -45,18 +50,15 @@ export default function FacilitiesPage({ session }) {
 
   const applyStatusChange = async (facility) => {
     const edit = editStatus[facility.id];
-    if (typeof edit?.active !== "boolean") return;
+    const newStatus = edit?.status || facility.status || (facility.active ? "OPEN" : "CLOSED");
     setSaving(prev => ({ ...prev, [facility.id]: true }));
     try {
-      const res = await fetch(`${API}/api/facilities/${facility.id}/status`, {
-        method: "PATCH",
+      const res = await fetch(`${API}/api/facilities/${facility.id}/status/change`, {
+        method: "POST",
         headers,
         body: JSON.stringify({
-          active: edit.active,
-          status: edit.active ? "OPEN" : "CLOSED",
-          statusReason: edit.reason || "",
-          policy: "CANCEL",
-          notifyUsers: true,
+          status: newStatus,
+          reason: edit?.reason || "",
         }),
       });
       if (!res.ok) throw new Error((await res.json()).message);
@@ -66,6 +68,22 @@ export default function FacilitiesPage({ session }) {
       alert("Error: " + e.message);
     } finally {
       setSaving(prev => ({ ...prev, [facility.id]: false }));
+    }
+  };
+
+  const handleDeleteFacility = async (facilityId) => {
+    if (!window.confirm("Are you sure you want to delete this facility? This will cancel all bookings associated with it and cannot be undone.")) {
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/api/facilities/${facilityId}`, {
+        method: "DELETE",
+        headers,
+      });
+      if (!res.ok) throw new Error((await res.json()).message);
+      await fetchFacilities();
+    } catch (e) {
+      alert("Error: " + e.message);
     }
   };
 
@@ -173,6 +191,8 @@ export default function FacilitiesPage({ session }) {
               {facilities.map(f => {
                 const edit = editStatus[f.id] || {};
                 const isSaving = saving[f.id];
+                const currentStatus = f.status || (f.active ? "OPEN" : "CLOSED");
+                const config = getStatusConfig(f.status, f.active);
                 return (
                   <tr key={f.id} className={!f.active ? "row-inactive" : ""}>
                     <td data-label="Facility"><strong>{f.name}</strong></td>
@@ -180,17 +200,17 @@ export default function FacilitiesPage({ session }) {
                     <td data-label="Hours">{f.openTime} – {f.closeTime}</td>
                     <td data-label="Participants">{f.minParticipants} – {f.maxParticipants}</td>
                     <td data-label="Current Status">
-                      <span className="status-pill" style={{ background: getAvailabilityConfig(Boolean(f.active)).color + "22", color: getAvailabilityConfig(Boolean(f.active)).color, border: `1px solid ${getAvailabilityConfig(Boolean(f.active)).color}` }}>
-                        {getAvailabilityConfig(Boolean(f.active)).icon} {getAvailabilityConfig(Boolean(f.active)).label}
+                      <span className="status-pill" style={{ background: config.color + "22", color: config.color, border: `1px solid ${config.color}` }}>
+                        {config.icon} {config.label}
                       </span>
                     </td>
                     <td data-label="Change Status">
                       <select
-                        value={typeof edit.active === "boolean" ? String(edit.active) : String(Boolean(f.active))}
-                        onChange={e => handleStatusChange(f.id, "active", e.target.value === "true")}
+                        value={edit.status || currentStatus}
+                        onChange={e => handleStatusChange(f.id, "status", e.target.value)}
                         className="status-select"
                       >
-                        {AVAILABILITY_OPTIONS.map(option => <option key={String(option.value)} value={String(option.value)}>{option.icon} {option.label}</option>)}
+                        {STATUS_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.icon} {option.label}</option>)}
                       </select>
                     </td>
                     <td data-label="Reason">
@@ -202,14 +222,25 @@ export default function FacilitiesPage({ session }) {
                       />
                     </td>
                     <td data-label="Action">
-                      <button
-                        type="button"
-                        className="btn-approve"
-                        disabled={isSaving || ((typeof edit.active !== "boolean") && !edit.reason) || (typeof edit.active === "boolean" && edit.active === Boolean(f.active) && !edit.reason)}
-                        onClick={() => applyStatusChange(f)}
-                      >
-                        {isSaving ? "..." : "Apply"}
-                      </button>
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <button
+                          type="button"
+                          className="btn-approve"
+                          disabled={isSaving || (!edit.status && !edit.reason) || (edit.status && edit.status === currentStatus && !edit.reason)}
+                          onClick={() => applyStatusChange(f)}
+                          style={{ minWidth: "60px" }}
+                        >
+                          {isSaving ? "..." : "Apply"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-reject"
+                          onClick={() => handleDeleteFacility(f.id)}
+                          style={{ margin: 0, padding: "6px 12px" }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

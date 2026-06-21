@@ -65,8 +65,8 @@ public class FacilityService {
                 .orElseThrow(() -> new IllegalArgumentException("Facility not found"));
 
         // Validate status
-        if (!status.matches("^(OPEN|MAINTENANCE|TOURNAMENT)$")) {
-            throw new IllegalArgumentException("Invalid status. Must be OPEN, MAINTENANCE, or TOURNAMENT");
+        if (!status.matches("^(OPEN|MAINTENANCE|TOURNAMENT|CLOSED)$")) {
+            throw new IllegalArgumentException("Invalid status. Must be OPEN, MAINTENANCE, TOURNAMENT, or CLOSED");
         }
 
         facility.setStatus(status);
@@ -161,5 +161,14 @@ public class FacilityService {
         response.put("date", date.toString());
         response.put("slots", slots);
         return response;
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Long facilityId = java.util.Objects.requireNonNull(id, "facility id is required");
+        Facility facility = facilityRepository.findById(facilityId)
+                .orElseThrow(() -> new IllegalArgumentException("Facility not found"));
+        bookingRepository.deleteByFacilityId(facilityId);
+        facilityRepository.delete(facility);
     }
 }
