@@ -647,7 +647,7 @@ export default function BookingPage({ session }) {
 
             <div className="bk-confirm-actions">
               <button className="bk-back-link" onClick={() => setStep(2)}>{t("bookingPage.editDetailsBtn")}</button>
-              <button className="bk-submit-btn" onClick={handleSubmit} disabled={submitting || !termsAccepted}>
+              <button className="bk-submit-btn" onClick={() => handleSubmit(false)} disabled={submitting || !termsAccepted}>
                 {submitting ? t("bookingPage.submitting") : t("bookingPage.confirmSubmitBtn")}
               </button>
             </div>
