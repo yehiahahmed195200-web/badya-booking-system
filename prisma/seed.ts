@@ -110,29 +110,100 @@ async function main() {
     });
   }
 
-  // Seed Activity Center facility
+  // Seed Table Tennis 1
   await prisma.facility.upsert({
-    where: { name: "Activity Center" },
+    where: { name: "Table Tennis 1" },
     update: {
       openTime: "09:00",
       closeTime: "15:00",
-      sports: "Table Tennis, Billiards, Air Hockey",
     },
     create: {
-      id: "activity-center",
-      name: "Activity Center",
+      id: "table-tennis-1",
+      name: "Table Tennis 1",
       category: "Activity Center",
       openTime: "09:00",
       closeTime: "15:00",
       minParticipants: 2,
       maxParticipants: 4,
-      sports: "Table Tennis, Billiards, Air Hockey",
+    },
+  });
+
+  // Seed Table Tennis 2
+  await prisma.facility.upsert({
+    where: { name: "Table Tennis 2" },
+    update: {
+      openTime: "09:00",
+      closeTime: "15:00",
+    },
+    create: {
+      id: "table-tennis-2",
+      name: "Table Tennis 2",
+      category: "Activity Center",
+      openTime: "09:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  // Seed Billiards
+  await prisma.facility.upsert({
+    where: { name: "Billiards" },
+    update: {
+      openTime: "09:00",
+      closeTime: "15:00",
+    },
+    create: {
+      id: "billiards",
+      name: "Billiards",
+      category: "Activity Center",
+      openTime: "09:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  // Seed Air Hockey 1
+  await prisma.facility.upsert({
+    where: { name: "Air Hockey 1" },
+    update: {
+      openTime: "09:00",
+      closeTime: "15:00",
+    },
+    create: {
+      id: "air-hockey-1",
+      name: "Air Hockey 1",
+      category: "Activity Center",
+      openTime: "09:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
+    },
+  });
+
+  // Seed Air Hockey 2
+  await prisma.facility.upsert({
+    where: { name: "Air Hockey 2" },
+    update: {
+      openTime: "09:00",
+      closeTime: "15:00",
+    },
+    create: {
+      id: "air-hockey-2",
+      name: "Air Hockey 2",
+      category: "Activity Center",
+      openTime: "09:00",
+      closeTime: "15:00",
+      minParticipants: 2,
+      maxParticipants: 4,
     },
   });
 
   // Clean up any facilities not in the list
   const allowedNames = [
-    "Tennis Court", "Football Court", "Padel 1", "Padel 2", "UFC Gym", "Activity Center"
+    "Tennis Court", "Football Court", "Padel 1", "Padel 2", "UFC Gym",
+    "Table Tennis 1", "Table Tennis 2", "Billiards", "Air Hockey 1", "Air Hockey 2"
   ];
   const allFacs = await prisma.facility.findMany();
   for (const f of allFacs) {

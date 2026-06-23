@@ -30,7 +30,7 @@ router.post("/", requireAuth, async (req, res, next) => {
     let resolvedSportId = data.sportId;
     if (!resolvedSportId && data.sport) {
       const sportRecord = await prisma.sport.findFirst({
-        where: { name: { equals: data.sport, mode: "insensitive" } }
+        where: { name: data.sport }
       });
       if (sportRecord) {
         resolvedSportId = sportRecord.id;
