@@ -309,22 +309,37 @@
 
 .bk-input {
   padding: 13px 16px;
-  border: 2px solid #e1eaf5;
+  border: 2px solid #cbd5e1 !important;
   border-radius: 12px;
   font: inherit;
   font-size: 1rem;
-  color: #0d1b2a;
-  background: #f9fbff;
+  color: #0d1b2a !important;
+  background-color: #ffffff !important;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   width: 100%;
   box-sizing: border-box;
 }
 
+.bk-input::placeholder {
+  color: #64748b !important;
+  opacity: 0.8 !important;
+}
+
 .bk-input:focus {
-  border-color: #1cb2bf;
-  box-shadow: 0 0 0 4px rgba(28,178,191,0.1);
-  background: #fff;
+  border-color: #1cb2bf !important;
+  box-shadow: 0 0 0 4px rgba(28,178,191,0.15) !important;
+  background-color: #ffffff !important;
+  color: #0d1b2a !important;
+}
+
+/* Autofill styling overrides to prevent invisible text in Chrome/Edge */
+.bk-input:-webkit-autofill,
+.bk-input:-webkit-autofill:hover, 
+.bk-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #0d1b2a !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .bk-hint {
