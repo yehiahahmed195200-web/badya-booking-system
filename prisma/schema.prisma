@@ -470,6 +470,7 @@ model Facility {
   id                String          @id @default(cuid())
   name              String          @unique(map: "Facility_name_key")
   sportId           String?
+  sports            String?         @db.Text
   category          String
   defaultSlotMins   Int             @default(60)
   openTime          String

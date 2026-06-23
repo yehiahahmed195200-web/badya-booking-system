@@ -30,6 +30,7 @@ const FACILITY_ICONS = (name = "") => {
   if (n.includes("volleyball")) return "🏐";
   if (n.includes("billiard") || n.includes("pool table")) return "🎱";
   if (n.includes("hockey")) return "🏒";
+  if (n.includes("activity center")) return "🎮";
   return "🏅";
 };
 
