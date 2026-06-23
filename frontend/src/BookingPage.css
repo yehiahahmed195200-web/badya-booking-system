@@ -682,7 +682,7 @@
 
 .bk-buddy-row .bk-input {
   flex: 1;
-  min-width: 0;
+  min-width: 180px !important;
   width: 100%;
   box-sizing: border-box;
   direction: ltr !important;

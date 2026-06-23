@@ -543,7 +543,6 @@ export default function BookingPage({ session }) {
                   <input className="bk-input" placeholder={t("bookingPage.buddyInputPlaceholder")}
                     value={buddyInput} onChange={e => setBuddyInput(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addBuddy())}
-                    style={{ flex: 1 }}
                     disabled={buddyLoading}
                   />
                   <button type="button" className="bk-buddy-add-btn" onClick={addBuddy} disabled={buddyLoading}>
