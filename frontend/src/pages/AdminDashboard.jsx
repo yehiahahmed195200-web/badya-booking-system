@@ -50,6 +50,27 @@ const getBookingFacilityId = (booking) => booking?.facility?.id ?? booking?.faci
 
 const getBookingUserId = (booking) => booking?.user?.id ?? booking?.userId;
 
+// ── Facility form helpers ──────────────────────────────────────────────────
+const FmLabel = ({ children }) => (
+  <label style={{ display: "block", fontWeight: 600, fontSize: "0.8rem", color: "#475569", marginBottom: 5 }}>{children}</label>
+);
+const FmInput = ({ onChange, value, ...props }) => (
+  <input
+    value={value}
+    onChange={e => onChange(e.target.value)}
+    {...props}
+    style={{ width: "100%", padding: "9px 12px", borderRadius: 9, border: "1.5px solid #e2e8f0", fontSize: "0.88rem", outline: "none", boxSizing: "border-box", transition: "border .15s", ...props.style }}
+    onFocus={e => e.target.style.borderColor = "#3b82f6"}
+    onBlur={e => e.target.style.borderColor = "#e2e8f0"}
+  />
+);
+const InfoCell = ({ icon, label, value }) => (
+  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <span style={{ fontSize: "0.68rem", color: "#94a3b8", fontWeight: 600, letterSpacing: "0.04em" }}>{icon} {label}</span>
+    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1e293b" }}>{value}</span>
+  </div>
+);
+
 export default function AdminDashboard({ session, onLogout, toggleNotifications }) {
   const [bookings, setBookings] = useState([]);
   const [facilities, setFacilities] = useState([]);
@@ -110,6 +131,17 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
   const [activeAttendanceView, setActiveAttendanceView] = useState("noshow");
   const [attendanceFacilityFilter, setAttendanceFacilityFilter] = useState("all");
   const [attendanceDateRange, setAttendanceDateRange] = useState("all");
+
+  // ── Facility Management State ──────────────────────────────
+  const EMPTY_FACILITY = { name: "", category: "", openTime: "08:00", closeTime: "22:00", defaultSlotMins: 60, minParticipants: 1, maxParticipants: 20, isActive: true, feedbackEnabled: true, latitude: "", longitude: "", geofencingRadius: "" };
+  const [facilityModal, setFacilityModal]   = useState(null); // null | "edit" | "create" | "status"
+  const [facilityTarget, setFacilityTarget] = useState(null); // the facility being edited
+  const [facilityForm, setFacilityForm]     = useState(EMPTY_FACILITY);
+  const [facilityStatusForm, setFacilityStatusForm] = useState({ status: "OPEN", statusReason: "", policy: "KEEP", notifyUsers: true });
+  const [facilityLoading, setFacilityLoading] = useState(false);
+  const [facilityError, setFacilityError]   = useState("");
+  const [facilitySuccess, setFacilitySuccess] = useState("");
+  const [facilitySearch, setFacilitySearch] = useState("");
 
   const navigate = useNavigate();
 
@@ -412,6 +444,97 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
     } finally {
       setSavingFairness(false);
     }
+  };
+
+  // ── Facility Management Handlers ──────────────────────────────
+  const openEditFacility = (f) => {
+    setFacilityTarget(f);
+    setFacilityForm({
+      name: f.name || "",
+      category: f.category || "",
+      openTime: f.openTime || "08:00",
+      closeTime: f.closeTime || "22:00",
+      defaultSlotMins: f.defaultSlotMins || 60,
+      minParticipants: f.minParticipants || 1,
+      maxParticipants: f.maxParticipants || 20,
+      isActive: f.isActive !== false,
+      feedbackEnabled: f.feedbackEnabled !== false,
+      latitude: f.latitude ?? "",
+      longitude: f.longitude ?? "",
+      geofencingRadius: f.geofencingRadius ?? "",
+    });
+    setFacilityError(""); setFacilitySuccess("");
+    setFacilityModal("edit");
+  };
+
+  const openCreateFacility = () => {
+    setFacilityTarget(null);
+    setFacilityForm(EMPTY_FACILITY);
+    setFacilityError(""); setFacilitySuccess("");
+    setFacilityModal("create");
+  };
+
+  const openStatusModal = (f) => {
+    setFacilityTarget(f);
+    setFacilityStatusForm({ status: f.status || "OPEN", statusReason: f.statusReason || "", policy: "KEEP", notifyUsers: true });
+    setFacilityError(""); setFacilitySuccess("");
+    setFacilityModal("status");
+  };
+
+  const handleSaveFacility = async (e) => {
+    e.preventDefault();
+    setFacilityLoading(true); setFacilityError(""); setFacilitySuccess("");
+    try {
+      const payload = {
+        ...facilityForm,
+        defaultSlotMins:  Number(facilityForm.defaultSlotMins),
+        minParticipants:  Number(facilityForm.minParticipants),
+        maxParticipants:  Number(facilityForm.maxParticipants),
+        latitude:         facilityForm.latitude !== "" ? Number(facilityForm.latitude) : null,
+        longitude:        facilityForm.longitude !== "" ? Number(facilityForm.longitude) : null,
+        geofencingRadius: facilityForm.geofencingRadius !== "" ? Number(facilityForm.geofencingRadius) : null,
+      };
+      const isEdit = facilityModal === "edit";
+      const url    = isEdit ? `${API}/api/facilities/${facilityTarget.id}` : `${API}/api/facilities`;
+      const method = isEdit ? "PUT" : "POST";
+      const res = await fetch(url, { method, headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to save facility");
+      setFacilitySuccess(isEdit ? "✓ Facility updated successfully!" : "✓ Facility created successfully!");
+      setFacilities(prev => isEdit ? prev.map(f => f.id === data.id ? data : f) : [...prev, data]);
+      setTimeout(() => setFacilityModal(null), 1200);
+    } catch (err) {
+      setFacilityError(err.message);
+    } finally { setFacilityLoading(false); }
+  };
+
+  const handleChangeStatus = async (e) => {
+    e.preventDefault();
+    setFacilityLoading(true); setFacilityError(""); setFacilitySuccess("");
+    try {
+      const res = await fetch(`${API}/api/facilities/${facilityTarget.id}/status`, {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify(facilityStatusForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update status");
+      setFacilitySuccess("✓ Status updated!");
+      setFacilities(prev => prev.map(f => f.id === facilityTarget.id ? { ...f, ...data.facility ?? data } : f));
+      setTimeout(() => setFacilityModal(null), 1000);
+    } catch (err) {
+      setFacilityError(err.message);
+    } finally { setFacilityLoading(false); }
+  };
+
+  const handleDeactivateFacility = async (f) => {
+    if (!window.confirm(`Are you sure you want to deactivate "${f.name}"? This will close the facility.`)) return;
+    try {
+      const res = await fetch(`${API}/api/facilities/${f.id}`, { method: "DELETE", headers });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to deactivate");
+      setFacilities(prev => prev.map(x => x.id === f.id ? { ...x, isActive: false, status: "CLOSED" } : x));
+    } catch (err) { alert(err.message); }
   };
 
   // Derived stats
@@ -1271,42 +1394,224 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
 
               {/* FACILITIES TAB */}
               {activeTab === "facilities" && (
-                <div className="ac-chart-card">
-                  <div className="ac-table-head">
-                    <h3 className="ac-chart-title" style={{ margin: 0 }}>Facility Status Overview</h3>
-                    <button className="ac-refresh-btn" onClick={() => navigate("/facilities")}>⚙️ Manage</button>
+                <div>
+                  {/* ── Header ── */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+                    <div>
+                      <h2 style={{ margin: 0, fontWeight: 800, fontSize: "1.3rem", color: "#0d1b2a" }}>🏟️ Facility Management</h2>
+                      <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.85rem" }}>{facilities.length} facilities registered</p>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <input
+                        placeholder="🔍 Search facilities..."
+                        value={facilitySearch}
+                        onChange={e => setFacilitySearch(e.target.value)}
+                        style={{ padding: "8px 14px", borderRadius: 10, border: "1.5px solid #e2e8f0", fontSize: "0.85rem", minWidth: 200, outline: "none" }}
+                      />
+                      <button
+                        onClick={openCreateFacility}
+                        style={{ padding: "9px 20px", background: "linear-gradient(135deg,#10b981,#059669)", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", boxShadow: "0 4px 14px rgba(16,185,129,0.35)", display: "flex", alignItems: "center", gap: 6 }}
+                      >
+                        ＋ New Facility
+                      </button>
+                    </div>
                   </div>
-                  <div className="ac-table-wrap">
-                    <table className="ac-table">
-                      <thead>
-                        <tr><th>Facility</th><th>Category</th><th>Hours</th><th>Capacity</th><th>Availability</th><th>Total Bookings</th></tr>
-                      </thead>
-                      <tbody>
-                        {facilities.map(f => {
-                          const STATUS_COLOR = {
-                            OPEN: "#10b981",
-                            AVAILABLE: "#10b981",
-                            MAINTENANCE: "#f59e0b",
-                            TOURNAMENT: "#8b5cf6",
-                            CLOSED: "#ef4444",
-                            UNAVAILABLE: "#ef4444",
-                          };
-                          const active = f.active ?? f.isActive;
-                          const availability = f.status || (active === false ? "UNAVAILABLE" : "AVAILABLE");
-                          return (
-                            <tr key={f.id}>
-                              <td><strong>{f.name}</strong></td>
-                              <td><span className="category-badge">{f.category}</span></td>
-                              <td>{f.openTime} – {f.closeTime}</td>
-                              <td>{f.minParticipants}–{f.maxParticipants} pax</td>
-                              <td><span className="status-pill" style={{ background: STATUS_COLOR[availability] + "18", color: STATUS_COLOR[availability], border: `1px solid ${STATUS_COLOR[availability]}` }}>{availability}</span></td>
-                              <td style={{ textAlign: "center" }}><strong>{bookings.filter(b => String(getBookingFacilityId(b)) === String(f.id)).length}</strong></td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+
+                  {/* ── Facility Cards Grid ── */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(320px,1fr))", gap: 16 }}>
+                    {facilities
+                      .filter(f => !facilitySearch || f.name?.toLowerCase().includes(facilitySearch.toLowerCase()) || f.category?.toLowerCase().includes(facilitySearch.toLowerCase()))
+                      .map(f => {
+                        const STATUS_COLOR = { OPEN: "#10b981", AVAILABLE: "#10b981", MAINTENANCE: "#f59e0b", TOURNAMENT: "#8b5cf6", CLOSED: "#ef4444", UNAVAILABLE: "#ef4444" };
+                        const STATUS_BG    = { OPEN: "#d1fae5", AVAILABLE: "#d1fae5", MAINTENANCE: "#fef3c7", TOURNAMENT: "#ede9fe", CLOSED: "#fee2e2", UNAVAILABLE: "#fee2e2" };
+                        const STATUS_ICON  = { OPEN: "🟢", AVAILABLE: "🟢", MAINTENANCE: "🟡", TOURNAMENT: "🟣", CLOSED: "🔴", UNAVAILABLE: "🔴" };
+                        const availability = f.status || (f.isActive === false ? "UNAVAILABLE" : "AVAILABLE");
+                        const totalBookings = bookings.filter(b => String(getBookingFacilityId(b)) === String(f.id)).length;
+                        return (
+                          <div key={f.id} style={{ background: "#fff", borderRadius: 16, border: "1.5px solid #e2e8f0", overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", transition: "box-shadow .2s", opacity: f.isActive === false ? 0.6 : 1 }}
+                            onMouseEnter={e => e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.12)"}
+                            onMouseLeave={e => e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.06)"}
+                          >
+                            {/* Card top strip */}
+                            <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                              <div>
+                                <div style={{ fontWeight: 800, fontSize: "1rem", color: "#0d1b2a", marginBottom: 4 }}>{f.name}</div>
+                                <span style={{ padding: "3px 10px", borderRadius: 999, background: "#e0f2fe", color: "#0369a1", fontSize: "0.72rem", fontWeight: 700 }}>{f.category}</span>
+                              </div>
+                              <div style={{ textAlign: "right" }}>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 999, background: STATUS_BG[availability] || "#f1f5f9", color: STATUS_COLOR[availability] || "#64748b", fontSize: "0.72rem", fontWeight: 800, border: `1px solid ${STATUS_COLOR[availability] || "#cbd5e1"}` }}>
+                                  {STATUS_ICON[availability]} {availability}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Info grid */}
+                            <div style={{ padding: "12px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 12px" }}>
+                              <InfoCell icon="⏰" label="Hours" value={`${f.openTime} – ${f.closeTime}`} />
+                              <InfoCell icon="👥" label="Capacity" value={`${f.minParticipants}–${f.maxParticipants} pax`} />
+                              <InfoCell icon="🕐" label="Slot" value={`${f.defaultSlotMins} min`} />
+                              <InfoCell icon="📅" label="Total Bookings" value={totalBookings} />
+                              {f.latitude && <InfoCell icon="📍" label="Geofence" value={`${f.geofencingRadius ? Math.round(f.geofencingRadius * 1000) + "m" : "—"}`} />}
+                              <InfoCell icon="💬" label="Feedback" value={f.feedbackEnabled ? "Enabled" : "Disabled"} />
+                            </div>
+
+                            {/* Actions */}
+                            <div style={{ padding: "10px 16px 14px", display: "flex", gap: 8, borderTop: "1px solid #f1f5f9" }}>
+                              <button
+                                onClick={() => openEditFacility(f)}
+                                style={{ flex: 1, padding: "8px 0", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", border: "none", borderRadius: 9, fontWeight: 700, fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                              >✏️ Edit</button>
+                              <button
+                                onClick={() => openStatusModal(f)}
+                                style={{ flex: 1, padding: "8px 0", background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff", border: "none", borderRadius: 9, fontWeight: 700, fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                              >🔄 Status</button>
+                              {f.isActive !== false && (
+                                <button
+                                  onClick={() => handleDeactivateFacility(f)}
+                                  title="Deactivate facility"
+                                  style={{ padding: "8px 12px", background: "#fee2e2", color: "#ef4444", border: "1.5px solid #fca5a5", borderRadius: 9, fontWeight: 700, fontSize: "0.8rem", cursor: "pointer" }}
+                                >🗑</button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                   </div>
+
+                  {/* ─────────── EDIT / CREATE MODAL ─────────── */}
+                  {(facilityModal === "edit" || facilityModal === "create") && (
+                    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setFacilityModal(null)}>
+                      <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 560, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 24px 80px rgba(0,0,0,0.35)" }} onClick={e => e.stopPropagation()}>
+                        {/* Modal header */}
+                        <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, background: "#fff", zIndex: 1, borderRadius: "20px 20px 0 0" }}>
+                          <div>
+                            <h3 style={{ margin: 0, fontWeight: 800, fontSize: "1.1rem", color: "#0d1b2a" }}>
+                              {facilityModal === "edit" ? `✏️ Edit — ${facilityTarget?.name}` : "🏟️ Create New Facility"}
+                            </h3>
+                            <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "#94a3b8" }}>{facilityModal === "edit" ? "Update facility details" : "Add a new facility to the system"}</p>
+                          </div>
+                          <button onClick={() => setFacilityModal(null)} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 34, height: 34, cursor: "pointer", fontSize: 18, color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                        </div>
+
+                        {/* Modal body */}
+                        <form onSubmit={handleSaveFacility} style={{ padding: "20px 24px 24px" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                            <div style={{ gridColumn: "1/-1" }}>
+                              <FmLabel>Facility Name *</FmLabel>
+                              <FmInput value={facilityForm.name} onChange={v => setFacilityForm(p => ({ ...p, name: v }))} placeholder="e.g. Court A – Basketball" required />
+                            </div>
+                            <div>
+                              <FmLabel>Category *</FmLabel>
+                              <FmInput value={facilityForm.category} onChange={v => setFacilityForm(p => ({ ...p, category: v }))} placeholder="e.g. Basketball, Swimming" required />
+                            </div>
+                            <div>
+                              <FmLabel>Slot Duration (min)</FmLabel>
+                              <FmInput type="number" min={15} max={240} value={facilityForm.defaultSlotMins} onChange={v => setFacilityForm(p => ({ ...p, defaultSlotMins: v }))} required />
+                            </div>
+                            <div>
+                              <FmLabel>Open Time *</FmLabel>
+                              <FmInput type="time" value={facilityForm.openTime} onChange={v => setFacilityForm(p => ({ ...p, openTime: v }))} required />
+                            </div>
+                            <div>
+                              <FmLabel>Close Time *</FmLabel>
+                              <FmInput type="time" value={facilityForm.closeTime} onChange={v => setFacilityForm(p => ({ ...p, closeTime: v }))} required />
+                            </div>
+                            <div>
+                              <FmLabel>Min Participants *</FmLabel>
+                              <FmInput type="number" min={1} value={facilityForm.minParticipants} onChange={v => setFacilityForm(p => ({ ...p, minParticipants: v }))} required />
+                            </div>
+                            <div>
+                              <FmLabel>Max Participants *</FmLabel>
+                              <FmInput type="number" min={1} value={facilityForm.maxParticipants} onChange={v => setFacilityForm(p => ({ ...p, maxParticipants: v }))} required />
+                            </div>
+
+                            {/* GPS / Geofencing */}
+                            <div style={{ gridColumn: "1/-1", marginTop: 4 }}>
+                              <div style={{ padding: "10px 14px", background: "#f8faff", borderRadius: 10, border: "1px solid #e0e7ff", marginBottom: 4 }}>
+                                <p style={{ margin: "0 0 10px", fontWeight: 700, fontSize: "0.82rem", color: "#3730a3" }}>📍 GPS & Geofencing (Optional)</p>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                                  <div><FmLabel>Latitude</FmLabel><FmInput type="number" step="any" value={facilityForm.latitude} onChange={v => setFacilityForm(p => ({ ...p, latitude: v }))} placeholder="30.0544" /></div>
+                                  <div><FmLabel>Longitude</FmLabel><FmInput type="number" step="any" value={facilityForm.longitude} onChange={v => setFacilityForm(p => ({ ...p, longitude: v }))} placeholder="31.3572" /></div>
+                                  <div><FmLabel>Radius (km)</FmLabel><FmInput type="number" step="0.001" min={0.001} value={facilityForm.geofencingRadius} onChange={v => setFacilityForm(p => ({ ...p, geofencingRadius: v }))} placeholder="0.004" /></div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Toggles */}
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <input type="checkbox" id="fm-active" checked={facilityForm.isActive} onChange={e => setFacilityForm(p => ({ ...p, isActive: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer" }} />
+                              <label htmlFor="fm-active" style={{ fontSize: "0.85rem", fontWeight: 600, color: "#374151", cursor: "pointer" }}>Active</label>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <input type="checkbox" id="fm-feedback" checked={facilityForm.feedbackEnabled} onChange={e => setFacilityForm(p => ({ ...p, feedbackEnabled: e.target.checked }))} style={{ width: 16, height: 16, cursor: "pointer" }} />
+                              <label htmlFor="fm-feedback" style={{ fontSize: "0.85rem", fontWeight: 600, color: "#374151", cursor: "pointer" }}>Feedback Enabled</label>
+                            </div>
+                          </div>
+
+                          {facilityError   && <div style={{ marginTop: 14, padding: "10px 14px", background: "#fee2e2", color: "#b91c1c", borderRadius: 9, fontSize: "0.83rem" }}>❌ {facilityError}</div>}
+                          {facilitySuccess && <div style={{ marginTop: 14, padding: "10px 14px", background: "#d1fae5", color: "#065f46", borderRadius: 9, fontSize: "0.83rem" }}>{facilitySuccess}</div>}
+
+                          <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+                            <button type="button" onClick={() => setFacilityModal(null)} style={{ flex: 1, padding: "11px", background: "#f1f5f9", border: "none", borderRadius: 10, fontWeight: 700, color: "#475569", cursor: "pointer", fontSize: "0.9rem" }}>Cancel</button>
+                            <button type="submit" disabled={facilityLoading} style={{ flex: 2, padding: "11px", background: "linear-gradient(135deg,#3b82f6,#2563eb)", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: "0.9rem", cursor: facilityLoading ? "not-allowed" : "pointer", opacity: facilityLoading ? 0.7 : 1, boxShadow: "0 4px 14px rgba(59,130,246,0.4)" }}>
+                              {facilityLoading ? "Saving…" : facilityModal === "edit" ? "💾 Save Changes" : "🏟️ Create Facility"}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─────────── STATUS MODAL ─────────── */}
+                  {facilityModal === "status" && (
+                    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setFacilityModal(null)}>
+                      <div style={{ background: "#fff", borderRadius: 20, width: "100%", maxWidth: 440, boxShadow: "0 24px 80px rgba(0,0,0,0.35)" }} onClick={e => e.stopPropagation()}>
+                        <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <h3 style={{ margin: 0, fontWeight: 800, fontSize: "1.05rem", color: "#0d1b2a" }}>🔄 Change Status — {facilityTarget?.name}</h3>
+                            <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "#94a3b8" }}>Update availability status</p>
+                          </div>
+                          <button onClick={() => setFacilityModal(null)} style={{ background: "#f1f5f9", border: "none", borderRadius: 8, width: 34, height: 34, cursor: "pointer", fontSize: 18, color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                        </div>
+                        <form onSubmit={handleChangeStatus} style={{ padding: "20px 24px 24px" }}>
+                          <div style={{ marginBottom: 14 }}>
+                            <FmLabel>New Status</FmLabel>
+                            <select value={facilityStatusForm.status} onChange={e => setFacilityStatusForm(p => ({ ...p, status: e.target.value }))} style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1.5px solid #e2e8f0", fontSize: "0.9rem", fontWeight: 600, outline: "none", background: "#fff" }}>
+                              <option value="OPEN">🟢 OPEN</option>
+                              <option value="MAINTENANCE">🟡 MAINTENANCE</option>
+                              <option value="TOURNAMENT">🟣 TOURNAMENT</option>
+                              <option value="CLOSED">🔴 CLOSED</option>
+                            </select>
+                          </div>
+                          <div style={{ marginBottom: 14 }}>
+                            <FmLabel>Reason (optional)</FmLabel>
+                            <textarea value={facilityStatusForm.statusReason} onChange={e => setFacilityStatusForm(p => ({ ...p, statusReason: e.target.value }))} rows={2} placeholder="e.g. Scheduled maintenance, Floor repair…" style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1.5px solid #e2e8f0", fontSize: "0.85rem", resize: "vertical", outline: "none", boxSizing: "border-box" }} />
+                          </div>
+                          <div style={{ marginBottom: 14 }}>
+                            <FmLabel>Booking Policy</FmLabel>
+                            <select value={facilityStatusForm.policy} onChange={e => setFacilityStatusForm(p => ({ ...p, policy: e.target.value }))} style={{ width: "100%", padding: "10px 12px", borderRadius: 9, border: "1.5px solid #e2e8f0", fontSize: "0.85rem", outline: "none", background: "#fff" }}>
+                              <option value="KEEP">Keep existing bookings</option>
+                              <option value="CANCEL">Cancel all upcoming bookings</option>
+                            </select>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                            <input type="checkbox" id="notify-users" checked={facilityStatusForm.notifyUsers} onChange={e => setFacilityStatusForm(p => ({ ...p, notifyUsers: e.target.checked }))} style={{ width: 16, height: 16 }} />
+                            <label htmlFor="notify-users" style={{ fontSize: "0.85rem", fontWeight: 600, color: "#374151", cursor: "pointer" }}>Notify affected users via system notification</label>
+                          </div>
+
+                          {facilityError   && <div style={{ marginBottom: 12, padding: "9px 14px", background: "#fee2e2", color: "#b91c1c", borderRadius: 9, fontSize: "0.82rem" }}>❌ {facilityError}</div>}
+                          {facilitySuccess && <div style={{ marginBottom: 12, padding: "9px 14px", background: "#d1fae5", color: "#065f46", borderRadius: 9, fontSize: "0.82rem" }}>{facilitySuccess}</div>}
+
+                          <div style={{ display: "flex", gap: 10 }}>
+                            <button type="button" onClick={() => setFacilityModal(null)} style={{ flex: 1, padding: "11px", background: "#f1f5f9", border: "none", borderRadius: 10, fontWeight: 700, color: "#475569", cursor: "pointer" }}>Cancel</button>
+                            <button type="submit" disabled={facilityLoading} style={{ flex: 2, padding: "11px", background: "linear-gradient(135deg,#f59e0b,#d97706)", color: "#fff", border: "none", borderRadius: 10, fontWeight: 700, fontSize: "0.9rem", cursor: facilityLoading ? "not-allowed" : "pointer", opacity: facilityLoading ? 0.7 : 1 }}>
+                              {facilityLoading ? "Updating…" : "🔄 Update Status"}
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

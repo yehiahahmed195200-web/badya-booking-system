@@ -98,6 +98,60 @@ router.patch("/:id/settings", requireAuth, requireRole(UserRole.ADMIN), async (r
   }
 });
 
+// Full edit — name, category, times, participants, location, etc.
+router.put("/:id", requireAuth, requireRole(UserRole.ADMIN), async (req, res, next) => {
+  try {
+    const { id } = z.object({ id: z.string() }).parse(req.params);
+    const body = z
+      .object({
+        name:             z.string().min(2).optional(),
+        category:         z.string().min(2).optional(),
+        openTime:         z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional(),
+        closeTime:        z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional(),
+        defaultSlotMins:  z.number().int().positive().optional(),
+        minParticipants:  z.number().int().positive().optional(),
+        maxParticipants:  z.number().int().positive().optional(),
+        isActive:         z.boolean().optional(),
+        feedbackEnabled:  z.boolean().optional(),
+        latitude:         z.number().optional().nullable(),
+        longitude:        z.number().optional().nullable(),
+        geofencingRadius: z.number().positive().optional().nullable(),
+      })
+      .parse(req.body);
+
+    if (
+      body.minParticipants !== undefined &&
+      body.maxParticipants !== undefined &&
+      body.minParticipants > body.maxParticipants
+    ) {
+      return res.status(400).json({ message: "minParticipants cannot be greater than maxParticipants" });
+    }
+
+    const facility = await prisma.facility.update({
+      where: { id },
+      data: body,
+    });
+
+    res.json(facility);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Soft-delete (deactivate) a facility
+router.delete("/:id", requireAuth, requireRole(UserRole.ADMIN), async (req, res, next) => {
+  try {
+    const { id } = z.object({ id: z.string() }).parse(req.params);
+    const facility = await prisma.facility.update({
+      where: { id },
+      data: { isActive: false, status: "CLOSED" },
+    });
+    res.json({ success: true, facility });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // FR-2.1 — Real-time availability for a facility on a given date
 router.get("/:id/availability", async (req, res, next) => {
   try {
