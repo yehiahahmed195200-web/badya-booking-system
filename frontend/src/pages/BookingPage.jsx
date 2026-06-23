@@ -87,6 +87,7 @@ export default function BookingPage({ session }) {
   const [error, setError]                 = useState(null);
   const [success, setSuccess]             = useState(null);
   const [search, setSearch]               = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
   // FR-2.7 Terms
   const [termsAccepted, setTermsAccepted] = useState(false);
   // FR-2.12 Buddy bookings
@@ -300,10 +301,13 @@ export default function BookingPage({ session }) {
     }
   };
 
-  const filtered = facilities.filter(f =>
-    f.name?.toLowerCase().includes(search.toLowerCase()) ||
-    f.category?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = facilities.filter(f => {
+    const matchesSearch = f.name?.toLowerCase().includes(search.toLowerCase()) ||
+                          f.category?.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory = selectedCategory === "all" || 
+                            f.category?.toLowerCase() === selectedCategory.toLowerCase();
+    return matchesSearch && matchesCategory;
+  });
 
   // ── SUCCESS ──────────────────────────────────────────────────────────────
   if (success) {
@@ -354,6 +358,26 @@ export default function BookingPage({ session }) {
             <div className="bk-search-wrap">
               <span className="bk-search-icon">🔍</span>
               <input className="bk-search" placeholder={t("bookingPage.searchPlaceholder")} value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+
+            {/* Category Tabs */}
+            <div className="bk-cat-tabs">
+              {[
+                { id: "all", labelEn: "All Facilities", labelAr: "كل المرافق", icon: "🌐" },
+                { id: "Sport", labelEn: "Sports Fields", labelAr: "الملاعب الرياضية", icon: "⚽" },
+                { id: "Fitness", labelEn: "Fitness & Gym", labelAr: "اللياقة البدنية", icon: "🏋️" },
+                { id: "Activity Center", labelEn: "Activity Center", labelAr: "مركز الأنشطة", icon: "🏓" }
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`bk-cat-tab ${selectedCategory === cat.id ? "active" : ""}`}
+                  onClick={() => setSelectedCategory(cat.id)}
+                >
+                  <span className="bk-cat-tab-icon">{cat.icon}</span>
+                  <span className="bk-cat-tab-label">{language === "en" ? cat.labelEn : cat.labelAr}</span>
+                </button>
+              ))}
             </div>
             {loading ? (
               <div className="bk-loading"><div className="bk-spinner" /><p>{t("common.loading")}</p></div>
