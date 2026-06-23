@@ -23,10 +23,13 @@ const FACILITY_ICONS = (name = "") => {
   const n = name.toLowerCase();
   if (n.includes("basket")) return "🏀";
   if (n.includes("football") || n.includes("soccer")) return "⚽";
+  if (n.includes("table tennis") || n.includes("ping pong")) return "🏓";
   if (n.includes("tennis") || n.includes("padel")) return "🎾";
   if (n.includes("swim") || n.includes("pool")) return "🏊";
   if (n.includes("gym") || n.includes("fitness")) return "🏋️";
   if (n.includes("volleyball")) return "🏐";
+  if (n.includes("billiard") || n.includes("pool table")) return "🎱";
+  if (n.includes("hockey")) return "🏒";
   return "🏅";
 };
 

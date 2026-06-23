@@ -221,6 +221,9 @@ export default function LiveDashboard({ session }) {
     if (sport === "Basketball") return "🏀";
     if (sport === "Volleyball") return "🏐";
     if (sport === "Tennis") return "🎾";
+    if (sport === "Table Tennis" || sport === "Ping Pong") return "🏓";
+    if (sport === "Billiards" || sport === "Pool") return "🎱";
+    if (sport === "Hockey" || sport === "Air Hockey") return "🏒";
     return "👟";
   };
 
