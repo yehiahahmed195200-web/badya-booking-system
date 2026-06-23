@@ -670,6 +670,25 @@
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
+  direction: ltr !important;
+  text-align: left !important;
+  font-family: 'Space Grotesk', 'Courier New', monospace, sans-serif !important;
+  color: #0d1b2a !important;
+  background-color: #ffffff !important;
+  border: 2px solid #cbd5e1 !important;
+}
+
+.bk-buddy-row .bk-input:focus {
+  border-color: #1cb2bf !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 0 0 4px rgba(28,178,191,0.15) !important;
+  color: #0d1b2a !important;
+}
+
+.bk-buddy-row .bk-input::placeholder {
+  color: #64748b !important;
+  opacity: 0.8 !important;
+  text-align: left !important;
 }
 
 .bk-buddy-add-btn {
