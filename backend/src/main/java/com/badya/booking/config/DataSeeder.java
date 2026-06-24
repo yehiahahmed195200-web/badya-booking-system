@@ -177,11 +177,13 @@ public class DataSeeder {
             upsertFacility(facilityRepository, "Billiards", "Activity Center", "09:00", "15:00", 60, 2, 4, "Billiards", 30.0550, 31.3578, 0.004);
             upsertFacility(facilityRepository, "Air Hockey 1", "Activity Center", "09:00", "15:00", 60, 2, 4, "Air Hockey", 30.0551, 31.3579, 0.004);
             upsertFacility(facilityRepository, "Air Hockey 2", "Activity Center", "09:00", "15:00", 60, 2, 4, "Air Hockey", 30.0552, 31.3580, 0.004);
+            upsertFacility(facilityRepository, "Multipurpose Court", "Sport", "09:00", "15:00", 60, 6, 12, "Basketball,Volleyball", 29.858446, 30.906963, 0.004);
 
             // Clean up any old facilities not matching the seed list
             java.util.List<String> allowedNames = java.util.List.of(
                 "Tennis Court", "Football Court", "Padel 1", "Padel 2", "UFC Gym",
-                "Table Tennis 1", "Table Tennis 2", "Billiards", "Air Hockey 1", "Air Hockey 2"
+                "Table Tennis 1", "Table Tennis 2", "Billiards", "Air Hockey 1", "Air Hockey 2",
+                "Multipurpose Court"
             );
             java.util.List<Facility> allFacilities = facilityRepository.findAll();
             for (Facility f : allFacilities) {
