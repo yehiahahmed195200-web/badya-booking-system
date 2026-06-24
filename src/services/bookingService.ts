@@ -97,19 +97,6 @@ export async function createBooking(input: CreateBookingInput) {
     throw new Error("Reservations must be made at least 1 hour in advance. No on-spot booking allowed.");
   }
 
-  // Active bookings check (No double booking)
-  const userActiveBookings = await prisma.booking.count({
-    where: {
-      userId: input.userId,
-      status: { in: [BookingStatus.PENDING, BookingStatus.APPROVED, BookingStatus.CONFIRMED] },
-      startTime: { lt: end.toDate() },
-      endTime: { gt: start.toDate() }
-    }
-  });
-  if (userActiveBookings > 0) {
-    throw new Error("You already have a booking at this time");
-  }
-
   // Daily Quota (Max 60 mins per game per day for creator AND all buddies)
   const startOfDay = start.startOf('day').toDate();
   const endOfDay = start.endOf('day').toDate();
@@ -131,6 +118,44 @@ export async function createBooking(input: CreateBookingInput) {
   }
 
   const allParticipantIds = [input.userId, ...internalBuddyIds];
+
+  // Comprehensive Overlap Check: Ensure no participant (creator or buddy) has an overlapping active booking
+  const allParticipantStudentIds = [user.studentId, ...buddyIds];
+
+  const overlappingActiveBookings = await prisma.booking.findMany({
+    where: {
+      status: { in: [BookingStatus.PENDING, BookingStatus.APPROVED, BookingStatus.CONFIRMED] },
+      startTime: { lt: end.toDate() },
+      endTime: { gt: start.toDate() }
+    }
+  });
+
+  for (const booking of overlappingActiveBookings) {
+    // 1. Check if any participant is the creator of an overlapping booking
+    if (allParticipantIds.includes(booking.userId)) {
+      const offendingUser = booking.userId === input.userId 
+        ? "You already have" 
+        : `Student ${buddyIds[internalBuddyIds.indexOf(booking.userId)] || booking.userId} already has`;
+      throw new Error(`${offendingUser} an active booking at this time`);
+    }
+
+    // 2. Check if any participant is a teammate (buddy) in an overlapping booking
+    if (booking.buddyIds) {
+      try {
+        const existingBuddies: string[] = JSON.parse(booking.buddyIds);
+        if (Array.isArray(existingBuddies)) {
+          for (const participantStudentId of allParticipantStudentIds) {
+            if (existingBuddies.includes(participantStudentId)) {
+              const offendingUser = participantStudentId === user.studentId 
+                ? "You are" 
+                : `Student ${participantStudentId} is`;
+              throw new Error(`${offendingUser} already added as a teammate in another booking at this time`);
+            }
+          }
+        }
+      } catch (e) {}
+    }
+  }
 
   for (const pid of allParticipantIds) {
     // We must check if THIS user is already part of any bookings for THIS facility today
