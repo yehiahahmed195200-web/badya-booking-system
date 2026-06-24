@@ -168,7 +168,7 @@ public class DataSeeder {
 
             // Seed or update facilities
             upsertFacility(facilityRepository, "Tennis Court", "Sport", "09:00", "15:00", 60, 2, 4, "Tennis", 30.0544, 31.3572, 0.004);
-            upsertFacility(facilityRepository, "Football Court", "Sport", "09:00", "15:00", 60, 10, 22, "Football", 30.0545, 31.3573, 0.004);
+            upsertFacility(facilityRepository, "Football Court", "Sport", "09:00", "15:00", 60, 10, 22, "Football", 29.858541, 30.906423, 0.004);
             upsertFacility(facilityRepository, "Padel 1", "Sport", "09:00", "15:00", 60, 2, 4, "Padel", 30.0546, 31.3574, 0.004);
             upsertFacility(facilityRepository, "Padel 2", "Sport", "09:00", "15:00", 60, 2, 4, "Padel", 29.858683, 30.906268, 0.004);
             upsertFacility(facilityRepository, "UFC Gym", "Fitness", "09:00", "15:00", 60, 1, 30, "Fitness", 30.0540, 31.3560, 0.004);
