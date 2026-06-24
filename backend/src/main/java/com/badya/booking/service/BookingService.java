@@ -237,11 +237,6 @@ public class BookingService {
                 }
                 buddyUsers.add(buddy);
             }
-
-            LocalDateTime minAllowedStartTime = LocalDateTime.now().plusHours(1);
-            if (startTime.isBefore(minAllowedStartTime)) {
-                throw new IllegalArgumentException("Booking rejected: Teammate invitations must be sent at least 1 hour before the game starts.");
-            }
         }
 
 
@@ -353,7 +348,7 @@ public class BookingService {
 
         if (hasBuddies) {
             booking.setStatus(BookingStatus.RESERVED_PENDING_PLAYERS);
-            booking.setExpiryTime(calculateExpiryTime(nowDT, startTime));
+            booking.setExpiryTime(nowDT.plusMinutes(15));
 
             // Option A: Booker credits hold (Reserved credits)
             user.setCredits(user.getCredits() - 1);
@@ -688,12 +683,6 @@ public class BookingService {
         } catch (Exception ex) {
             System.err.println("Failed to log booking event: " + ex.getMessage());
         }
-    }
-
-    private LocalDateTime calculateExpiryTime(LocalDateTime createdAt, LocalDateTime startTime) {
-        LocalDateTime plus15 = createdAt.plusMinutes(15);
-        LocalDateTime minus1hour = startTime.minusHours(1);
-        return plus15.isBefore(minus1hour) ? plus15 : minus1hour;
     }
 
     @Transactional
