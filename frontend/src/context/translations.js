@@ -517,7 +517,7 @@ export const translations = {
       bookFacilityBtn: "+ احجز ملعب دلوقتي",
       totalBookings: "كل حجوزاتك",
       allTime: "من أول ما سجلت",
-      sessionsDone: "ماتشات خلصت",
+      sessionsDone: "ماتشات مكتملة",
       myPoints: "نقطي",
       earnedSoFar: "اللي جمعته لحد دلوقتي",
       maxBan: "3 إنذارات = حظر فوري",
