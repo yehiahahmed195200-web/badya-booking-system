@@ -60,6 +60,28 @@ public class FacilityController {
 
         return created;
     }
+
+    @PutMapping("/{id}")
+    public Facility update(
+            @PathVariable Long id,
+            @Valid @RequestBody Facility facility,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
+        if (admin == null) {
+            throw new IllegalArgumentException("Unauthorized: Admin privilege required.");
+        }
+        Facility updated = facilityService.update(id, facility);
+
+        // Log the action
+        auditLogService.log(admin, "FACILITY_UPDATED", Map.of(
+                "facilityId", updated.getId(),
+                "facilityName", updated.getName(),
+                "category", updated.getCategory()
+        ));
+
+        return updated;
+    }
+
     @PatchMapping("/{id}/status")
     public Facility updateStatus(
             @PathVariable Long id,

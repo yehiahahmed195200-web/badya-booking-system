@@ -123,6 +123,31 @@ public class FacilityService {
         return facilityRepository.save(facility);
     }
 
+    @Transactional
+    public Facility update(Long id, Facility updates) {
+        Long facilityId = Objects.requireNonNull(id, "facility id is required");
+        Facility facility = facilityRepository.findById(facilityId)
+                .orElseThrow(() -> new IllegalArgumentException("Facility not found"));
+
+        if (updates.getName() != null) facility.setName(updates.getName());
+        if (updates.getCategory() != null) facility.setCategory(updates.getCategory());
+        if (updates.getOpenTime() != null) facility.setOpenTime(updates.getOpenTime());
+        if (updates.getCloseTime() != null) facility.setCloseTime(updates.getCloseTime());
+        if (updates.getDefaultSlotMins() != null) facility.setDefaultSlotMins(updates.getDefaultSlotMins());
+        if (updates.getMinParticipants() != null) facility.setMinParticipants(updates.getMinParticipants());
+        if (updates.getMaxParticipants() != null) facility.setMaxParticipants(updates.getMaxParticipants());
+        if (updates.getActive() != null) facility.setActive(updates.getActive());
+        if (updates.getSports() != null) facility.setSports(updates.getSports());
+        if (updates.getStatus() != null) facility.setStatus(updates.getStatus());
+        if (updates.getStatusReason() != null) facility.setStatusReason(updates.getStatusReason());
+        
+        facility.setLatitude(updates.getLatitude());
+        facility.setLongitude(updates.getLongitude());
+        facility.setGeofencingRadius(updates.getGeofencingRadius());
+
+        return facilityRepository.save(facility);
+    }
+
     public java.util.Map<String, Object> getAvailabilityForDate(Long id, java.time.LocalDate date) {
         Facility facility = facilityRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Facility not found"));

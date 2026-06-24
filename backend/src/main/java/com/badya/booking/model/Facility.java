@@ -123,6 +123,10 @@ public class Facility {
         this.active = active;
     }
 
+    public void setIsActive(Boolean active) {
+        this.active = active;
+    }
+
     public String getStatus() {
         return status;
     }
