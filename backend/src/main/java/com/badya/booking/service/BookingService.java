@@ -706,10 +706,15 @@ public class BookingService {
 
         for (Booking booking : expiredBookings) {
             try {
-                booking.setStatus(BookingStatus.CANCELLED);
-                bookingRepository.save(booking);
+                // Fetch fresh status in current transaction to prevent race conditions (multi-instance safety check)
+                Booking freshBooking = bookingRepository.findById(booking.getId()).orElse(null);
+                if (freshBooking == null || freshBooking.getStatus() != BookingStatus.RESERVED_PENDING_PLAYERS) {
+                    continue;
+                }
+                freshBooking.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(freshBooking);
 
-                UserAccount booker = booking.getUser();
+                UserAccount booker = freshBooking.getUser();
                 if (booker != null) {
                     booker.setCredits(booker.getCredits() + 1);
                     if (booker.getReservedCredits() > 0) {
@@ -717,15 +722,15 @@ public class BookingService {
                     }
                     userRepository.save(booker);
 
-                    logEvent(booking.getId(), booker.getId(), "INVITATION_EXPIRED", "Teammate invitation expired.");
-                    logEvent(booking.getId(), booker.getId(), "REFUND_ISSUED", "Refunded 1 credit to booker due to expiration.");
+                    logEvent(freshBooking.getId(), booker.getId(), "INVITATION_EXPIRED", "Teammate invitation expired.");
+                    logEvent(freshBooking.getId(), booker.getId(), "REFUND_ISSUED", "Refunded 1 credit to booker due to expiration.");
 
                     String title = "⏳ انتهى وقت قبول الدعوة (Invitation Expired)";
-                    String message = "انتهى وقت تأكيد الحجز لملعب " + booking.getFacility().getName() + " يوم " + booking.getStartTime().toLocalDate() + " الساعة " + booking.getStartTime().toLocalTime() + " لأن بعض زملائك لم يوافقوا على الدعوة في الوقت المحدد (15 دقيقة). تم إلغاء الحجز وإرجاع الرصيد لحسابك.";
+                    String message = "انتهى وقت تأكيد الحجز لملعب " + freshBooking.getFacility().getName() + " يوم " + freshBooking.getStartTime().toLocalDate() + " الساعة " + freshBooking.getStartTime().toLocalTime() + " لأن بعض زملائك لم يوافقوا على الدعوة في الوقت المحدد (15 دقيقة). تم إلغاء الحجز وإرجاع الرصيد لحسابك.";
                     notificationService.sendInAppNotification(booker, title, message, com.badya.booking.model.NotificationType.BOOKING_CANCELLED);
                 }
 
-                List<BookingParticipant> participants = bookingParticipantRepository.findByBookingId(booking.getId());
+                List<BookingParticipant> participants = bookingParticipantRepository.findByBookingId(freshBooking.getId());
                 for (BookingParticipant bp : participants) {
                     if (bp.getStatus() == ParticipantStatus.PENDING) {
                         bp.setStatus(ParticipantStatus.REJECTED);
@@ -734,7 +739,7 @@ public class BookingService {
                         UserAccount buddy = bp.getUser();
                         if (buddy != null) {
                             String title = "⏳ انتهى وقت قبول الدعوة (Invitation Expired)";
-                            String message = "انتهى وقت قبول دعوة اللعب من " + booking.getUser().getFullName() + " بملعب " + booking.getFacility().getName() + ". تم إلغاء الحجز.";
+                            String message = "انتهى وقت قبول دعوة اللعب من " + freshBooking.getUser().getFullName() + " بملعب " + freshBooking.getFacility().getName() + ". تم إلغاء الحجز.";
                             notificationService.sendInAppNotification(buddy, title, message, com.badya.booking.model.NotificationType.BOOKING_CANCELLED);
                         }
                     }
