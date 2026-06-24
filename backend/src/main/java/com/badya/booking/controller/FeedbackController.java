@@ -5,6 +5,7 @@ import com.badya.booking.model.Facility;
 import com.badya.booking.model.Feedback;
 import com.badya.booking.model.FeedbackType;
 import com.badya.booking.model.UserAccount;
+import com.badya.booking.model.UserRole;
 import com.badya.booking.repository.FacilityRepository;
 import com.badya.booking.repository.FeedbackRepository;
 import com.badya.booking.repository.UserRepository;
@@ -93,6 +94,18 @@ public class FeedbackController {
                 "feedbackId", saved.getId()));
     }
 
+    @GetMapping
+    public ResponseEntity<?> getAllFeedback(@RequestHeader("Authorization") String authHeader) {
+        UserAccount admin = getCurrentAdmin(authHeader);
+        if (admin == null) {
+            throw new IllegalArgumentException("Unauthorized: Admin privilege required.");
+        }
+        List<Feedback> feedbacks = feedbackRepository.findAll(
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt")
+        );
+        return ResponseEntity.ok(feedbacks);
+    }
+
     @GetMapping("/user/{userId}")
     public ResponseEntity<?> getUserFeedback(@PathVariable @NonNull Long userId) {
         UserAccount user = userRepository.findById(userId)
@@ -100,6 +113,18 @@ public class FeedbackController {
 
         List<Feedback> feedbacks = feedbackRepository.findByUser(user);
         return ResponseEntity.ok(feedbacks);
+    }
+
+    private UserAccount getCurrentAdmin(String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            if (current != null && current.getRole() == UserRole.ADMIN) {
+                return current;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
     }
 
     private UserAccount getAuthenticatedUser(String authHeader) {

@@ -80,6 +80,8 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
   const [savingRules, setSavingRules] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [feedbacksLoading, setFeedbacksLoading] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -347,7 +349,27 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
     finally { setLoading(false); }
   };
 
+  const fetchFeedbacks = async () => {
+    setFeedbacksLoading(true);
+    try {
+      const res = await fetch(`${API}/api/feedback`, { headers });
+      if (res.ok) {
+        setFeedbacks(await res.json());
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFeedbacksLoading(false);
+    }
+  };
+
   useEffect(() => { fetchAll(); }, []);
+
+  useEffect(() => {
+    if (activeTab === "feedbacks") {
+      fetchFeedbacks();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === "medical") {
@@ -838,6 +860,7 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
             { id: "users", icon: "👥", label: "Users", badge: users.filter(u => u.isBanned).length || 0 },
             { id: "attendance", icon: "📍", label: "Attendance", badge: attendanceStats.noShowCount || 0 },
             { id: "medical", icon: "⚕️", label: "Medical Clearance", badge: athletesCompliance.filter(a => a.complianceStatus === "PENDING_REVIEW").length || 0 },
+            { id: "feedbacks", icon: "💬", label: "Feedbacks" },
             { id: "auditlog", icon: "📋", label: "Audit Log" },
           ].map(item => (
             <button
@@ -893,6 +916,7 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
                 {activeTab === "attendance" && "📍 Attendance & Geofencing"}
                 {activeTab === "medical" && "⚕️ Athlete Medical Clearance"}
                 {activeTab === "auditlog" && "📋 Conflict Audit Log"}
+                {activeTab === "feedbacks" && "💬 Student Feedbacks"}
               </h1>
               <p className="ac-topbar-sub">Welcome back, {session?.fullName}</p>
             </div>
@@ -2557,6 +2581,89 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
                             </tr>
                           );
                         })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              
+              {/* FEEDBACKS TAB */}
+              {activeTab === "feedbacks" && (
+                <div className="ac-chart-card">
+                  <div className="ac-table-head" style={{ marginBottom: 16 }}>
+                    <div>
+                      <h3 className="ac-chart-title" style={{ margin: 0 }}>Student Feedbacks</h3>
+                      <div style={{ display: "flex", gap: 12, marginTop: 10, flexWrap: "wrap" }}>
+                        <span className="ac-badge-neutral">{feedbacks.length} total</span>
+                      </div>
+                    </div>
+                    <div>
+                      <button
+                        className="ac-refresh-btn"
+                        style={{
+                          background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
+                          color: "#fff",
+                          border: "none",
+                          padding: "8px 16px",
+                          borderRadius: 8,
+                          fontWeight: "bold",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6
+                        }}
+                        disabled={feedbacksLoading}
+                        onClick={fetchFeedbacks}
+                      >
+                        {feedbacksLoading ? "🔄 Loading..." : "🔄 Refresh"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="ac-table-container">
+                    <table className="ac-table">
+                      <thead>
+                        <tr>
+                          <th>Student</th>
+                          <th>Facility</th>
+                          <th>Rating</th>
+                          <th>Feedback Content</th>
+                          <th>Submitted At</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {feedbacksLoading && feedbacks.length === 0 && (
+                          <tr><td colSpan={5} className="ac-empty">Loading feedbacks...</td></tr>
+                        )}
+                        {!feedbacksLoading && feedbacks.length === 0 && (
+                          <tr><td colSpan={5} className="ac-empty">No feedbacks found</td></tr>
+                        )}
+                        {feedbacks.map(f => (
+                          <tr key={f.id}>
+                            <td>
+                              <div style={{ fontWeight: 700 }}>{f.user?.fullName || "Anonymous"}</div>
+                              <div style={{ fontSize: "0.8rem", color: "#888" }}>{f.user?.studentId || ""}</div>
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{f.facility?.name || "N/A"}</div>
+                              <div style={{ fontSize: "0.8rem", color: "#6b7280" }}>{f.facility?.category || ""}</div>
+                            </td>
+                            <td>
+                              <div style={{ color: "#fbbf24", fontSize: "1.1rem", fontWeight: "bold" }}>
+                                {"★".repeat(f.rating || 0)}
+                                <span style={{ color: "#d1d5db" }}>{"★".repeat(5 - (f.rating || 0))}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <div style={{ whiteSpace: "pre-wrap", fontSize: "0.9rem", color: "#1f2937" }}>
+                                {f.content}
+                              </div>
+                            </td>
+                            <td style={{ fontSize: "0.85rem", color: "#6b7280" }}>
+                              {f.createdAt ? new Date(f.createdAt).toLocaleString() : "N/A"}
+                            </td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
