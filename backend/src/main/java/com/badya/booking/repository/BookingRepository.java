@@ -42,6 +42,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUserId(Long userId);
 
+    List<Booking> findByUserIdAndStatusInAndStartTimeLessThanAndEndTimeGreaterThan(
+            Long userId,
+            List<BookingStatus> statuses,
+            LocalDateTime endTime,
+            LocalDateTime startTime);
+
+    long countByUserIdAndStatus(Long userId, BookingStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT b FROM Booking b LEFT JOIN b.bookingParticipants bp WHERE b.user.id = :userId OR bp.user.id = :userId")
+    List<Booking> findAllForUser(@org.springframework.data.repository.query.Param("userId") Long userId);
+
+    List<Booking> findByStatusAndExpiryTimeBefore(BookingStatus status, LocalDateTime expiryTime);
+
     @Modifying
     @Transactional
     void deleteByFacilityId(Long facilityId);

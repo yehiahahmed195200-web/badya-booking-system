@@ -21,6 +21,12 @@ import com.badya.booking.repository.NotificationRepository;
 import com.badya.booking.model.UserRole;
 import com.badya.booking.model.FairnessConfig;
 import com.badya.booking.repository.FairnessConfigRepository;
+import com.badya.booking.model.ParticipantStatus;
+import com.badya.booking.model.BookingParticipant;
+import com.badya.booking.model.BookingEvent;
+import com.badya.booking.repository.BookingParticipantRepository;
+import com.badya.booking.repository.BookingEventRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.DayOfWeek;
@@ -42,6 +48,12 @@ public class BookingService {
     private NotificationRepository notificationRepository;
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private BookingParticipantRepository bookingParticipantRepository;
+
+    @Autowired
+    private BookingEventRepository bookingEventRepository;
 
     public BookingService(
             BookingRepository bookingRepository,
@@ -201,6 +213,37 @@ public class BookingService {
             throw new IllegalArgumentException("Participants outside allowed range");
         }
 
+        List<String> buddyIds = request.buddyIds();
+        boolean hasBuddies = buddyIds != null && !buddyIds.isEmpty();
+        List<UserAccount> buddyUsers = new java.util.ArrayList<>();
+
+        if (hasBuddies) {
+            long pendingCount = bookingRepository.countByUserIdAndStatus(userId, BookingStatus.RESERVED_PENDING_PLAYERS);
+            if (pendingCount >= 5) {
+                throw new IllegalArgumentException("Booking rejected: You have reached the limit of 5 pending teammate invitations. Please wait for your friends to respond or cancel your pending invitations first.");
+            }
+
+            for (String buddyId : buddyIds) {
+                if (buddyId.trim().equalsIgnoreCase(user.getStudentId())) {
+                    throw new IllegalArgumentException("Booking rejected: You cannot add yourself as a buddy.");
+                }
+                UserAccount buddy = userRepository.findByStudentId(buddyId.trim())
+                        .orElseThrow(() -> new IllegalArgumentException("Booking rejected: Student ID '" + buddyId + "' is not registered."));
+                if (buddy.isBanned()) {
+                    throw new IllegalArgumentException("Booking rejected: Teammate '" + buddy.getFullName() + "' is currently banned.");
+                }
+                if (hasOverlappingBooking(buddy.getId(), startTime, startTime.plusMinutes(duration))) {
+                    throw new IllegalArgumentException("Booking rejected: Teammate '" + buddy.getFullName() + "' already has another overlapping booking or invitation at this time.");
+                }
+                buddyUsers.add(buddy);
+            }
+
+            LocalDateTime minAllowedStartTime = LocalDateTime.now().plusHours(1);
+            if (startTime.isBefore(minAllowedStartTime)) {
+                throw new IllegalArgumentException("Booking rejected: Teammate invitations must be sent at least 1 hour before the game starts.");
+            }
+        }
+
 
         if (duration < rules.getMinBookingDurationMins() || duration > rules.getMaxBookingDurationMins()) {
             throw new IllegalArgumentException("Booking duration must be between " + rules.getMinBookingDurationMins() + " and " + rules.getMaxBookingDurationMins() + " minutes");
@@ -283,7 +326,7 @@ public class BookingService {
         List<Booking> overlaps = bookingRepository
                 .findByFacilityIdAndStatusInAndStartTimeLessThanAndEndTimeGreaterThan(
                         persistedFacilityId,
-                        List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
+                        List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING, BookingStatus.RESERVED_PENDING_PLAYERS),
                         endTime,
                         startTime);
 
@@ -299,22 +342,61 @@ public class BookingService {
         booking.setStartTime(startTime);
         booking.setEndTime(endTime);
         booking.setParticipants(participants);
-        booking.setCreatedAt(LocalDateTime.now());
+        LocalDateTime nowDT = LocalDateTime.now();
+        booking.setCreatedAt(nowDT);
         String scannedIdData = request.scannedIdData();
         if (scannedIdData == null || scannedIdData.trim().isEmpty()) {
             scannedIdData = "matchmaking:" + effectiveSport;
         }
         booking.setScannedIdData(scannedIdData);
-
-        booking.setStatus(BookingStatus.CONFIRMED);
-
-        // Deduct credit since all validations passed
-        user.setCredits(user.getCredits() - 1);
-        userRepository.save(user);
-
         booking.setConflictId(null);
-        Booking saved = bookingRepository.save(booking);
-        return saved;
+
+        if (hasBuddies) {
+            booking.setStatus(BookingStatus.RESERVED_PENDING_PLAYERS);
+            booking.setExpiryTime(calculateExpiryTime(nowDT, startTime));
+
+            // Option A: Booker credits hold (Reserved credits)
+            user.setCredits(user.getCredits() - 1);
+            user.setReservedCredits(user.getReservedCredits() + 1);
+            userRepository.save(user);
+
+            booking = bookingRepository.save(booking);
+
+            // Log and create events
+            logEvent(booking.getId(), user.getId(), "INVITATION_SENT", "Booker reserved the court and sent buddy invitations.");
+
+            // Create BookingParticipant for each buddy
+            for (UserAccount buddyUser : buddyUsers) {
+                BookingParticipant participant = new BookingParticipant();
+                participant.setBooking(booking);
+                participant.setUser(buddyUser);
+                participant.setStatus(ParticipantStatus.PENDING);
+                bookingParticipantRepository.save(participant);
+
+                // Notify buddy (Invitation Sent)
+                String title = "🎾 دعوة للانضمام إلى مباراة! (Teammate Invitation)";
+                String message = user.getFullName() + " قام بدعوتك للعب في " + facility.getName() + " يوم " + startTime.toLocalDate() + " الساعة " + startTime.toLocalTime() + ". يرجى الرد على الدعوة بالقبول أو الرفض خلال 15 دقيقة.";
+                try {
+                    notificationService.sendInAppNotification(buddyUser, title, message, com.badya.booking.model.NotificationType.BOOKING_CONFIRMED);
+                    if (buddyUser.getEmail() != null) {
+                        notificationService.sendEmail(buddyUser.getEmail(), title, message);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to send buddy invitation notifications: " + e.getMessage());
+                }
+            }
+        } else {
+            booking.setStatus(BookingStatus.CONFIRMED);
+
+            // Deduct credit directly
+            user.setCredits(user.getCredits() - 1);
+            userRepository.save(user);
+
+            booking = bookingRepository.save(booking);
+            logEvent(booking.getId(), user.getId(), "BOOKING_CONFIRMED", "Booking confirmed immediately.");
+        }
+
+        return booking;
     }
 
     public List<Booking> all() {
@@ -330,8 +412,10 @@ public class BookingService {
             return booking;
         }
 
-        // Late cancellation check (less than 2 hours before start time)
-        if (LocalDateTime.now().isAfter(booking.getStartTime().minusHours(2))) {
+        BookingStatus originalStatus = booking.getStatus();
+
+        // Late cancellation check (less than 2 hours before start time) - only for non-reserved bookings
+        if (originalStatus != BookingStatus.RESERVED_PENDING_PLAYERS && LocalDateTime.now().isAfter(booking.getStartTime().minusHours(2))) {
             UserAccount user = booking.getUser();
             if (user != null) {
                 user.setWarnings((user.getWarnings() != null ? user.getWarnings() : 0) + 1);
@@ -353,18 +437,68 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
+        booking.setConflictId(null);
+        Booking saved = bookingRepository.save(booking);
+
         UserAccount user = booking.getUser();
         if (user != null) {
-            user.setCredits(user.getCredits() + 1);
-            userRepository.save(user);
+            if (originalStatus == BookingStatus.RESERVED_PENDING_PLAYERS) {
+                user.setCredits(user.getCredits() + 1);
+                if (user.getReservedCredits() > 0) {
+                    user.setReservedCredits(user.getReservedCredits() - 1);
+                }
+                userRepository.save(user);
+                logEvent(booking.getId(), user.getId(), "BOOKING_CANCELLED", "Booker cancelled the pending booking.");
+                logEvent(booking.getId(), user.getId(), "REFUND_ISSUED", "Refunded 1 reserved credit to booker.");
+            } else {
+                user.setCredits(user.getCredits() + 1);
+                userRepository.save(user);
+                logEvent(booking.getId(), user.getId(), "BOOKING_CANCELLED", "Booker cancelled the confirmed booking.");
+                logEvent(booking.getId(), user.getId(), "REFUND_ISSUED", "Refunded 1 credit to booker.");
+            }
         }
+
+        // Refund and update buddy participants
+        List<BookingParticipant> participants = bookingParticipantRepository.findByBookingId(booking.getId());
+        for (BookingParticipant bp : participants) {
+            if (bp.getStatus() == ParticipantStatus.CONFIRMED) {
+                UserAccount buddy = bp.getUser();
+                if (buddy != null) {
+                    buddy.setCredits(buddy.getCredits() + 1);
+                    userRepository.save(buddy);
+                    logEvent(booking.getId(), buddy.getId(), "REFUND_ISSUED", "Refunded 1 credit to buddy due to booking cancellation.");
+
+                    // Notify buddy about cancellation
+                    String title = "🚫 تم إلغاء الحجز (Booking Cancelled)";
+                    String message = booking.getUser().getFullName() + " قام بإلغاء الحجز لملعب " + booking.getFacility().getName() + " يوم " + booking.getStartTime().toLocalDate() + ". تم إرجاع الرصيد لحسابك.";
+                    try {
+                        notificationService.sendInAppNotification(buddy, title, message, com.badya.booking.model.NotificationType.BOOKING_CANCELLED);
+                    } catch (Exception ex) {
+                        System.err.println("Failed to notify buddy of cancellation: " + ex.getMessage());
+                    }
+                }
+            } else if (bp.getStatus() == ParticipantStatus.PENDING) {
+                // Notify pending buddy that the invitation was cancelled/withdrawn
+                UserAccount buddy = bp.getUser();
+                if (buddy != null) {
+                    String title = "🚫 تم سحب دعوة الحجز (Invitation Withdrawn)";
+                    String message = booking.getUser().getFullName() + " قام بسحب دعوة الحجز لملعب " + booking.getFacility().getName() + " يوم " + booking.getStartTime().toLocalDate() + ".";
+                    try {
+                        notificationService.sendInAppNotification(buddy, title, message, com.badya.booking.model.NotificationType.BOOKING_CANCELLED);
+                    } catch (Exception ex) {
+                        System.err.println("Failed to notify buddy of invitation withdrawal: " + ex.getMessage());
+                    }
+                }
+            }
+            bp.setStatus(ParticipantStatus.REJECTED);
+            bookingParticipantRepository.save(bp);
+        }
+
         try {
             notificationService.sendBookingCancelled(booking, true);
         } catch (Exception ex) {
             System.err.println("Cancellation notification failed: " + ex.getMessage());
         }
-        booking.setConflictId(null);
-        Booking saved = bookingRepository.save(booking);
         promoteWaitlist(booking);
         return saved;
     }
@@ -517,5 +651,97 @@ public class BookingService {
             current = slotEnd;
         }
         return availableTimes;
+    }
+
+    public boolean hasOverlappingBooking(Long userId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<Booking> bookerOverlaps = bookingRepository.findByUserIdAndStatusInAndStartTimeLessThanAndEndTimeGreaterThan(
+                userId,
+                List.of(BookingStatus.CONFIRMED, BookingStatus.RESERVED_PENDING_PLAYERS),
+                endTime,
+                startTime);
+        if (!bookerOverlaps.isEmpty()) {
+            return true;
+        }
+
+        List<BookingParticipant> participations = bookingParticipantRepository.findByUserId(userId);
+        for (BookingParticipant bp : participations) {
+            if (bp.getStatus() == ParticipantStatus.CONFIRMED) {
+                Booking b = bp.getBooking();
+                if (b.getStatus() == BookingStatus.CONFIRMED || b.getStatus() == BookingStatus.RESERVED_PENDING_PLAYERS) {
+                    if (b.getStartTime().isBefore(endTime) && b.getEndTime().isAfter(startTime)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private void logEvent(Long bookingId, Long userId, String eventType, String details) {
+        try {
+            BookingEvent event = new BookingEvent();
+            event.setBookingId(bookingId);
+            event.setUserId(userId);
+            event.setEventType(eventType);
+            event.setDetails(details);
+            bookingEventRepository.save(event);
+        } catch (Exception ex) {
+            System.err.println("Failed to log booking event: " + ex.getMessage());
+        }
+    }
+
+    private LocalDateTime calculateExpiryTime(LocalDateTime createdAt, LocalDateTime startTime) {
+        LocalDateTime plus15 = createdAt.plusMinutes(15);
+        LocalDateTime minus1hour = startTime.minusHours(1);
+        return plus15.isBefore(minus1hour) ? plus15 : minus1hour;
+    }
+
+    @Transactional
+    @Scheduled(fixedRate = 30000)
+    public void checkExpiredBookings() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> expiredBookings = bookingRepository.findByStatusAndExpiryTimeBefore(
+                BookingStatus.RESERVED_PENDING_PLAYERS,
+                now);
+
+        for (Booking booking : expiredBookings) {
+            try {
+                booking.setStatus(BookingStatus.CANCELLED);
+                bookingRepository.save(booking);
+
+                UserAccount booker = booking.getUser();
+                if (booker != null) {
+                    booker.setCredits(booker.getCredits() + 1);
+                    if (booker.getReservedCredits() > 0) {
+                        booker.setReservedCredits(booker.getReservedCredits() - 1);
+                    }
+                    userRepository.save(booker);
+
+                    logEvent(booking.getId(), booker.getId(), "INVITATION_EXPIRED", "Teammate invitation expired.");
+                    logEvent(booking.getId(), booker.getId(), "REFUND_ISSUED", "Refunded 1 credit to booker due to expiration.");
+
+                    String title = "⏳ انتهى وقت قبول الدعوة (Invitation Expired)";
+                    String message = "انتهى وقت تأكيد الحجز لملعب " + booking.getFacility().getName() + " يوم " + booking.getStartTime().toLocalDate() + " الساعة " + booking.getStartTime().toLocalTime() + " لأن بعض زملائك لم يوافقوا على الدعوة في الوقت المحدد (15 دقيقة). تم إلغاء الحجز وإرجاع الرصيد لحسابك.";
+                    notificationService.sendInAppNotification(booker, title, message, com.badya.booking.model.NotificationType.BOOKING_CANCELLED);
+                }
+
+                List<BookingParticipant> participants = bookingParticipantRepository.findByBookingId(booking.getId());
+                for (BookingParticipant bp : participants) {
+                    if (bp.getStatus() == ParticipantStatus.PENDING) {
+                        bp.setStatus(ParticipantStatus.REJECTED);
+                        bookingParticipantRepository.save(bp);
+
+                        UserAccount buddy = bp.getUser();
+                        if (buddy != null) {
+                            String title = "⏳ انتهى وقت قبول الدعوة (Invitation Expired)";
+                            String message = "انتهى وقت قبول دعوة اللعب من " + booking.getUser().getFullName() + " بملعب " + booking.getFacility().getName() + ". تم إلغاء الحجز.";
+                            notificationService.sendInAppNotification(buddy, title, message, com.badya.booking.model.NotificationType.BOOKING_CANCELLED);
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                System.err.println("Failed to process expired booking ID " + booking.getId() + ": " + ex.getMessage());
+            }
+        }
     }
 }

@@ -17,6 +17,7 @@ const STATUS_CONFIG = {
   REJECTED: { label: "Rejected", color: "#ef4444", bg: "#fee2e2", icon: "❌" },
   CANCELLED: { label: "Cancelled", color: "#6b7280", bg: "#f3f4f6", icon: "🚫" },
   COMPLETED: { label: "Completed", color: "#8b5cf6", bg: "#ede9fe", icon: "🏁" },
+  RESERVED_PENDING_PLAYERS: { label: "Pending Teammates", color: "#d97706", bg: "#fef3c7", icon: "⏳" },
 };
 
 const FACILITY_ICONS = (name = "") => {
@@ -55,9 +56,16 @@ function BookingCard({ booking, onCancel, onReschedule, onFeedback }) {
   const displayStatus = booking.conflictId && booking.status === "PENDING" ? "CONFLICT" : booking.status;
   const cfg = STATUS_CONFIG[displayStatus] || STATUS_CONFIG.PENDING;
   const start = new Date(booking.startTime);
-  const isUpcoming = start > new Date() && ["CONFIRMED", "APPROVED", "PENDING", "CONFLICT"].includes(displayStatus);
+  const isUpcoming = start > new Date() && ["CONFIRMED", "APPROVED", "PENDING", "CONFLICT", "RESERVED_PENDING_PLAYERS"].includes(displayStatus);
   const statusKey = `status${displayStatus.charAt(0) + displayStatus.slice(1).toLowerCase()}`;
-  const translatedLabel = t(`studentDashboard.${statusKey}`) || cfg.label;
+  let translatedLabel = t(`studentDashboard.${statusKey}`);
+  if (!translatedLabel || translatedLabel === `studentDashboard.${statusKey}`) {
+    if (displayStatus === "RESERVED_PENDING_PLAYERS") {
+      translatedLabel = language === "ar" ? "في انتظار الزملاء" : "Pending Teammates";
+    } else {
+      translatedLabel = cfg.label;
+    }
+  }
 
   return (
     <div className={`sd-booking-card ${isUpcoming ? "upcoming" : ""}`}>
@@ -74,6 +82,20 @@ function BookingCard({ booking, onCancel, onReschedule, onFeedback }) {
         )}
         {displayStatus === "CONFLICT" && (
           <div className="sd-rejection-reason">{t("studentDashboard.conflictDetectedAwaitingAdmin")}</div>
+        )}
+        {booking.bookingParticipants && booking.bookingParticipants.length > 0 && (
+          <div className="sd-booking-buddies" style={{ marginTop: 8, fontSize: "0.82rem", color: "#6b7280", display: "flex", flexWrap: "wrap", gap: "6px 12px", borderTop: "1px dashed #e5e7eb", paddingTop: "6px" }}>
+            <span style={{ fontWeight: "600" }}>{language === "ar" ? "الزملاء:" : "Teammates:"}</span>
+            {booking.bookingParticipants.map(bp => {
+              const statusIcon = bp.status === "CONFIRMED" ? "✅" : bp.status === "REJECTED" ? "❌" : "⏳";
+              const statusLabel = bp.status === "CONFIRMED" ? (language === "ar" ? "موافق" : "Joined") : bp.status === "REJECTED" ? (language === "ar" ? "اعتذر" : "Declined") : (language === "ar" ? "معلق" : "Pending");
+              return (
+                <span key={bp.id} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  👤 {bp.user?.fullName} ({statusIcon} {statusLabel})
+                </span>
+              );
+            })}
+          </div>
         )}
       </div>
       <div className="sd-booking-right">
@@ -434,8 +456,50 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
     finally { setFbLoading(false); }
   };
 
+  const handleRespondInvitation = async (bookingId, accept) => {
+    try {
+      const res = await fetch(`${API}/api/bookings/${bookingId}/respond-buddy`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...headers
+        },
+        body: JSON.stringify({ accept })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || data.message || "Failed to respond to invitation");
+      }
+      alert(accept 
+        ? (language === "ar" ? "تم قبول الدعوة بنجاح وخصم رصيد حجز واحد." : "Invitation accepted successfully. 1 credit deducted.") 
+        : (language === "ar" ? "تم رفض الدعوة بنجاح وإلغاء الحجز." : "Invitation declined. Booking cancelled.")
+      );
+      await fetchData();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   // Stats
-  const active = bookings.filter(b => ["CONFIRMED", "APPROVED", "PENDING"].includes(b.status));
+  const active = bookings.filter(b => {
+    if (["CONFIRMED", "APPROVED", "PENDING"].includes(b.status)) {
+      return true;
+    }
+    if (b.status === "RESERVED_PENDING_PLAYERS") {
+      if (b.user?.id === session?.id) return true;
+      if (b.bookingParticipants && b.bookingParticipants.some(p => p.user?.id === session?.id && p.status === "CONFIRMED")) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  const pendingInvitations = bookings.filter(b => 
+    b.status === "RESERVED_PENDING_PLAYERS" && 
+    b.bookingParticipants && 
+    b.bookingParticipants.some(p => p.user?.studentId === session?.studentId && p.status === "PENDING")
+  );
+
   const upcoming = active.filter(b => new Date(b.startTime) > new Date());
   const completed = bookings.filter(b => b.status === "COMPLETED");
   const conflictBookings = bookings.filter(b => b.conflictId && b.status === "PENDING");
@@ -571,6 +635,99 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
         </header>
 
         <div className="sd-content">
+          {/* Teammate invitations */}
+          {pendingInvitations.length > 0 && (
+            <div className="sd-invitations-section" style={{
+              background: "linear-gradient(135deg, #fffbeb, #fef3c7)",
+              border: "1px solid #fcd34d",
+              borderRadius: "12px",
+              padding: "16px",
+              marginBottom: "20px",
+              boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)"
+            }}>
+              <h3 style={{ margin: "0 0 12px 0", color: "#d97706", display: "flex", alignItems: "center", gap: 8, fontSize: "1.1rem" }}>
+                🔔 {language === "ar" ? "دعوات حجز معلقة من أصحابك" : "Teammate Booking Invitations"}
+                <span style={{
+                  background: "#ef4444",
+                  color: "#fff",
+                  borderRadius: "50%",
+                  width: "22px",
+                  height: "22px",
+                  fontSize: "0.75rem",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}>{pendingInvitations.length}</span>
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {pendingInvitations.map(inv => {
+                  const start = new Date(inv.startTime);
+                  const displayDate = start.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" });
+                  const displayTime = start.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+                  return (
+                    <div key={inv.id} style={{
+                      background: "#fff",
+                      border: "1px solid #fcd34d",
+                      borderRadius: "8px",
+                      padding: "12px 16px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: 12
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: "bold", fontSize: "1rem", color: "#1f2937" }}>
+                          {FACILITY_ICONS(inv.facility?.name)} {inv.facility?.name}
+                        </div>
+                        <div style={{ fontSize: "0.85rem", color: "#4b5563", marginTop: 4 }}>
+                          <span>📅 {displayDate} </span> | <span> 🕐 {displayTime}</span>
+                        </div>
+                        <div style={{ fontSize: "0.85rem", color: "#4b5563", marginTop: 4 }}>
+                          👤 {language === "ar" ? `الداعي: ${inv.user?.fullName}` : `Invited by: ${inv.user?.fullName}`}
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          onClick={() => handleRespondInvitation(inv.id, true)}
+                          style={{
+                            background: "#10b981",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "6px",
+                            padding: "8px 16px",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                            fontSize: "0.85rem",
+                            boxShadow: "0 2px 4px rgba(16,185,129,0.2)"
+                          }}
+                        >
+                          {language === "ar" ? "قبول الدعوة (1 رصيد)" : "Accept (1 Credit)"}
+                        </button>
+                        <button
+                          onClick={() => handleRespondInvitation(inv.id, false)}
+                          style={{
+                            background: "#ef4444",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "6px",
+                            padding: "8px 16px",
+                            cursor: "pointer",
+                            fontWeight: "bold",
+                            fontSize: "0.85rem",
+                            boxShadow: "0 2px 4px rgba(239,68,68,0.2)"
+                          }}
+                        >
+                          {language === "ar" ? "رفض" : "Decline"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Stats Row & Timeline (only on overview/bookings tab) */}
           {activeTab === "bookings" && (
             <>

@@ -2,6 +2,9 @@ package com.badya.booking.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "bookings")
@@ -72,6 +75,29 @@ public class Booking {
 
     @Column(name = "reminder_sent", nullable = false)
     private boolean reminderSent = false;
+
+    @Column(name = "expiry_time", nullable = true)
+    private LocalDateTime expiryTime;
+
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("booking")
+    private List<BookingParticipant> bookingParticipants = new ArrayList<>();
+
+    public LocalDateTime getExpiryTime() {
+        return expiryTime;
+    }
+
+    public void setExpiryTime(LocalDateTime expiryTime) {
+        this.expiryTime = expiryTime;
+    }
+
+    public List<BookingParticipant> getBookingParticipants() {
+        return bookingParticipants;
+    }
+
+    public void setBookingParticipants(List<BookingParticipant> bookingParticipants) {
+        this.bookingParticipants = bookingParticipants;
+    }
 
     public Long getId() {
         return id;

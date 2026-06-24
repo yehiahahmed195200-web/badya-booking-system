@@ -1,6 +1,7 @@
 package com.badya.booking.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "booking_participants", uniqueConstraints = {
@@ -13,6 +14,7 @@ public class BookingParticipant {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "booking_id", nullable = false)
+    @JsonIgnoreProperties("bookingParticipants")
     private Booking booking;
 
     @ManyToOne(optional = false)
@@ -21,6 +23,18 @@ public class BookingParticipant {
 
     @Column(name = "team", nullable = false)
     private String team = "A";
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ParticipantStatus status = ParticipantStatus.PENDING;
+
+    public ParticipantStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ParticipantStatus status) {
+        this.status = status;
+    }
 
     public Long getId() {
         return id;

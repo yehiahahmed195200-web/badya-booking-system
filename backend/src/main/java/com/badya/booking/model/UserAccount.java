@@ -40,6 +40,9 @@ public class UserAccount {
     @Column(name = "credits", nullable = false)
     private Integer credits = 10;
 
+    @Column(name = "reserved_credits", nullable = false)
+    private Integer reservedCredits = 0;
+
     @Column(name = "student_id", nullable = true, unique = true)
     private String studentId;
 
@@ -77,6 +80,14 @@ public class UserAccount {
 
     public void setCredits(Integer credits) {
         this.credits = credits;
+    }
+
+    public Integer getReservedCredits() {
+        return reservedCredits;
+    }
+
+    public void setReservedCredits(Integer reservedCredits) {
+        this.reservedCredits = reservedCredits;
     }
 
     public String getFullName() {

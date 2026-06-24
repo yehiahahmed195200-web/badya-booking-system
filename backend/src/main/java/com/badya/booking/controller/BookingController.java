@@ -13,6 +13,11 @@ import com.badya.booking.repository.UserRepository;
 import com.badya.booking.service.BookingService;
 import com.badya.booking.service.AuditLogService;
 import com.badya.booking.service.NotificationService;
+import com.badya.booking.model.ParticipantStatus;
+import com.badya.booking.model.BookingParticipant;
+import com.badya.booking.model.BookingEvent;
+import com.badya.booking.repository.BookingParticipantRepository;
+import com.badya.booking.repository.BookingEventRepository;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -45,6 +50,12 @@ public class BookingController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private BookingParticipantRepository bookingParticipantRepository;
+
+    @Autowired
+    private BookingEventRepository bookingEventRepository;
+
     public BookingController(BookingService bookingService) {
         this.bookingService = bookingService;
     }
@@ -56,10 +67,8 @@ public class BookingController {
             if (current.getRole() == UserRole.ADMIN) {
                 return bookingService.all();
             }
-            // Return only bookings belonging to the authenticated user via direct repository query
-            return bookingRepository.findByUserId(current.getId());
+            return bookingRepository.findAllForUser(current.getId());
         } catch (IllegalArgumentException e) {
-            // If no valid auth header present, default to empty list for safety
             return List.of();
         }
     }
@@ -79,6 +88,178 @@ public class BookingController {
     @PatchMapping("/{id}/cancel")
     public Booking cancel(@PathVariable Long id) {
         return bookingService.cancel(id);
+    }
+
+    @PostMapping("/{id}/respond-buddy")
+    public ResponseEntity<?> respondBuddy(
+            @PathVariable Long id,
+            @RequestBody Map<String, Boolean> body,
+            @RequestHeader("Authorization") String authHeader) {
+        UserAccount current = getAuthenticatedUser(authHeader);
+        if (current == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+
+        Boolean accept = body.get("accept");
+        if (accept == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "accept field is required"));
+        }
+
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+
+        if (booking.getStatus() != BookingStatus.RESERVED_PENDING_PLAYERS) {
+            return ResponseEntity.badRequest().body(Map.of("error", "This booking is no longer pending teammate responses."));
+        }
+
+        // Verify expiration
+        if (booking.getExpiryTime() != null && booking.getExpiryTime().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "This booking invitation has expired."));
+        }
+
+        BookingParticipant participant = bookingParticipantRepository.findByBookingIdAndUserId(id, current.getId())
+                .orElseThrow(() -> new IllegalArgumentException("You are not invited to this booking."));
+
+        if (participant.getStatus() != ParticipantStatus.PENDING) {
+            return ResponseEntity.badRequest().body(Map.of("error", "You have already responded to this invitation."));
+        }
+
+        if (accept) {
+            // Check buddy credits
+            if (current.getCredits() == null || current.getCredits() <= 0) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Insufficient credits. Your remaining credit balance is 0."));
+            }
+
+            // Deduct buddy credit
+            current.setCredits(current.getCredits() - 1);
+            userRepository.save(current);
+
+            // Mark participant status
+            participant.setStatus(ParticipantStatus.CONFIRMED);
+            bookingParticipantRepository.save(participant);
+
+            // Audit Event
+            logEvent(booking.getId(), current.getId(), "INVITATION_ACCEPTED", current.getFullName() + " accepted the teammate invitation.");
+
+            // Notify Booker
+            String title = "✅ تم قبول دعوتك! (Buddy Accepted)";
+            String message = current.getFullName() + " وافق على دعوة اللعب بملعب " + booking.getFacility().getName() + " يوم " + booking.getStartTime().toLocalDate() + ".";
+            try {
+                notificationService.sendInAppNotification(booking.getUser(), title, message, NotificationType.BOOKING_CONFIRMED);
+            } catch (Exception e) {
+                System.err.println("Failed to send notification: " + e.getMessage());
+            }
+
+            // Check if ALL participants are confirmed
+            List<BookingParticipant> allParticipants = bookingParticipantRepository.findByBookingId(booking.getId());
+            boolean allConfirmed = allParticipants.stream().allMatch(p -> p.getStatus() == ParticipantStatus.CONFIRMED);
+            if (allConfirmed) {
+                // Confirm booking
+                booking.setStatus(BookingStatus.CONFIRMED);
+                booking.setExpiryTime(null);
+                bookingRepository.save(booking);
+
+                // Booker's credit hold is finalized
+                UserAccount booker = booking.getUser();
+                if (booker.getReservedCredits() > 0) {
+                    booker.setReservedCredits(booker.getReservedCredits() - 1);
+                    userRepository.save(booker);
+                }
+
+                // Audit Event
+                logEvent(booking.getId(), booker.getId(), "BOOKING_CONFIRMED", "All teammates accepted. Booking is confirmed.");
+
+                // Notify booker and all participants
+                String confTitle = "🎾 الحجز مؤكد بالكامل! (Booking Confirmed)";
+                String confMessage = "تم تأكيد الحجز بالكامل لملعب " + booking.getFacility().getName() + " يوم " + booking.getStartTime().toLocalDate() + " الساعة " + booking.getStartTime().toLocalTime() + " بعد موافقة جميع زملائك.";
+                try {
+                    notificationService.sendInAppNotification(booker, confTitle, confMessage, NotificationType.BOOKING_CONFIRMED);
+                    if (booker.getEmail() != null) {
+                        notificationService.sendEmail(booker.getEmail(), confTitle, confMessage);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to send notifications: " + e.getMessage());
+                }
+
+                for (BookingParticipant bp : allParticipants) {
+                    UserAccount player = bp.getUser();
+                    try {
+                        notificationService.sendInAppNotification(player, confTitle, confMessage, NotificationType.BOOKING_CONFIRMED);
+                        if (player.getEmail() != null) {
+                            notificationService.sendEmail(player.getEmail(), confTitle, confMessage);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Failed to send notification: " + e.getMessage());
+                    }
+                }
+            }
+        } else {
+            // Reject invitation
+            participant.setStatus(ParticipantStatus.REJECTED);
+            bookingParticipantRepository.save(participant);
+
+            // Audit Event
+            logEvent(booking.getId(), current.getId(), "INVITATION_REJECTED", current.getFullName() + " rejected the teammate invitation.");
+
+            // Cancel the booking immediately
+            booking.setStatus(BookingStatus.CANCELLED);
+            booking.setExpiryTime(null);
+            bookingRepository.save(booking);
+
+            // Refund Booker
+            UserAccount booker = booking.getUser();
+            booker.setCredits(booker.getCredits() + 1);
+            if (booker.getReservedCredits() > 0) {
+                booker.setReservedCredits(booker.getReservedCredits() - 1);
+            }
+            userRepository.save(booker);
+
+            logEvent(booking.getId(), booker.getId(), "BOOKING_CANCELLED", "Booking cancelled due to teammate rejection.");
+            logEvent(booking.getId(), booker.getId(), "REFUND_ISSUED", "Refunded 1 credit to booker due to teammate rejection.");
+
+            // Notify Booker
+            String title = "❌ تم رفض دعوتك (Buddy Declined)";
+            String message = current.getFullName() + " اعتذر عن دعوة اللعب بملعب " + booking.getFacility().getName() + " يوم " + booking.getStartTime().toLocalDate() + ". تم إلغاء الحجز وإرجاع الرصيد لحسابك.";
+            try {
+                notificationService.sendInAppNotification(booker, title, message, NotificationType.BOOKING_CANCELLED);
+            } catch (Exception e) {
+                System.err.println("Failed to send notification: " + e.getMessage());
+            }
+
+            // Notify other participants of cancellation
+            List<BookingParticipant> allParticipants = bookingParticipantRepository.findByBookingId(booking.getId());
+            for (BookingParticipant bp : allParticipants) {
+                if (bp.getId().equals(participant.getId())) continue;
+                bp.setStatus(ParticipantStatus.REJECTED);
+                bookingParticipantRepository.save(bp);
+
+                UserAccount buddyUser = bp.getUser();
+                if (buddyUser != null) {
+                    String cancelTitle = "🚫 تم إلغاء حجز اللعبة (Invitation Cancelled)";
+                    String cancelMsg = "تم إلغاء حجز اللعبة من " + booker.getFullName() + " بملعب " + booking.getFacility().getName() + " لأن أحد الزملاء اعتذر عن الحضور.";
+                    try {
+                        notificationService.sendInAppNotification(buddyUser, cancelTitle, cancelMsg, NotificationType.BOOKING_CANCELLED);
+                    } catch (Exception e) {
+                        System.err.println("Failed to send notification: " + e.getMessage());
+                    }
+                }
+            }
+        }
+
+        return ResponseEntity.ok(Map.of("success", true, "bookingStatus", booking.getStatus()));
+    }
+
+    private void logEvent(Long bookingId, Long userId, String eventType, String details) {
+        try {
+            BookingEvent event = new BookingEvent();
+            event.setBookingId(bookingId);
+            event.setUserId(userId);
+            event.setEventType(eventType);
+            event.setDetails(details);
+            bookingEventRepository.save(event);
+        } catch (Exception ex) {
+            System.err.println("Failed to log event: " + ex.getMessage());
+        }
     }
 
     /**

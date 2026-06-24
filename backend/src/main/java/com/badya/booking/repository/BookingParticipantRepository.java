@@ -14,6 +14,7 @@ public interface BookingParticipantRepository extends JpaRepository<BookingParti
     List<BookingParticipant> findByBookingId(Long bookingId);
     List<BookingParticipant> findByUserId(Long userId);
     long countByBookingId(Long bookingId);
+    java.util.Optional<BookingParticipant> findByBookingIdAndUserId(Long bookingId, Long userId);
 
     @Modifying
     @Transactional

@@ -12,4 +12,5 @@ public record CreateBookingRequest(
         Integer durationMins,
         String scannedIdData,
         String sport,
-        Boolean forceCancelOverlap) {}
+        Boolean forceCancelOverlap,
+        java.util.List<String> buddyIds) {}
