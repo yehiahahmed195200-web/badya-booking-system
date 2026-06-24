@@ -13,14 +13,28 @@ const prisma = new PrismaClient();
 
 async function main() {
   try {
-    console.log("Fetching all users from the users table...");
-    const allUsers = await prisma.users.findMany();
-    console.log("Users in database:");
-    allUsers.forEach(u => {
-      console.log(`ID: ${u.id}, Name: ${u.full_name}, Email: ${u.email}, Role: ${u.role}, StudentID: ${u.student_id}, DeviceID: ${u.device_id}, PendingDeviceID: ${u.pending_device_id}, DeviceChangeStatus: ${u.device_change_status}`);
-    });
+    console.log("Checking columns for users table:");
+    const usersCols: any[] = await prisma.$queryRawUnsafe("SHOW COLUMNS FROM users");
+    console.log(usersCols.map(c => `${c.Field} (${c.Type})`));
+
+    console.log("\nChecking columns for bookings table:");
+    const bookingsCols: any[] = await prisma.$queryRawUnsafe("SHOW COLUMNS FROM bookings");
+    console.log(bookingsCols.map(c => `${c.Field} (${c.Type})`));
+
+    console.log("\nChecking columns for booking_participants table:");
+    const participantsCols: any[] = await prisma.$queryRawUnsafe("SHOW COLUMNS FROM booking_participants");
+    console.log(participantsCols.map(c => `${c.Field} (${c.Type})`));
+
+    console.log("\nChecking if booking_events table exists:");
+    try {
+      const eventsCols: any[] = await prisma.$queryRawUnsafe("SHOW COLUMNS FROM booking_events");
+      console.log("booking_events exists with columns:", eventsCols.map(c => `${c.Field} (${c.Type})`));
+    } catch (e: any) {
+      console.log("booking_events does not exist or error:", e.message);
+    }
+
   } catch (error) {
-    console.error("Error fetching users:", error);
+    console.error("Error inspecting database:", error);
   } finally {
     await prisma.$disconnect();
   }
