@@ -162,8 +162,43 @@ public class UserController {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         String reason = body.getOrDefault("reason", "No reason provided");
+        String duration = body.getOrDefault("duration", "Permanent");
 
         user.setBanned(true);
+        user.setBanReason(reason);
+        user.setBanDuration(duration);
+
+        if ("Permanent".equalsIgnoreCase(duration)) {
+            user.setBanExpiresAt(null);
+        } else {
+            java.time.LocalDateTime expiresAt = java.time.LocalDateTime.now();
+            if (duration.toLowerCase().contains("day")) {
+                try {
+                    int days = Integer.parseInt(duration.replaceAll("[^0-9]", "").trim());
+                    expiresAt = expiresAt.plusDays(days);
+                } catch (Exception e) {
+                    expiresAt = expiresAt.plusDays(3);
+                }
+            } else if (duration.toLowerCase().contains("week")) {
+                try {
+                    int weeks = Integer.parseInt(duration.replaceAll("[^0-9]", "").trim());
+                    expiresAt = expiresAt.plusWeeks(weeks);
+                } catch (Exception e) {
+                    expiresAt = expiresAt.plusWeeks(1);
+                }
+            } else if (duration.toLowerCase().contains("month")) {
+                try {
+                    int months = Integer.parseInt(duration.replaceAll("[^0-9]", "").trim());
+                    expiresAt = expiresAt.plusMonths(months);
+                } catch (Exception e) {
+                    expiresAt = expiresAt.plusMonths(1);
+                }
+            } else {
+                expiresAt = null;
+            }
+            user.setBanExpiresAt(expiresAt);
+        }
+
         userRepository.save(user);
 
         // Send automated ban notification (FR-7.4)
@@ -201,6 +236,9 @@ public class UserController {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         user.setBanned(false);
+        user.setBanReason(null);
+        user.setBanDuration(null);
+        user.setBanExpiresAt(null);
         user.setWarnings(0);
         userRepository.save(user);
 

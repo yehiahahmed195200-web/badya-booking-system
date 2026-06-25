@@ -79,6 +79,16 @@ public class UserAccount {
     @Column(name = "terms_accepted_version", nullable = true)
     private String termsAcceptedVersion;
 
+    @Column(name = "ban_reason", nullable = true)
+    private String banReason;
+
+    @Column(name = "ban_duration", nullable = true)
+    private String banDuration;
+
+    @Column(name = "ban_expires_at", nullable = true)
+    private java.time.LocalDateTime banExpiresAt;
+
+
 
     public Long getId() {
         return id;
@@ -125,6 +135,9 @@ public class UserAccount {
     }
 
     public boolean isBanned() {
+        if (banned && banExpiresAt != null && java.time.LocalDateTime.now().isAfter(banExpiresAt)) {
+            return false;
+        }
         return banned;
     }
 
@@ -266,5 +279,29 @@ public class UserAccount {
 
     public void setTermsAcceptedVersion(String termsAcceptedVersion) {
         this.termsAcceptedVersion = termsAcceptedVersion;
+    }
+
+    public String getBanReason() {
+        return banReason;
+    }
+
+    public void setBanReason(String banReason) {
+        this.banReason = banReason;
+    }
+
+    public String getBanDuration() {
+        return banDuration;
+    }
+
+    public void setBanDuration(String banDuration) {
+        this.banDuration = banDuration;
+    }
+
+    public java.time.LocalDateTime getBanExpiresAt() {
+        return banExpiresAt;
+    }
+
+    public void setBanExpiresAt(java.time.LocalDateTime banExpiresAt) {
+        this.banExpiresAt = banExpiresAt;
     }
 }

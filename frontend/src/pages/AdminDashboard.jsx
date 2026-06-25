@@ -800,9 +800,11 @@ export default function AdminDashboard({ session, onLogout, toggleNotifications 
       } else if (action === "ban") {
         const reason = prompt("Enter reason for ban:");
         if (!reason) { setUserAction(p => ({ ...p, [userId]: {} })); return; }
-        body = { reason };
+        const duration = prompt("Enter duration for ban (e.g. '3 Days', '1 Week', '1 Month', 'Permanent'):", "Permanent");
+        if (!duration) { setUserAction(p => ({ ...p, [userId]: {} })); return; }
+        body = { reason, duration };
       }
-      const res = await fetch(`${API}/api/admin/users/${userId}/${action}`, {
+      const res = await fetch(`${API}/api/users/admin/${userId}/${action}`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify(body),

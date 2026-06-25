@@ -12,10 +12,11 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
 
   // Student form states
   const [studentIdInput, setStudentIdInput] = useState("");
-  const [studentStep, setStudentStep] = useState("studentId"); // "card", "studentId", "device_locked"
+  const [studentStep, setStudentStep] = useState("studentId"); // "card", "studentId", "device_locked", "banned"
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
   const [deviceLockedState, setDeviceLockedState] = useState(null);
+  const [banDetails, setBanDetails] = useState(null);
 
   // Loading and helper states
   const [loading, setLoading] = useState(false);
@@ -41,9 +42,26 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
   };
 
   // Staff manual login submit
-  function handleStaffSubmit(e) {
+  async function handleStaffSubmit(e) {
     e.preventDefault();
-    onLoginSubmit({ email: staffEmail, password: staffPassword });
+    setLocalError("");
+    setLocalSuccess("");
+    setLoading(true);
+    try {
+      const data = await onLoginSubmit({ email: staffEmail, password: staffPassword });
+      if (data && data.status === "BANNED") {
+        setBanDetails({
+          reason: data.reason,
+          duration: data.duration,
+          message: data.message
+        });
+        setStudentStep("banned");
+      }
+    } catch (err) {
+      // handled in parent component or locally
+    } finally {
+      setLoading(false);
+    }
   }
 
   // Student Step 1: Initiate Student Login (Passwordless check or OTP trigger)
@@ -78,6 +96,16 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
             pendingRequest: data.pendingRequest || false
           });
           setStudentStep("device_locked");
+          setLoading(false);
+          return;
+        }
+        if (data.status === "BANNED") {
+          setBanDetails({
+            reason: data.reason,
+            duration: data.duration,
+            message: data.message
+          });
+          setStudentStep("banned");
           setLoading(false);
           return;
         }
@@ -289,213 +317,261 @@ export default function LoginPage({ onLoginSubmit, onStudentLoginSuccess, errorM
         <main className="login-layout" id="layout">
           <section className="login-card" id="login-section">
             
-            {/* Tabs Header */}
-            <div className="login-tabs">
-              <button
-                type="button"
-                className={`login-tab-btn ${activeTab === "student" ? "active" : ""}`}
-                onClick={() => {
-                  setActiveTab("student");
-                  setLocalError("");
-                  setLocalSuccess("");
-                }}
-              >
-                🎓 {language === "en" ? "Students" : "الطلاب"}
-              </button>
-              <button
-                type="button"
-                className={`login-tab-btn ${activeTab === "staff" ? "active" : ""}`}
-                onClick={() => {
-                  setActiveTab("staff");
-                  setLocalError("");
-                  setLocalSuccess("");
-                }}
-              >
-                👥 {language === "en" ? "Staff / Coaches" : "الموظفون / المدربون"}
-              </button>
-            </div>
-
-            {/* TAB 1: STUDENT LOGIN FLOW */}
-            {activeTab === "student" && (
-              <div>
+            {studentStep === "banned" && banDetails ? (
+              <div className="login-form text-arabic" style={{ textAlign: "center", padding: "10px 0" }}>
+                <div style={{ fontSize: "3.5rem", marginBottom: "15px" }}>🚫👤</div>
                 
-                {/* SCREEN A: QUICK CARD (Recognized Device) */}
-                {studentStep === "card" && (
-                  <div className="student-quick-card">
-                    <div className="avatar-circle">
-                      {getInitials(studentName)}
-                    </div>
-                    <h3 style={{ margin: "0 0 4px", fontSize: "1.35rem" }}>
-                      {language === "en" ? `Welcome back, ${studentName} 👋` : `مرحباً بك مجدداً، ${studentName} 👋`}
-                    </h3>
-                    <p style={{ margin: "0 0 20px", color: "rgba(255, 255, 255, 0.7)", fontSize: "0.9rem" }}>
-                      {language === "en" ? "Student ID:" : "الرقم الجامعي:"} <strong style={{ color: "#2dd4dc" }}>{selectedStudentId}</strong>
-                    </p>
+                <h3 style={{ color: "#ff4d4d", margin: "0 0 12px", fontSize: "1.45rem", fontWeight: "bold" }}>
+                  {language === "en" ? "Account Suspended!" : "تم إيقاف الحساب!"}
+                </h3>
+                
+                <div style={{
+                  background: "rgba(255, 77, 77, 0.08)",
+                  border: "1px solid rgba(255, 77, 77, 0.2)",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  marginBottom: "20px",
+                  textAlign: language === "en" ? "left" : "right"
+                }}>
+                  <p style={{ margin: "0 0 10px", color: "rgba(255, 255, 255, 0.95)", fontSize: "0.95rem" }}>
+                    <strong>{language === "en" ? "Reason:" : "السبب:"}</strong> {banDetails.reason}
+                  </p>
+                  <p style={{ margin: "0 0 10px", color: "rgba(255, 255, 255, 0.95)", fontSize: "0.95rem" }}>
+                    <strong>{language === "en" ? "Duration:" : "المدة:"}</strong> {banDetails.duration}
+                  </p>
+                  <p style={{ margin: 0, color: "rgba(255, 255, 255, 0.75)", fontSize: "0.85rem", lineHeight: "1.5" }}>
+                    {language === "en" 
+                      ? "⚠️ If you believe this is a mistake or wish to appeal, please contact the Athletic Administration at: "
+                      : "⚠️ إذا كنت تعتقد أن هذا الإجراء تم بالخطأ أو ترغب في تقديم التماس، يرجى التواصل مع الإدارة الرياضية عبر:"}
+                    <br/>
+                    <strong style={{ color: "#2dd4dc" }}>advising@badyauni.edu</strong>
+                    {language === "en" ? " or visit the Athletic Office in person." : " أو زيارة مكتب الإدارة الرياضية شخصياً."}
+                  </p>
+                </div>
 
-                    <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.6)", background: "rgba(255,255,255,0.04)", padding: "10px 12px", borderRadius: 12, marginBottom: 16, textAlign: "center", lineHeight: "1.5" }}>
-                      {language === "en"
-                        ? "🔒 This device is registered and secured to your account. You will be logged in with a single click."
-                        : "🔒 هذا الجهاز مسجل ومؤمن لحسابك. سيتم تسجيل دخولك بنقرة واحدة."}
-                    </p>
+                <button
+                  type="button"
+                  className="back-link"
+                  onClick={() => {
+                    setBanDetails(null);
+                    setStudentStep(localStorage.getItem("remembered_student_id") && activeTab === "student" ? "card" : "studentId");
+                    setLocalError("");
+                    setLocalSuccess("");
+                  }}
+                  style={{ marginTop: "10px", display: "inline-block", fontSize: "0.95rem" }}
+                >
+                  {language === "en" ? "← Go Back" : "← العودة للخلف"}
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Tabs Header */}
+                <div className="login-tabs">
+                  <button
+                    type="button"
+                    className={`login-tab-btn ${activeTab === "student" ? "active" : ""}`}
+                    onClick={() => {
+                      setActiveTab("student");
+                      setLocalError("");
+                      setLocalSuccess("");
+                    }}
+                  >
+                    🎓 {language === "en" ? "Students" : "الطلاب"}
+                  </button>
+                  <button
+                    type="button"
+                    className={`login-tab-btn ${activeTab === "staff" ? "active" : ""}`}
+                    onClick={() => {
+                      setActiveTab("staff");
+                      setLocalError("");
+                      setLocalSuccess("");
+                    }}
+                  >
+                    👥 {language === "en" ? "Staff / Coaches" : "الموظفون / المدربون"}
+                  </button>
+                </div>
 
-                    <button
-                      type="button"
-                      className="login-primary pulse-login-btn"
-                      onClick={(e) => handleStudentInit(e, selectedStudentId)}
-                      disabled={loading}
-                    >
-                      {loading ? t("common.loading") : (language === "en" ? "⚡ Quick & Secure Entry" : "⚡ دخول سريع وآمن")}
-                    </button>
+                {/* TAB 1: STUDENT LOGIN FLOW */}
+                {activeTab === "student" && (
+                  <div>
+                    
+                    {/* SCREEN A: QUICK CARD (Recognized Device) */}
+                    {studentStep === "card" && (
+                      <div className="student-quick-card">
+                        <div className="avatar-circle">
+                          {getInitials(studentName)}
+                        </div>
+                        <h3 style={{ margin: "0 0 4px", fontSize: "1.35rem" }}>
+                          {language === "en" ? `Welcome back, ${studentName} 👋` : `مرحباً بك مجدداً، ${studentName} 👋`}
+                        </h3>
+                        <p style={{ margin: "0 0 20px", color: "rgba(255, 255, 255, 0.7)", fontSize: "0.9rem" }}>
+                          {language === "en" ? "Student ID:" : "الرقم الجامعي:"} <strong style={{ color: "#2dd4dc" }}>{selectedStudentId}</strong>
+                        </p>
 
-                    <button
-                      type="button"
-                      className="back-link"
-                      onClick={() => {
-                        setStudentStep("studentId");
-                        setLocalError("");
-                        setLocalSuccess("");
-                      }}
-                    >
-                      {language === "en" ? "Login with another Student ID" : "الدخول برقم جامعي آخر"}
-                    </button>
+                        <p style={{ fontSize: "0.85rem", color: "rgba(255, 255, 255, 0.6)", background: "rgba(255,255,255,0.04)", padding: "10px 12px", borderRadius: 12, marginBottom: 16, textAlign: "center", lineHeight: "1.5" }}>
+                          {language === "en"
+                            ? "🔒 This device is registered and secured to your account. You will be logged in with a single click."
+                            : "🔒 هذا الجهاز مسجل ومؤمن لحسابك. سيتم تسجيل دخولك بنقرة واحدة."}
+                        </p>
+
+                        <button
+                          type="button"
+                          className="login-primary pulse-login-btn"
+                          onClick={(e) => handleStudentInit(e, selectedStudentId)}
+                          disabled={loading}
+                        >
+                          {loading ? t("common.loading") : (language === "en" ? "⚡ Quick & Secure Entry" : "⚡ دخول سريع وآمن")}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="back-link"
+                          onClick={() => {
+                            setStudentStep("studentId");
+                            setLocalError("");
+                            setLocalSuccess("");
+                          }}
+                        >
+                          {language === "en" ? "Login with another Student ID" : "الدخول برقم جامعي آخر"}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* SCREEN B: ENTER STUDENT ID */}
+                    {studentStep === "studentId" && (
+                      <form onSubmit={(e) => handleStudentInit(e)} className="login-form">
+                        <label className="login-label">
+                          {language === "en" ? "Student ID" : "الرقم الجامعي"}
+                          <input
+                            className="login-input"
+                            type="text"
+                            value={studentIdInput}
+                            onChange={e => setStudentIdInput(e.target.value)}
+                            placeholder={t("login.studentIdPlaceholder")}
+                            required
+                            autoFocus
+                            style={{ direction: "ltr", textAlign: "center" }}
+                          />
+                        </label>
+
+                        <p style={{ fontSize: "0.82rem", color: "rgba(255, 255, 255, 0.7)", margin: "0 0 10px" }}>
+                          {language === "en"
+                            ? "💡 Enter your Student ID. Upon your first login, this device will be automatically registered and locked to your account. You will not be able to log in from any other device without contacting the University Administration."
+                            : "💡 أدخل الرقم الجامعي الخاص بك. عند تسجيل دخولك الأول، سيتم تسجيل هذا الجهاز تلقائياً وقفله على حسابك. لن تتمكن من تسجيل الدخول من أي جهاز آخر دون مراجعة إدارة الجامعة."}
+                        </p>
+
+                        <button type="submit" className="login-primary" disabled={loading}>
+                          {loading ? (language === "en" ? "Verifying..." : "جاري التحقق...") : (language === "en" ? "Continue" : "متابعة")}
+                          {!loading && <span aria-hidden="true">→</span>}
+                        </button>
+                      </form>
+                    )}
+
+                    {/* SCREEN D: DEVICE LOCKED / REQUEST CHANGE */}
+                    {studentStep === "device_locked" && deviceLockedState && (
+                      <div className="login-form" style={{ textAlign: "center", padding: "10px 0" }}>
+                        <div style={{ fontSize: "3.5rem", marginBottom: "15px" }}>🔒📱</div>
+                        
+                        <h3 style={{ color: "#ff5e5e", margin: "0 0 12px", fontSize: "1.25rem", fontWeight: "bold" }}>
+                          {language === "en" ? "Account Linked to Another Device!" : "الحساب مرتبط بجهاز آخر!"}
+                        </h3>
+                        
+                        <p style={{ fontSize: "0.9rem", color: "rgba(255, 255, 255, 0.85)", lineHeight: "1.6", background: "rgba(255, 255, 255, 0.05)", padding: "12px", borderRadius: "8px", marginBottom: "20px" }}>
+                          {deviceLockedState.message}
+                        </p>
+
+                        {deviceLockedState.pendingRequest ? (
+                          <div style={{ background: "rgba(45, 212, 220, 0.08)", border: "1px solid rgba(45, 212, 220, 0.2)", borderRadius: "8px", padding: "12px", color: "#2dd4dc", fontSize: "0.85rem", marginBottom: "20px" }}>
+                            ⏳ <strong>{language === "en" ? "Pending Review:" : "قيد المراجعة:"}</strong> {language === "en" ? "Your request to transfer the account to this device has been submitted successfully and is currently under review by the Athletic Administration." : "تم تقديم طلب نقل الحساب لهذا الجهاز بنجاح وهو قيد المراجعة حالياً من قبل الإدارة الرياضية."}
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="login-primary"
+                            onClick={handleSendDeviceRequest}
+                            disabled={loading}
+                            style={{ background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", border: "none", color: "#000", fontWeight: "bold" }}
+                          >
+                            {loading ? (language === "en" ? "Submitting..." : "جاري التقديم...") : (language === "en" ? "🚀 Submit Device Change Request" : "🚀 تقديم طلب تغيير الجهاز")}
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          className="back-link"
+                          onClick={() => {
+                            setStudentStep("studentId");
+                            setLocalError("");
+                            setLocalSuccess("");
+                          }}
+                          style={{ marginTop: "15px", display: "inline-block" }}
+                        >
+                          {t("common.back")}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* SCREEN B: ENTER STUDENT ID */}
-                {studentStep === "studentId" && (
-                  <form onSubmit={(e) => handleStudentInit(e)} className="login-form">
+                {/* TAB 2: STAFF LOGIN (EMAIL + PASSWORD) */}
+                {activeTab === "staff" && (
+                  <form onSubmit={handleStaffSubmit} className="login-form">
                     <label className="login-label">
-                      {language === "en" ? "Student ID" : "الرقم الجامعي"}
+                      {t("login.email")}
                       <input
                         className="login-input"
-                        type="text"
-                        value={studentIdInput}
-                        onChange={e => setStudentIdInput(e.target.value)}
-                        placeholder={t("login.studentIdPlaceholder")}
+                        type="email"
+                        value={staffEmail}
+                        onChange={e => setStaffEmail(e.target.value)}
+                        placeholder="admin@badya.edu"
                         required
-                        autoFocus
-                        style={{ direction: "ltr", textAlign: "center" }}
+                        autoComplete="email"
                       />
                     </label>
 
-                    <p style={{ fontSize: "0.82rem", color: "rgba(255, 255, 255, 0.7)", margin: "0 0 10px" }}>
-                      {language === "en"
-                        ? "💡 Enter your Student ID. Upon your first login, this device will be automatically registered and locked to your account. You will not be able to log in from any other device without contacting the University Administration."
-                        : "💡 أدخل الرقم الجامعي الخاص بك. عند تسجيل دخولك الأول، سيتم تسجيل هذا الجهاز تلقائياً وقفله على حسابك. لن تتمكن من تسجيل الدخول من أي جهاز آخر دون مراجعة إدارة الجامعة."}
-                    </p>
+                    <label className="login-label">
+                      {t("login.password")}
+                      <input
+                        className="login-input"
+                        type="password"
+                        value={staffPassword}
+                        onChange={e => setStaffPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        autoComplete="current-password"
+                      />
+                    </label>
 
-                    <button type="submit" className="login-primary" disabled={loading}>
-                      {loading ? (language === "en" ? "Verifying..." : "جاري التحقق...") : (language === "en" ? "Continue" : "متابعة")}
-                      {!loading && <span aria-hidden="true">→</span>}
+                    <button type="button" className="login-forgot">{language === "en" ? "Forgot password?" : "نسيت كلمة المرور؟"}</button>
+
+                    <button type="submit" className="login-primary">
+                      {language === "en" ? "Sign In (Staff Portal)" : "تسجيل الدخول (بوابة الموظفين)"}
+                      <span aria-hidden="true">→</span>
                     </button>
                   </form>
                 )}
 
+                {/* Error & Success Messages */}
+                {(localError || errorMessage) && (
+                  <p className="login-error">{localError || errorMessage}</p>
+                )}
+                {(localSuccess || (message && !errorMessage)) && !localError && (
+                  <p className="login-message">{localSuccess || message}</p>
+                )}
 
-
-                {/* SCREEN D: DEVICE LOCKED / REQUEST CHANGE */}
-                {studentStep === "device_locked" && deviceLockedState && (
-                  <div className="login-form" style={{ textAlign: "center", padding: "10px 0" }}>
-                    <div style={{ fontSize: "3.5rem", marginBottom: "15px" }}>🔒📱</div>
-                    
-                    <h3 style={{ color: "#ff5e5e", margin: "0 0 12px", fontSize: "1.25rem", fontWeight: "bold" }}>
-                      {language === "en" ? "Account Linked to Another Device!" : "الحساب مرتبط بجهاز آخر!"}
-                    </h3>
-                    
-                    <p style={{ fontSize: "0.9rem", color: "rgba(255, 255, 255, 0.85)", lineHeight: "1.6", background: "rgba(255, 255, 255, 0.05)", padding: "12px", borderRadius: "8px", marginBottom: "20px" }}>
-                      {deviceLockedState.message}
-                    </p>
-
-                    {deviceLockedState.pendingRequest ? (
-                      <div style={{ background: "rgba(45, 212, 220, 0.08)", border: "1px solid rgba(45, 212, 220, 0.2)", borderRadius: "8px", padding: "12px", color: "#2dd4dc", fontSize: "0.85rem", marginBottom: "20px" }}>
-                        ⏳ <strong>{language === "en" ? "Pending Review:" : "قيد المراجعة:"}</strong> {language === "en" ? "Your request to transfer the account to this device has been submitted successfully and is currently under review by the Athletic Administration." : "تم تقديم طلب نقل الحساب لهذا الجهاز بنجاح وهو قيد المراجعة حالياً من قبل الإدارة الرياضية."}
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="login-primary"
-                        onClick={handleSendDeviceRequest}
-                        disabled={loading}
-                        style={{ background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", border: "none", color: "#000", fontWeight: "bold" }}
-                      >
-                        {loading ? (language === "en" ? "Submitting..." : "جاري التقديم...") : (language === "en" ? "🚀 Submit Device Change Request" : "🚀 تقديم طلب تغيير الجهاز")}
-                      </button>
-                    )}
-
+                {/* Divider and Register (Students only) */}
+                {activeTab === "student" && studentStep === "studentId" && (
+                  <>
+                    <div className="login-divider">{t("login.noAccount")}</div>
                     <button
                       type="button"
-                      className="back-link"
-                      onClick={() => {
-                        setStudentStep("studentId");
-                        setLocalError("");
-                        setLocalSuccess("");
-                      }}
-                      style={{ marginTop: "15px", display: "inline-block" }}
+                      className="login-secondary"
+                      onClick={onOpenRegister}
                     >
-                      {t("common.back")}
+                      {t("login.createAccount")}
                     </button>
-                  </div>
+                  </>
                 )}
-              </div>
-            )}
-
-            {/* TAB 2: STAFF LOGIN (EMAIL + PASSWORD) */}
-            {activeTab === "staff" && (
-              <form onSubmit={handleStaffSubmit} className="login-form">
-                <label className="login-label">
-                  {t("login.email")}
-                  <input
-                    className="login-input"
-                    type="email"
-                    value={staffEmail}
-                    onChange={e => setStaffEmail(e.target.value)}
-                    placeholder="admin@badya.edu"
-                    required
-                    autoComplete="email"
-                  />
-                </label>
-
-                <label className="login-label">
-                  {t("login.password")}
-                  <input
-                    className="login-input"
-                    type="password"
-                    value={staffPassword}
-                    onChange={e => setStaffPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    autoComplete="current-password"
-                  />
-                </label>
-
-                <button type="button" className="login-forgot">{language === "en" ? "Forgot password?" : "نسيت كلمة المرور؟"}</button>
-
-                <button type="submit" className="login-primary">
-                  {language === "en" ? "Sign In (Staff Portal)" : "تسجيل الدخول (بوابة الموظفين)"}
-                  <span aria-hidden="true">→</span>
-                </button>
-              </form>
-            )}
-
-            {/* Error & Success Messages */}
-            {(localError || errorMessage) && (
-              <p className="login-error">{localError || errorMessage}</p>
-            )}
-            {(localSuccess || (message && !errorMessage)) && !localError && (
-              <p className="login-message">{localSuccess || message}</p>
-            )}
-
-            {/* Divider and Register (Students only) */}
-            {activeTab === "student" && studentStep === "studentId" && (
-              <>
-                <div className="login-divider">{t("login.noAccount")}</div>
-                <button
-                  type="button"
-                  className="login-secondary"
-                  onClick={onOpenRegister}
-                >
-                  {t("login.createAccount")}
-                </button>
               </>
             )}
 

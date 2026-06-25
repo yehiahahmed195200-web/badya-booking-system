@@ -123,13 +123,14 @@ export default function App() {
       if (!response.ok) {
         setErrorMessage(data.message || "Login failed");
         setMessage("");
-        return;
+        return data;
       }
       setSession(data.user);
       localStorage.setItem("token", data.token);
       setMessage(`Welcome ${data.user.fullName} (${data.user.role})`);
       setErrorMessage("");
       navigate("/dashboard", { replace: true });
+      return data;
     } catch (error) {
       const isNetworkError = error instanceof TypeError;
       setErrorMessage(
@@ -138,6 +139,7 @@ export default function App() {
           : (error.message || "Login failed")
       );
       setMessage("");
+      throw error;
     }
   }
 

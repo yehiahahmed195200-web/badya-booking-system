@@ -35,9 +35,22 @@ public class AuthController {
 
         // Step 2: Check ban status
         if (user.isBanned()) {
-            return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "Access denied - Your account has been banned"));
+            if (user.getBanExpiresAt() != null && java.time.LocalDateTime.now().isAfter(user.getBanExpiresAt())) {
+                user.setBanned(false);
+                user.setBanReason(null);
+                user.setBanDuration(null);
+                user.setBanExpiresAt(null);
+                user.setWarnings(0);
+                userRepository.save(user);
+            } else {
+                return ResponseEntity.status(403).body(Map.of(
+                        "success", false,
+                        "status", "BANNED",
+                        "reason", user.getBanReason() != null ? user.getBanReason() : "No reason provided",
+                        "duration", user.getBanDuration() != null ? user.getBanDuration() : "Permanent",
+                        "message", "Access denied - Your account has been banned"
+                ));
+            }
         }
 
         // Step 3: Redirect by role - return user info with role
@@ -63,9 +76,22 @@ public class AuthController {
                 .orElseThrow(() -> new IllegalArgumentException("Student ID is not registered in the system."));
 
         if (user.isBanned()) {
-            return ResponseEntity.status(403).body(Map.of(
-                    "success", false,
-                    "message", "Sorry, this account has been banned by the administration."));
+            if (user.getBanExpiresAt() != null && java.time.LocalDateTime.now().isAfter(user.getBanExpiresAt())) {
+                user.setBanned(false);
+                user.setBanReason(null);
+                user.setBanDuration(null);
+                user.setBanExpiresAt(null);
+                user.setWarnings(0);
+                userRepository.save(user);
+            } else {
+                return ResponseEntity.status(403).body(Map.of(
+                        "success", false,
+                        "status", "BANNED",
+                        "reason", user.getBanReason() != null ? user.getBanReason() : "No reason provided",
+                        "duration", user.getBanDuration() != null ? user.getBanDuration() : "Permanent",
+                        "message", "Sorry, this account has been banned by the administration."
+                ));
+            }
         }
 
         // Case 1: First-time login (Device not bound yet)
