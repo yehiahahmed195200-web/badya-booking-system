@@ -159,11 +159,14 @@ export default function TermsPage() {
             <span>{language === "ar" ? "←" : "←"}</span>
             {getDict("Go Back", "رجوع")}
           </button>
-          <h1>{getDict("Terms & Conditions", "الشروط والأحكام")}</h1>
-          <div className="terms-metadata">
-            <span>{getDict(`Version ${TERMS_VERSION}`, `الإصدار ${TERMS_VERSION}`)}</span>
-            <span>{getDict(`Effective: ${TERMS_EFFECTIVE_DATE}`, `ساري من: ${TERMS_EFFECTIVE_DATE}`)}</span>
+          <div className="terms-header-center">
+            <h1>{getDict("Terms & Conditions", "الشروط والأحكام")}</h1>
+            <div className="terms-metadata">
+              <span>{getDict(`Version ${TERMS_VERSION}`, `الإصدار ${TERMS_VERSION}`)}</span>
+              <span>{getDict(`Effective: ${TERMS_EFFECTIVE_DATE}`, `ساري من: ${TERMS_EFFECTIVE_DATE}`)}</span>
+            </div>
           </div>
+          <div className="terms-header-spacer" />
         </header>
 
         {/* Search & Actions Panel */}

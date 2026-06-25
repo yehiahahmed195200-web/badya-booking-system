@@ -35,19 +35,17 @@
 
 /* Header styling */
 .terms-header {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 140px 1fr 140px;
   align-items: center;
   margin-bottom: 40px;
-  position: relative;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 30px;
+  gap: 20px;
 }
 
 .terms-back-btn {
-  position: absolute;
-  left: 0;
-  top: 0;
+  justify-self: start;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #e2e8f0;
@@ -70,6 +68,18 @@
   color: #fff;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(18, 173, 190, 0.25);
+}
+
+.terms-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  grid-column: 2;
+}
+
+.terms-header-spacer {
+  grid-column: 3;
+  width: 140px;
 }
 
 .terms-header h1 {
@@ -560,19 +570,25 @@
   }
 
   .terms-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     margin-bottom: 24px;
-    padding-top: 54px;
+    gap: 16px;
   }
 
   .terms-back-btn {
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: auto;
+    position: static;
+    transform: none;
+    justify-self: center;
   }
 
   .terms-back-btn:hover {
-    transform: translateX(-50%) translateY(-1px);
+    transform: translateY(-1px);
+  }
+
+  .terms-header-spacer {
+    display: none;
   }
 
   .terms-controls {
