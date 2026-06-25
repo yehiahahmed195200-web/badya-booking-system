@@ -150,95 +150,97 @@ export default function TermsPage() {
   }, [filteredData, activeTab]);
 
   return (
-    <div className="terms-container" ref={containerRef}>
-      
-      {/* Header */}
-      <header className="terms-header">
-        <button className="terms-back-btn" onClick={() => navigate(-1)} aria-label="Go Back">
-          <span>{language === "ar" ? "←" : "←"}</span>
-          {getDict("Go Back", "رجوع")}
-        </button>
-        <h1>{getDict("Terms & Conditions", "الشروط والأحكام")}</h1>
-        <div className="terms-metadata">
-          <span>{getDict(`Version ${TERMS_VERSION}`, `الإصدار ${TERMS_VERSION}`)}</span>
-          <span>{getDict(`Effective: ${TERMS_EFFECTIVE_DATE}`, `ساري من: ${TERMS_EFFECTIVE_DATE}`)}</span>
-        </div>
-      </header>
-
-      {/* Search & Actions Panel */}
-      <section className="terms-controls">
-        <div className="terms-search-wrapper">
-          <span className="terms-search-icon" aria-hidden="true">🔍</span>
-          <input
-            type="search"
-            className="terms-search-input"
-            placeholder={getDict("Search rules, sports, keywords...", "ابحث في القوانين، الرياضات، الكلمات المفتاحية...")}
-            value={searchQuery}
-            onChange={handleSearchChange}
-            aria-label="Search terms and conditions"
-          />
-        </div>
-        <button className="terms-print-btn" onClick={handlePrint} aria-label="Print Terms as PDF">
-          <span aria-hidden="true">🖨️</span>
-          {getDict("Print / Save PDF", "طباعة / حفظ كـ PDF")}
-        </button>
-      </section>
-
-      {/* Tabs Menu - Only show if not searching (search shows matched sections across categories) */}
-      {!searchQuery && (
-        <nav className="terms-tabs" role="tablist" aria-label="Terms Categories">
-          {termsData.map((category) => (
-            <button
-              key={category.id}
-              role="tab"
-              aria-selected={activeTab === category.id}
-              aria-controls={`panel-${category.id}`}
-              id={`tab-${category.id}`}
-              className={`terms-tab-btn ${activeTab === category.id ? "active" : ""}`}
-              onClick={() => handleTabChange(category.id)}
-            >
-              <span>{category.icon}</span>
-              {category.category[language]}
-            </button>
-          ))}
-        </nav>
-      )}
-
-      {/* Content Renderers */}
-      <main className="terms-content-area">
-        {!hasSearchResults ? (
-          <div className="terms-empty-state">
-            <h3>{getDict("No matches found", "لم يتم العثور على نتائج")}</h3>
-            <p>{getDict("Try adjusting your search terms or keywords.", "يرجى تجربة كلمات بحث مختلفة.")}</p>
+    <div className="terms-page-wrapper">
+      <div className="terms-container" ref={containerRef}>
+        
+        {/* Header */}
+        <header className="terms-header">
+          <button className="terms-back-btn" onClick={() => navigate(-1)} aria-label="Go Back">
+            <span>{language === "ar" ? "←" : "←"}</span>
+            {getDict("Go Back", "رجوع")}
+          </button>
+          <h1>{getDict("Terms & Conditions", "الشروط والأحكام")}</h1>
+          <div className="terms-metadata">
+            <span>{getDict(`Version ${TERMS_VERSION}`, `الإصدار ${TERMS_VERSION}`)}</span>
+            <span>{getDict(`Effective: ${TERMS_EFFECTIVE_DATE}`, `ساري من: ${TERMS_EFFECTIVE_DATE}`)}</span>
           </div>
-        ) : searchQuery ? (
-          /* Search Results Mode: render all categories that have matching items */
-          <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
-            {filteredData.map((category) => {
-              if (category.items.length === 0) return null;
-              return (
-                <div key={category.id} className="terms-panel">
-                  <h2>{category.icon} {category.category[language]}</h2>
-                  {renderCategoryContent(category)}
-                </div>
-              );
-            })}
+        </header>
+
+        {/* Search & Actions Panel */}
+        <section className="terms-controls">
+          <div className="terms-search-wrapper">
+            <span className="terms-search-icon" aria-hidden="true">🔍</span>
+            <input
+              type="search"
+              className="terms-search-input"
+              placeholder={getDict("Search rules, sports, keywords...", "ابحث في القوانين، الرياضات، الكلمات المفتاحية...")}
+              value={searchQuery}
+              onChange={handleSearchChange}
+              aria-label="Search terms and conditions"
+            />
           </div>
-        ) : (
-          /* Standard Tabs Mode */
-          activeCategoryData && (
-            <div
-              className="terms-panel"
-              role="tabpanel"
-              id={`panel-${activeTab}`}
-              aria-labelledby={`tab-${activeTab}`}
-            >
-              <h2>{activeCategoryData.icon} {activeCategoryData.category[language]}</h2>
-              {renderCategoryContent(activeCategoryData)}
-            </div>
-          )
+          <button className="terms-print-btn" onClick={handlePrint} aria-label="Print Terms as PDF">
+            <span aria-hidden="true">🖨️</span>
+            {getDict("Print / Save PDF", "طباعة / حفظ كـ PDF")}
+          </button>
+        </section>
+
+        {/* Tabs Menu - Only show if not searching (search shows matched sections across categories) */}
+        {!searchQuery && (
+          <nav className="terms-tabs" role="tablist" aria-label="Terms Categories">
+            {termsData.map((category) => (
+              <button
+                key={category.id}
+                role="tab"
+                aria-selected={activeTab === category.id}
+                aria-controls={`panel-${category.id}`}
+                id={`tab-${category.id}`}
+                className={`terms-tab-btn ${activeTab === category.id ? "active" : ""}`}
+                onClick={() => handleTabChange(category.id)}
+              >
+                <span>{category.icon}</span>
+                {category.category[language]}
+              </button>
+            ))}
+          </nav>
         )}
-      </main>
+
+        {/* Content Renderers */}
+        <main className="terms-content-area">
+          {!hasSearchResults ? (
+            <div className="terms-empty-state">
+              <h3>{getDict("No matches found", "لم يتم العثور على نتائج")}</h3>
+              <p>{getDict("Try adjusting your search terms or keywords.", "يرجى تجربة كلمات بحث مختلفة.")}</p>
+            </div>
+          ) : searchQuery ? (
+            /* Search Results Mode: render all categories that have matching items */
+            <div style={{ display: "flex", flexDirection: "column", gap: "40px" }}>
+              {filteredData.map((category) => {
+                if (category.items.length === 0) return null;
+                return (
+                  <div key={category.id} className="terms-panel">
+                    <h2>{category.icon} {category.category[language]}</h2>
+                    {renderCategoryContent(category)}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Standard Tabs Mode */
+            activeCategoryData && (
+              <div
+                className="terms-panel"
+                role="tabpanel"
+                id={`panel-${activeTab}`}
+                aria-labelledby={`tab-${activeTab}`}
+              >
+                <h2>{activeCategoryData.icon} {activeCategoryData.category[language]}</h2>
+                {renderCategoryContent(activeCategoryData)}
+              </div>
+            )
+          )}
+        </main>
+      </div>
     </div>
   );
 
