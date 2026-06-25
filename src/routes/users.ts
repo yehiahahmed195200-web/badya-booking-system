@@ -103,6 +103,7 @@ router.get("/me", requireAuth, async (req, res, next) => {
       email: user.email,
       role: user.role,
       managedFacilityId: user.managedFacilityId,
+      skillLevel: user.skillLevel || "Intermediate",
     });
   } catch (error) {
     next(error);
@@ -139,6 +140,30 @@ router.post("/me/spin-wheel", requireAuth, async (req, res, next) => {
   try {
     const result = await spinLuckyWheel(req.auth!.userId);
     res.json(result);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put("/:userId/skill", requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+    if (req.auth!.userId !== userId) {
+      return res.status(403).json({ error: "Forbidden: You can only update your own skill level." });
+    }
+    const { skillLevel } = z.object({
+      skillLevel: z.enum(["Beginner", "Intermediate", "Advanced"])
+    }).parse(req.body);
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { skillLevel },
+    });
+
+    res.json({
+      success: true,
+      skillLevel: user.skillLevel
+    });
   } catch (error) {
     next(error);
   }

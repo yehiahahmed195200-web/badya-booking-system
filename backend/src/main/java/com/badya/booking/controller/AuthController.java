@@ -44,15 +44,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "token", "demo-token-" + user.getId(),
-                "user", Map.of(
-                        "id", user.getId(),
-                        "fullName", user.getFullName(),
-                        "email", user.getEmail(),
-                        "role", user.getRole().name(),
-                        "earnedPoints", user.getEarnedPoints(),
-                        "activeBookings", user.getActiveBookings(),
-                        "emailNotifications", user.isEmailNotificationsEnabled(),
-                        "pushNotifications", user.isPushNotificationsEnabled())));
+                "user", serializeUser(user)));
     }
 
     @PostMapping("/student-login-init")
@@ -93,18 +85,7 @@ public class AuthController {
                     "success", true,
                     "status", "PASSWORDLESS_SUCCESS",
                     "token", "demo-token-" + user.getId(),
-                    "user", Map.of(
-                            "id", user.getId(),
-                            "fullName", user.getFullName(),
-                            "email", user.getEmail(),
-                            "role", user.getRole().name(),
-                            "studentId", user.getStudentId(),
-                            "deviceId", user.getDeviceId() != null ? user.getDeviceId() : "",
-                            "earnedPoints", user.getEarnedPoints() != null ? user.getEarnedPoints() : 0,
-                            "activeBookings", user.getActiveBookings() != null ? user.getActiveBookings() : 0,
-                            "emailNotifications", user.isEmailNotificationsEnabled(),
-                            "pushNotifications", user.isPushNotificationsEnabled()
-                    )
+                    "user", serializeUser(user)
             ));
         }
 
@@ -114,18 +95,7 @@ public class AuthController {
                     "success", true,
                     "status", "PASSWORDLESS_SUCCESS",
                     "token", "demo-token-" + user.getId(),
-                    "user", Map.of(
-                            "id", user.getId(),
-                            "fullName", user.getFullName(),
-                            "email", user.getEmail(),
-                            "role", user.getRole().name(),
-                            "studentId", user.getStudentId(),
-                            "deviceId", user.getDeviceId() != null ? user.getDeviceId() : "",
-                            "earnedPoints", user.getEarnedPoints() != null ? user.getEarnedPoints() : 0,
-                            "activeBookings", user.getActiveBookings() != null ? user.getActiveBookings() : 0,
-                            "emailNotifications", user.isEmailNotificationsEnabled(),
-                            "pushNotifications", user.isPushNotificationsEnabled()
-                    )
+                    "user", serializeUser(user)
             ));
         }
 
@@ -229,5 +199,22 @@ public class AuthController {
                 "success", false,
                 "message", "OTP-based login is currently disabled. Please contact the University administration to change your registered device."
         ));
+    }
+
+    private Map<String, Object> serializeUser(UserAccount user) {
+        Map<String, Object> map = new java.util.HashMap<>();
+        map.put("id", user.getId());
+        map.put("fullName", user.getFullName());
+        map.put("email", user.getEmail());
+        map.put("role", user.getRole().name());
+        map.put("studentId", user.getStudentId() != null ? user.getStudentId() : "");
+        map.put("deviceId", user.getDeviceId() != null ? user.getDeviceId() : "");
+        map.put("earnedPoints", user.getEarnedPoints() != null ? user.getEarnedPoints() : 0);
+        map.put("activeBookings", user.getActiveBookings() != null ? user.getActiveBookings() : 0);
+        map.put("emailNotifications", user.isEmailNotificationsEnabled());
+        map.put("pushNotifications", user.isPushNotificationsEnabled());
+        map.put("termsAccepted", user.isTermsAccepted());
+        map.put("termsAcceptedVersion", user.getTermsAcceptedVersion() != null ? user.getTermsAcceptedVersion() : "");
+        return map;
     }
 }

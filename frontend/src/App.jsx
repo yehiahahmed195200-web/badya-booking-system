@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Link, Navigate, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import "./App.css";
 import { useLanguage } from "./context/LanguageContext";
@@ -14,6 +14,8 @@ import NotificationCenter from "./components/NotificationCenter";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { API_BASE } from "./config/api";
 import ChatbotWidget from "./components/ChatbotWidget";
+
+const TermsPage = lazy(() => import("./pages/TermsPage"));
 
 async function fetchJson(path) {
   const response = await fetch(`${API_BASE}${path}`);
@@ -43,6 +45,10 @@ export default function App() {
   const [regError, setRegError] = useState("");
   const [regSuccess, setRegSuccess] = useState("");
   const [regLoading, setRegLoading] = useState(false);
+
+  // Mandatory Terms & Conditions accept modal states
+  const [blockingTermsAcceptCheckbox, setBlockingTermsAcceptCheckbox] = useState(false);
+  const [termsSubmitLoading, setTermsSubmitLoading] = useState(false);
 
   useEffect(() => {
     // Generate device UUID if not present
@@ -170,6 +176,7 @@ export default function App() {
           <div className="hero-actions">
             <button className="btn btn-outline" onClick={() => navigate("/login")}>Login</button>
             <button className="btn btn-solid" onClick={() => navigate("/login")}>Get Started</button>
+            <button className="btn btn-outline" onClick={() => navigate("/terms")} style={{ border: '2px solid var(--brand)', color: 'var(--brand)' }}>Terms & Conditions</button>
           </div>
         </div>
       </section>
@@ -248,6 +255,7 @@ export default function App() {
           <header className="site-nav" id="brand">
             <div className="nav-inner">
               <nav className="nav-links">
+                <Link to="/terms">{t("navbar.terms")}</Link>
                 <a href="/#about">{t("navbar.about")}</a>
                 <a href="/#contact">{t("navbar.contact")}</a>
                 {!session && <Link to="/login">{t("navbar.login")}</Link>}
@@ -283,6 +291,11 @@ export default function App() {
           <Route path="/book" element={<BookingRoute />} />
           <Route path="/facilities" element={<FacilitiesRoute />} />
           <Route path="/live" element={<LiveRoute />} />
+          <Route path="/terms" element={
+            <Suspense fallback={<div style={{ padding: 60, color: '#fff', textAlign: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>Loading Terms...</div>}>
+              <TermsPage />
+            </Suspense>
+          } />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -371,6 +384,90 @@ export default function App() {
       >
         {language === "en" ? "عربي" : "EN"}
       </button>
+
+      {/* Mandatory Terms & Conditions Acceptance Guard Modal */}
+      {session && session.role === "STUDENT" && (!session.termsAccepted || session.termsAcceptedVersion !== "1.0") && location.pathname !== "/terms" && location.pathname !== "/login" && (
+        <div className="modal-overlay" style={{ zIndex: 9999 }}>
+          <div className="modal-card" style={{ maxWidth: "550px", border: "1px solid rgba(18, 173, 190, 0.3)" }}>
+            <div className="modal-header">
+              <h2>{language === "ar" ? "📢 تحديث هام: الشروط والأحكام" : "📢 Mandatory Terms Acceptance"}</h2>
+            </div>
+            <div className="modal-body" style={{ padding: "20px 24px", color: "#e2e8f0" }}>
+              <p style={{ lineHeight: "1.6", marginBottom: "20px" }}>
+                {language === "ar" 
+                  ? "قامت إدارة جامعة باديا بتحديث شروط وقوانين استخدام المنشآت الرياضية (الإصدار 1.0). لضمان حجز الملاعب بالعدل وتجنب المخالفات، يجب على جميع الطلاب قراءة الشروط والموافقة عليها قبل استخدام بوابة الحجز."
+                  : "Badya University Administration has updated the terms, conditions, and regulations for booking sports facilities (Version 1.0). To ensure fair booking opportunities and safe usage, all students are required to read and accept the updated terms to proceed."}
+              </p>
+              
+              <div style={{ textAlign: "center", marginBottom: "24px" }}>
+                <button 
+                  className="btn btn-outline" 
+                  onClick={() => navigate("/terms")}
+                  style={{ minWidth: "220px", padding: "12px 20px", border: "2px dashed var(--brand)", color: "var(--brand)" }}
+                >
+                  📖 {language === "ar" ? "قراءة الشروط والأحكام كاملة" : "Read Terms & Conditions"}
+                </button>
+              </div>
+
+              <label className="bk-terms-label" style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", userSelect: "none" }}>
+                <input 
+                  type="checkbox" 
+                  checked={blockingTermsAcceptCheckbox} 
+                  onChange={(e) => setBlockingTermsAcceptCheckbox(e.target.checked)} 
+                  style={{ width: "18px", height: "18px", marginTop: "3px" }}
+                />
+                <span style={{ fontSize: "0.95rem", color: "#cbd5e1" }}>
+                  {language === "ar" 
+                    ? "أقر بأنني قد قرأت وأوافق تماماً على الالتزام بجميع القوانين والجزاءات الموضحة في لائحة الشروط والأحكام."
+                    : "I acknowledge that I have read and agree to comply with all rules, violations, and penalty policies detailed in the Terms & Conditions."}
+                </span>
+              </label>
+            </div>
+            
+            <div className="modal-footer" style={{ padding: "16px 24px", borderTop: "1px solid rgba(255, 255, 255, 0.08)", display: "flex", justifyContent: "flex-end" }}>
+              <button 
+                className="btn btn-solid" 
+                disabled={!blockingTermsAcceptCheckbox || termsSubmitLoading}
+                onClick={async () => {
+                  setTermsSubmitLoading(true);
+                  try {
+                    const res = await fetch(`${API_BASE}/api/users/me/accept-terms`, {
+                      method: "POST",
+                      headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`
+                      }
+                    });
+                    if (!res.ok) throw new Error("Failed to accept terms");
+                    const data = await res.json();
+                    
+                    // Update session state in app
+                    setSession(prev => ({
+                      ...prev,
+                      termsAccepted: true,
+                      termsAcceptedVersion: "1.0"
+                    }));
+                  } catch (err) {
+                    alert(language === "ar" ? "حدث خطأ أثناء حفظ موافقتك. يرجى المحاولة لاحقاً." : "Error saving agreement. Please try again.");
+                  } finally {
+                    setTermsSubmitLoading(false);
+                  }
+                }}
+                style={{ 
+                  background: blockingTermsAcceptCheckbox ? "var(--brand)" : "rgba(255, 255, 255, 0.05)",
+                  color: blockingTermsAcceptCheckbox ? "#fff" : "rgba(255, 255, 255, 0.3)",
+                  minWidth: "160px",
+                  padding: "12px 24px"
+                }}
+              >
+                {termsSubmitLoading 
+                  ? (language === "ar" ? "جاري الحفظ..." : "Saving...") 
+                  : (language === "ar" ? "تأكيد ومتابعة ←" : "Accept & Continue →")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       </div>
     </NotificationProvider>

@@ -24,7 +24,8 @@ export const translations = {
       reserve: "Reserve a Facility",
       adminPanel: "Admin Panel",
       liveView: "Live View",
-      chatbotTitle: "Badya AI Chatbot"
+      chatbotTitle: "Badya AI Chatbot",
+      terms: "Terms & Conditions"
     },
     login: {
       title: "Badya University",
@@ -433,7 +434,8 @@ export const translations = {
       reserve: "احجز ملعب",
       adminPanel: "لوحة الأدمن",
       liveView: "البث المباشر",
-      chatbotTitle: "مساعد باديا الذكي"
+      chatbotTitle: "مساعد باديا الذكي",
+      terms: "الشروط والأحكام"
     },
     login: {
       title: "جامعة باديا",

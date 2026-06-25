@@ -123,6 +123,8 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
   const [userPoints, setUserPoints] = useState(session?.points || 0);
   const [userWarnings, setUserWarnings] = useState(session?.warnings || 0);
   const [userCredits, setUserCredits] = useState(session?.credits || 10);
+  const [userSkillLevel, setUserSkillLevel] = useState("Intermediate");
+  const [updatingSkill, setUpdatingSkill] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -254,6 +256,28 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
       setLfgLoading(false);
     }
   };
+
+  const handleUpdateSkillLevel = async (e) => {
+    const val = e.target.value;
+    setUserSkillLevel(val);
+    setUpdatingSkill(true);
+    setLfgError("");
+    setLfgSuccess("");
+    try {
+      const res = await fetch(`${API}/api/users/${session.id}/skill`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ skillLevel: val })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || "Failed to update skill level.");
+      setLfgSuccess(language === "ar" ? "تم تحديث مستوى مهاراتك بنجاح!" : "Skill level updated successfully!");
+    } catch (err) {
+      setLfgError(err.message);
+    } finally {
+      setUpdatingSkill(false);
+    }
+  };
  
   const fetchData = async () => {
     try {
@@ -269,6 +293,7 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
         setUserPoints(uData.earnedPoints || 0);
         setUserWarnings(uData.warnings || 0);
         setUserCredits(uData.credits != null ? uData.credits : 10);
+        setUserSkillLevel(uData.skillLevel || "Intermediate");
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -809,7 +834,32 @@ export default function StudentDashboard({ session, onLogout, toggleNotification
                     {lfgSuccess && <div className="sd-feedback-success" style={{ marginBottom: 12, background: '#d1fae5', color: '#10b981', padding: '10px 14px', borderRadius: 8, fontSize: '0.88rem' }}>{lfgSuccess}</div>}
                     
                     <form onSubmit={handleJoinQueue} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                      <div>
+                       {/* Skill Level Selector */}
+                       <div style={{ paddingBottom: 12, borderBottom: '1px dashed #e2e8f0', marginBottom: 4 }}>
+                         <label style={{ display: 'block', fontWeight: 700, fontSize: '0.88rem', marginBottom: 6, color: '#1e293b' }}>
+                           {language === "ar" ? "مستوى مهاراتك الحالي:" : "Your Current Skill Level:"}
+                         </label>
+                         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                           <select
+                             value={userSkillLevel}
+                             onChange={handleUpdateSkillLevel}
+                             disabled={updatingSkill}
+                             style={{ flex: 1, padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: 8, fontSize: '0.9rem', color: '#334155', fontWeight: 600, background: '#fff' }}
+                           >
+                             <option value="Beginner">{language === "ar" ? "🌱 مبتدئ (Beginner)" : "Beginner"}</option>
+                             <option value="Intermediate">{language === "ar" ? "⚡ متوسط (Intermediate)" : "Intermediate"}</option>
+                             <option value="Advanced">{language === "ar" ? "🔥 محترف (Advanced)" : "Advanced"}</option>
+                           </select>
+                           {updatingSkill && <span style={{ fontSize: '0.8rem', color: '#64748b' }}>⏳</span>}
+                         </div>
+                         <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "0.75rem", lineHeight: '1.25' }}>
+                           {language === "ar" 
+                             ? "يتم استخدام هذا المستوى لمطابقتك مع لاعبين مناسبين وتوزيع الفرق بشكل متوازن." 
+                             : "This level is used to match you with suitable players and balance teams evenly."}
+                         </p>
+                       </div>
+
+                       <div>
                         <label style={{ display: 'block', fontWeight: 600, fontSize: '0.88rem', marginBottom: 6, color: '#475569' }}>{t("studentDashboard.sportAndFacility")}</label>
                         <select 
                           className="sd-fb-input" 

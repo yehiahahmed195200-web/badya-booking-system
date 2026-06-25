@@ -70,6 +70,16 @@ public class UserAccount {
     @Column(name = "skilllevel", nullable = true)
     private String skillLevel = "Intermediate";
 
+    @Column(name = "terms_accepted", nullable = false)
+    private boolean termsAccepted = false;
+
+    @Column(name = "terms_accepted_at", nullable = true)
+    private java.time.LocalDateTime termsAcceptedAt;
+
+    @Column(name = "terms_accepted_version", nullable = true)
+    private String termsAcceptedVersion;
+
+
     public Long getId() {
         return id;
     }
@@ -232,5 +242,29 @@ public class UserAccount {
 
     public void setSkillLevel(String skillLevel) {
         this.skillLevel = skillLevel;
+    }
+
+    public boolean isTermsAccepted() {
+        return termsAccepted;
+    }
+
+    public void setTermsAccepted(boolean termsAccepted) {
+        this.termsAccepted = termsAccepted;
+    }
+
+    public java.time.LocalDateTime getTermsAcceptedAt() {
+        return termsAcceptedAt;
+    }
+
+    public void setTermsAcceptedAt(java.time.LocalDateTime termsAcceptedAt) {
+        this.termsAcceptedAt = termsAcceptedAt;
+    }
+
+    public String getTermsAcceptedVersion() {
+        return termsAcceptedVersion;
+    }
+
+    public void setTermsAcceptedVersion(String termsAcceptedVersion) {
+        this.termsAcceptedVersion = termsAcceptedVersion;
     }
 }

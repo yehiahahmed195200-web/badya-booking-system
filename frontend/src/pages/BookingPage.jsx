@@ -53,24 +53,44 @@ export default function BookingPage({ session }) {
     if (!msg) return msg;
     if (msg.includes("OVERLAP_DETECTED")) {
       return language === "en"
-        ? "You already have another active booking at this time."
-        : "أنت حاجز حاجة تانية في نفس الميعاد ده.";
+        ? "⚠️ Rule Violation (System Clause 4 - Overlap): You already have another active booking at this time. Overlapping reservations are automatically blocked."
+        : "⚠️ مخالفة لائحة النظام (بند 4 - منع التداخل): أنت حاجز حاجة تانية في نفس الميعاد ده. تداخل المواعيد ممنوع تلقائياً.";
     }
     if (msg.includes("Sport selection is required")) return t("bookingPage.errSportRequired");
     if (msg.includes("Invalid sport selection")) return t("bookingPage.errInvalidSport");
     if (msg.includes("Basketball has exceeded its weekly quota")) return t("bookingPage.errQuotaBasketball");
     if (msg.includes("Volleyball has exceeded its weekly quota")) return t("bookingPage.errQuotaVolleyball");
-    if (msg.includes("account is banned")) return t("bookingPage.errBanned");
+    if (msg.includes("account is banned")) {
+      return language === "en"
+        ? "⚠️ Rule Violation (Disciplinary Clause - Account Banned): This account has been banned by the administration due to rules infringement."
+        : "⚠️ مخالفة لائحة الانضباط (حظر الحساب): هذا الحساب محظور حالياً بقرار من الإدارة لمخالفته القوانين.";
+    }
     if (msg.includes("Insufficient credits")) return t("bookingPage.errCredits");
-    if (msg.includes("warning threshold reached")) return t("bookingPage.errAutoBanned");
+    if (msg.includes("warning threshold reached")) {
+      return language === "en"
+        ? "⚠️ Rule Violation (Disciplinary Clause 2 - Warning Limit): Warning threshold reached. Your booking privileges have been suspended."
+        : "⚠️ مخالفة لائحة الانضباط (تجاوز الإنذارات): لقد وصلت للحد الأقصى للإنذارات. تم تعليق صلاحية الحجز لحسابك.";
+    }
     if (msg.includes("Facility is deactivated")) return t("bookingPage.errDeactivated");
-    if (msg.includes("Participants outside allowed range")) return t("bookingPage.errParticipantsRange");
+    if (msg.includes("Participants outside allowed range")) {
+      return language === "en"
+        ? "⚠️ Rule Violation (Sports Booking Clause - Min/Max Players): The number of players falls outside the allowed limits for the selected sport."
+        : "⚠️ مخالفة شروط الرياضة (عدد اللاعبين): عدد المشتركين خارج نطاق الحد الأدنى/الأقصى المسموح به للعب هذه الرياضة.";
+    }
     if (msg.includes("Booking duration must be between")) return t("bookingPage.errDuration");
     if (msg.includes("Booking start time cannot be in the past")) return t("bookingPage.errPast");
     if (msg.includes("Booking exceeds advance window")) return t("bookingPage.errAdvanceWindow");
-    if (msg.includes("Daily booking limit reached")) return t("bookingPage.errDailyLimit");
+    if (msg.includes("Daily booking limit reached")) {
+      return language === "en"
+        ? "⚠️ Rule Violation (System Clause - Daily Limit): You have reached your maximum daily booking limit to ensure fair allocation."
+        : "⚠️ مخالفة لائحة النظام (الحد اليومي): لقد وصلت للحد الأقصى المسموح به للحجز يومياً لضمان التوزيع العادل.";
+    }
     if (msg.includes("Booking must fall within facility operating hours")) return t("bookingPage.errOperatingHours");
-    if (msg.includes("Back-to-back bookings are disabled")) return t("bookingPage.errBackToBack");
+    if (msg.includes("Back-to-back bookings are disabled")) {
+      return language === "en"
+        ? "⚠️ Rule Violation (System Clause 3 - Double Booking): Back-to-back double bookings are disabled to ensure fair court rotation."
+        : "⚠️ مخالفة لائحة النظام (بند 3 - الحجز المزدوج): الحجوزات المتتالية لنفس الطالب غير مسموحة لضمان تدوير اللعب.";
+    }
     if (msg.includes("already booked during the requested time slot")) {
       const idx = msg.indexOf("Available times today: ");
       const times = idx !== -1 ? msg.substring(idx + "Available times today: ".length) : "";
@@ -665,6 +685,26 @@ export default function BookingPage({ session }) {
                 <li>{t("bookingPage.rule3")}</li>
                 <li>{t("bookingPage.rule4")}</li>
               </ul>
+            </div>
+
+            <div className="bk-terms-notice" style={{ margin: "16px 0", padding: "12px", background: "rgba(18, 173, 190, 0.08)", border: "1px solid rgba(18, 173, 190, 0.2)", borderRadius: "8px", fontSize: "0.9rem", color: "#cbd5e1" }}>
+              <p style={{ margin: 0, lineHeight: "1.4" }}>
+                {language === "ar" ? (
+                  <>
+                    تأكيد هذا الحجز يعني موافقتك على الالتزام بـ{" "}
+                    <a href="/terms#sports_rules" target="_blank" rel="noopener noreferrer" style={{ color: "var(--brand)", textDecoration: "underline", fontWeight: "bold" }}>
+                      قوانين وشروط استخدام الملاعب بالمركز الرياضي
+                    </a>.
+                  </>
+                ) : (
+                  <>
+                    By confirming this booking, you agree to comply with the{" "}
+                    <a href="/terms#sports_rules" target="_blank" rel="noopener noreferrer" style={{ color: "var(--brand)", textDecoration: "underline", fontWeight: "bold" }}>
+                      Sports Center Rules & Terms
+                    </a>.
+                  </>
+                )}
+              </p>
             </div>
 
             {/* FR-2.7 Terms & Conditions */}

@@ -478,6 +478,34 @@ public class UserController {
         ));
     }
 
+    /**
+     * PUT /api/users/{userId}/skill
+     * Update user skill level
+     */
+    @PutMapping("/{userId}/skill")
+    public ResponseEntity<?> updateSkill(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> body,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            if (!current.getId().equals(userId)) {
+                return ResponseEntity.status(403).body(Map.of("error", "Forbidden: You can only update your own skill level."));
+            }
+            String skillLevel = body.get("skillLevel");
+            if (skillLevel == null || (!skillLevel.equals("Beginner") && !skillLevel.equals("Intermediate") && !skillLevel.equals("Advanced"))) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid skill level. Must be Beginner, Intermediate, or Advanced."));
+            }
+            UserAccount user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            user.setSkillLevel(skillLevel);
+            userRepository.save(user);
+            return ResponseEntity.ok(Map.of("success", true, "skillLevel", skillLevel));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
     private UserAccount getCurrentAdmin(String authHeader) {
         try {
             UserAccount current = getAuthenticatedUser(authHeader);
@@ -488,6 +516,25 @@ public class UserController {
             // ignore
         }
         return null;
+    }
+
+    @PostMapping("/me/accept-terms")
+    public ResponseEntity<?> acceptTerms(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        try {
+            UserAccount current = getAuthenticatedUser(authHeader);
+            current.setTermsAccepted(true);
+            current.setTermsAcceptedAt(java.time.LocalDateTime.now());
+            current.setTermsAcceptedVersion("1.0");
+            userRepository.save(current);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Terms and conditions accepted successfully",
+                "termsAccepted", current.isTermsAccepted(),
+                "termsAcceptedVersion", current.getTermsAcceptedVersion() != null ? current.getTermsAcceptedVersion() : ""
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 
     /**
