@@ -5,7 +5,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-@Component
+// @Component
 @Order(1) // Run before DataSeeder
 public class DatabaseSchemaInitializer implements CommandLineRunner {
 
