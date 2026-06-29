@@ -407,13 +407,20 @@
 
 /* Card Operations (Actions on hover) */
 .card-operations {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 12px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 6px;
   opacity: 0;
   transition: all 0.2s ease;
-  justify-content: flex-start;
-  flex-shrink: 0;
+  z-index: 10;
+  background: #ffffff;
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.05);
 }
 
 .notification-card:hover .card-operations {
