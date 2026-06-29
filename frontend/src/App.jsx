@@ -15,7 +15,7 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 import { API_BASE } from "./config/api";
 import ChatbotWidget from "./components/ChatbotWidget";
 
-const TermsPage = lazy(() => import("./pages/TermsPage"));
+import TermsPage from "./pages/TermsPage";
 
 async function fetchJson(path) {
   const response = await fetch(`${API_BASE}${path}`);
@@ -293,11 +293,7 @@ export default function App() {
           <Route path="/book" element={<BookingRoute />} />
           <Route path="/facilities" element={<FacilitiesRoute />} />
           <Route path="/live" element={<LiveRoute />} />
-          <Route path="/terms" element={
-            <Suspense fallback={<div style={{ padding: 60, color: '#fff', textAlign: 'center', fontSize: '1.2rem', fontWeight: 'bold' }}>Loading Terms...</div>}>
-              <TermsPage />
-            </Suspense>
-          } />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
