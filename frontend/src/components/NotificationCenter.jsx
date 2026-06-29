@@ -15,13 +15,18 @@ export default function NotificationCenter({ isOpen, onClose }) {
   } = useNotifications();
   const [activeFilter, setActiveFilter] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [expandedIds, setExpandedIds] = useState({});
+  const [expandedIds, setExpandedIds] = useState(new Set());
 
   const toggleExpand = (id) => {
-    setExpandedIds((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   const handleRefresh = async () => {
@@ -207,7 +212,7 @@ export default function NotificationCenter({ isOpen, onClose }) {
           ) : (
             filtered.map((n) => {
               const pInfo = getPriorityInfo(n);
-              const isExpanded = !!expandedIds[n.id];
+              const isExpanded = expandedIds.has(n.id);
               return (
                 <div
                   key={n.id}
