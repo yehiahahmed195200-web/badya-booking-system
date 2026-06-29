@@ -261,24 +261,26 @@ public class BookingService {
 
         LocalDateTime dayStart = startTime.toLocalDate().atStartOfDay();
         LocalDateTime dayEnd = dayStart.plusDays(1).minusNanos(1);
-        long dailyCount = bookingRepository.countByUserIdAndStatusInAndStartTimeBetween(
-                userId,
-                List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
-                dayStart,
-                dayEnd);
-        if (dailyCount >= rules.getMaxBookingsPerUserPerDay()) {
-            throw new IllegalArgumentException("Daily booking limit reached (" + rules.getMaxBookingsPerUserPerDay() + ")");
-        }
 
-
-        LocalDateTime endTime = startTime.plusMinutes(duration);
-
-        // Check if the user already has an active booking overlapping with this time slot
+        // Fetch same-day bookings for the user to validate constraints
         List<Booking> sameDayUserBookings = bookingRepository.findByUserIdAndStatusInAndStartTimeBetween(
                 userId,
                 List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
                 dayStart,
                 dayEnd);
+
+        // Validate daily booking limit per facility (each student should be allowed to try different facilities per day)
+        long dailyFacilityCount = sameDayUserBookings.stream()
+                .filter(b -> b.getFacility().getId().equals(facilityId))
+                .count();
+        Integer maxLimit = rules.getMaxBookingsPerUserPerDay();
+        if (maxLimit != null && dailyFacilityCount >= maxLimit) {
+            throw new IllegalArgumentException("Daily booking limit reached for this facility (" + maxLimit + ")");
+        }
+
+        LocalDateTime endTime = startTime.plusMinutes(duration);
+
+        // Check if the user already has an active booking overlapping with this time slot
         List<Booking> userOverlaps = sameDayUserBookings.stream()
                 .filter(existing -> existing.getStartTime().isBefore(endTime) && existing.getEndTime().isAfter(startTime))
                 .toList();
@@ -541,25 +543,24 @@ public class BookingService {
                 LocalDateTime dayStart = start.toLocalDate().atStartOfDay();
                 LocalDateTime dayEnd = dayStart.plusDays(1).minusNanos(1);
 
-                // 4. Daily booking limit validation
-                long dailyCount = bookingRepository.countByUserIdAndStatusInAndStartTimeBetween(
+                // 4. Daily booking limit validation (per facility)
+                List<Booking> sameDayWaitlistUserBookings = bookingRepository.findByUserIdAndStatusInAndStartTimeBetween(
                         waitlistUser.getId(),
                         List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
                         dayStart,
                         dayEnd);
-                if (dailyCount >= rules.getMaxBookingsPerUserPerDay()) {
+                long dailyFacilityCount = sameDayWaitlistUserBookings.stream()
+                        .filter(b -> b.getFacility().getId().equals(entry.getFacility().getId()))
+                        .count();
+                Integer maxLimit = rules.getMaxBookingsPerUserPerDay();
+                if (maxLimit != null && dailyFacilityCount >= maxLimit) {
                     waitlistRepository.delete(entry);
                     continue;
                 }
 
                 // 5. Back-to-back booking validation
                 if (!Boolean.TRUE.equals(rules.getAllowBackToBackBookings())) {
-                    List<Booking> sameDayBookings = bookingRepository.findByUserIdAndStatusInAndStartTimeBetween(
-                            waitlistUser.getId(),
-                            List.of(BookingStatus.CONFIRMED, BookingStatus.PENDING),
-                            dayStart,
-                            dayEnd);
-                    boolean hasBackToBack = sameDayBookings.stream().anyMatch(existing ->
+                    boolean hasBackToBack = sameDayWaitlistUserBookings.stream().anyMatch(existing ->
                             existing.getEndTime().equals(start) || existing.getStartTime().equals(end));
                     if (hasBackToBack) {
                         waitlistRepository.delete(entry);
