@@ -6,7 +6,8 @@ import { useLanguage } from "../context/LanguageContext";
 import "./TermsPage.css";
 
 export default function TermsPage() {
-  const { language, t } = useLanguage();
+  const { language: rawLanguage, t } = useLanguage();
+  const language = rawLanguage === "ar" ? "ar" : "en";
   const navigate = useNavigate();
   const location = useLocation();
 
