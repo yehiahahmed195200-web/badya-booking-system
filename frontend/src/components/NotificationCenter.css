@@ -338,6 +338,44 @@
   word-break: break-word;
 }
 
+.card-expandable-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-out, margin-top 0.25s;
+  margin-top: 0;
+}
+
+.card-expandable-content.expanded {
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 8px;
+}
+
+.card-expand-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: color 0.2s, transform 0.2s;
+  padding: 0 4px;
+  cursor: pointer;
+}
+
+.notification-card:hover .card-expand-toggle {
+  color: #475569;
+}
+
+.chevron-svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chevron-svg.rotated {
+  transform: rotate(180deg);
+}
+
 .card-action-btn {
   align-self: flex-start;
   margin-top: 8px;
@@ -649,5 +687,48 @@
 
 .notifications-list::-webkit-scrollbar-thumb:hover {
   background: rgba(15, 23, 42, 0.24);
+}
+
+/* ==========================================================================
+   RTL MODE OVERRIDES
+   ========================================================================== */
+.rtl-mode .card-indicator {
+  left: auto;
+  right: 0;
+  border-radius: 0 14px 14px 0;
+}
+
+.rtl-mode .card-operations {
+  transform: translateX(-5px);
+}
+
+.rtl-mode .notification-card:hover .card-operations {
+  transform: translateX(0);
+}
+
+.rtl-mode .notification-drawer {
+  right: auto;
+  left: -450px;
+  border-left: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 10px 0 40px rgba(15, 23, 42, 0.08);
+  transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rtl-mode .notification-drawer.open {
+  left: 0;
+  right: auto;
+}
+
+@media (max-width: 600px) {
+  .rtl-mode .notification-drawer {
+    left: -100%;
+    right: auto;
+    border-right: none;
+  }
+  .rtl-mode .notification-drawer.open {
+    left: 0;
+    right: auto;
+  }
 }
 

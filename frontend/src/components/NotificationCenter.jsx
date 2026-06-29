@@ -15,6 +15,14 @@ export default function NotificationCenter({ isOpen, onClose }) {
   } = useNotifications();
   const [activeFilter, setActiveFilter] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [expandedIds, setExpandedIds] = useState({});
+
+  const toggleExpand = (id) => {
+    setExpandedIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -199,13 +207,15 @@ export default function NotificationCenter({ isOpen, onClose }) {
           ) : (
             filtered.map((n) => {
               const pInfo = getPriorityInfo(n);
+              const isExpanded = !!expandedIds[n.id];
               return (
                 <div
                   key={n.id}
-                  className={`notification-card ${!n.read ? 'unread' : ''}`}
+                  className={`notification-card ${!n.read ? 'unread' : ''} ${isExpanded ? 'expanded' : ''}`}
                   style={{ '--priority-color': pInfo.color }}
                   onClick={(e) => {
                     if (!n.read) markAsRead(n.id);
+                    toggleExpand(n.id);
                   }}
                 >
                   <div className="card-indicator" />
@@ -227,16 +237,29 @@ export default function NotificationCenter({ isOpen, onClose }) {
                       </span>
                     </div>
                     <h4 className="card-title">{n.title}</h4>
-                    <p className="card-desc">{n.message}</p>
-                    {n.actionUrl && (
-                      <a href={n.actionUrl} className="card-action-btn" onClick={(e) => e.stopPropagation()}>
-                        {t('notifications.viewDetails')}
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="arrow-svg">
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                          <polyline points="12 5 19 12 12 19" />
-                        </svg>
-                      </a>
-                    )}
+                    <div className={`card-expandable-content ${isExpanded ? 'expanded' : ''}`}>
+                      <p className="card-desc">{n.message}</p>
+                      {n.actionUrl && (
+                        <a href={n.actionUrl} className="card-action-btn" onClick={(e) => e.stopPropagation()}>
+                          {t('notifications.viewDetails')}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="arrow-svg">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="card-expand-toggle">
+                    <svg
+                      className={`chevron-svg ${isExpanded ? 'rotated' : ''}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
                   </div>
                   <div className="card-operations">
                     {!n.read && (
