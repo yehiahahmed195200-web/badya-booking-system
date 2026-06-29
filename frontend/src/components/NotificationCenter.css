@@ -207,6 +207,7 @@
 .notifications-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -221,6 +222,7 @@
   display: flex;
   gap: 14px;
   padding: 16px;
+  padding-inline-start: 20px;
   background: #ffffff;
   border: 1px solid rgba(15, 23, 42, 0.05);
   border-radius: 14px;
@@ -228,6 +230,9 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 
 .notification-card:hover {
@@ -245,11 +250,12 @@
 .card-indicator {
   position: absolute;
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
   bottom: 0;
   width: 4px;
   background: var(--priority-color, #64748b);
-  border-radius: 14px 0 0 14px;
+  border-start-start-radius: 14px;
+  border-end-start-radius: 14px;
 }
 
 .card-icon-container {
@@ -405,21 +411,19 @@
   flex-direction: column;
   gap: 6px;
   opacity: 0;
-  transform: translateX(5px);
   transition: all 0.2s ease;
   justify-content: flex-start;
+  flex-shrink: 0;
 }
 
 .notification-card:hover .card-operations {
   opacity: 1;
-  transform: translateX(0);
 }
 
 @media (max-width: 768px) {
   /* Keep operations permanently visible on mobile since there is no hover */
   .card-operations {
     opacity: 1;
-    transform: translateX(0);
   }
 }
 
@@ -692,43 +696,9 @@
 /* ==========================================================================
    RTL MODE OVERRIDES
    ========================================================================== */
-.rtl-mode .card-indicator {
-  left: auto;
-  right: 0;
-  border-radius: 0 14px 14px 0;
-}
 
-.rtl-mode .card-operations {
-  transform: translateX(-5px);
-}
-
-.rtl-mode .notification-card:hover .card-operations {
-  transform: translateX(0);
-}
-
-.rtl-mode .notification-drawer {
-  right: auto;
-  left: -450px;
-  border-left: none;
-  border-right: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 10px 0 40px rgba(15, 23, 42, 0.08);
-  transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.rtl-mode .notification-drawer.open {
-  left: 0;
-  right: auto;
-}
-
-@media (max-width: 600px) {
-  .rtl-mode .notification-drawer {
-    left: -100%;
-    right: auto;
-    border-right: none;
-  }
-  .rtl-mode .notification-drawer.open {
-    left: 0;
-    right: auto;
-  }
+/* Unread gradient direction fix for RTL */
+.rtl-mode .notification-card.unread {
+  background: linear-gradient(to left, rgba(28, 178, 191, 0.02), rgba(255, 255, 255, 0.7));
 }
 
