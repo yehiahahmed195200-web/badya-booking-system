@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <system.webServer>
+    <handlers>
+      <!-- Adds the HttpPlatformHandler to process Java requests directly through IIS -->
+      <add name="httpPlatformHandler" path="*" verb="*" modules="httpPlatformHandler" resourceType="Unspecified"/>
+    </handlers>
+    
+    <!-- 
+      This configuration runs the Spring Boot application JAR inside IIS using HttpPlatformHandler.
+      Requirements:
+      1. Install the "HttpPlatformHandler" module in IIS.
+      2. Ensure JAVA_HOME is set as a system environment variable, or replace '%JAVA_HOME%\bin\java.exe' with the absolute path to java.exe.
+      3. Rename this file to 'web.config' and place it in the same directory as your compiled '.jar' file.
+      4. Make sure to update the '-jar' argument below to match your actual jar filename (e.g., booking-backend-0.1.0.jar).
+    -->
+    <httpPlatform processPath="%JAVA_HOME%\bin\java.exe"
+                  arguments="-Djava.net.preferIPv4Stack=true -Dserver.port=%HTTP_PLATFORM_PORT% -jar &quot;%d%\booking-backend.jar&quot;"
+                  stdoutLogEnabled="true"
+                  stdoutLogFile=".\logs\stdout"
+                  startupTimeLimit="90">
+      <environmentVariables>
+        <!-- Database and Spring Boot Environment Variables -->
+        <environmentVariable name="SPRING_DATASOURCE_URL" value="jdbc:sqlserver://localhost:1433;databaseName=badyadb;encrypt=true;trustServerCertificate=true;" />
+        <environmentVariable name="SPRING_DATASOURCE_USERNAME" value="SA" />
+        <environmentVariable name="SPRING_DATASOURCE_PASSWORD" value="YourSecurePassword123" />
+        <environmentVariable name="PORT" value="%HTTP_PLATFORM_PORT%" />
+      </environmentVariables>
+    </httpPlatform>
+  </system.webServer>
+</configuration>

@@ -28,7 +28,7 @@ async function fetchJson(path) {
 export default function App() {
   const { language, toggleLanguage, t } = useLanguage();
   const [form, setForm] = useState({ email: "admin@badya.edu", password: "Admin@123" });
-  const [message, setMessage] = useState("Use demo account and click Sign In");
+  const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [session, setSession] = useState(null);
   const [metrics, setMetrics] = useState({ facilities: 0, bookings: 0, users: 0 });
