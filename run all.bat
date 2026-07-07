@@ -46,6 +46,15 @@ popd
 
 echo [3/8] Setting up Database (Prisma)...
 pushd "%ROOT%"
+if not exist "%ROOT%node_modules\.prisma" (
+    echo - Generating Prisma Client...
+    call npx prisma generate
+)
+choice /C YN /T 3 /D N /M "Run database migrations, seeding, and Prisma Studio?"
+if errorlevel 2 (
+    echo - Skipping database migrations, seeding, and Prisma Studio.
+    goto :db_setup_done
+)
 echo - Generating Prisma Client...
 call npx prisma generate
 echo - Ensuring database is up to date...
@@ -56,6 +65,7 @@ call npx ts-node fix_db.ts
 call npm run prisma:seed
 echo - Starting Prisma Studio to view the database in a browser...
 start "Prisma Studio" /D "%ROOT%" cmd /k "node studio.js"
+:db_setup_done
 popd
 
 echo [4/8] Freeing up required ports...
