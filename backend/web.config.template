@@ -21,9 +21,9 @@
                   startupTimeLimit="90">
       <environmentVariables>
         <!-- Database and Spring Boot Environment Variables -->
-        <environmentVariable name="SPRING_DATASOURCE_URL" value="jdbc:sqlserver://localhost:1433;databaseName=badyadb;encrypt=true;trustServerCertificate=true;" />
-        <environmentVariable name="SPRING_DATASOURCE_USERNAME" value="SA" />
-        <environmentVariable name="SPRING_DATASOURCE_PASSWORD" value="YourSecurePassword123" />
+        <environmentVariable name="SPRING_DATASOURCE_URL" value="jdbc:mysql://localhost:3306/badyadb?createDatabaseIfNotExist=true" />
+        <environmentVariable name="SPRING_DATASOURCE_USERNAME" value="root" />
+        <environmentVariable name="SPRING_DATASOURCE_PASSWORD" value="yehia.hema195200" />
         <environmentVariable name="PORT" value="%HTTP_PLATFORM_PORT%" />
       </environmentVariables>
     </httpPlatform>
